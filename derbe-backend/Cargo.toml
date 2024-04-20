@@ -1,0 +1,14 @@
+[package]
+name = "derbe-backend"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.7.5"
+tower-http = { version = "0.5.2", features = ["cors"] }
+serde = { version = "1.0.198", features = ["derive"]}
+tokio = { version = "1.37.0", features = ["full"] }
+sqlx = { version = "0.7.4", features = [ "runtime-tokio-rustls", "migrate", "postgres" ] }
+dotenv = "0.15.0"
