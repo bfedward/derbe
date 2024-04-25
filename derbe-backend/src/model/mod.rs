@@ -12,3 +12,81 @@ pub mod leave_type {
         pub show_in_approve_days: bool
     }
 }
+
+pub mod division {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Division {
+        pub id: Option<i32>,
+        pub name: String,
+    }
+}
+
+pub mod location {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Location {
+        pub id: Option<i32>,
+        pub name: String,
+    }
+}
+
+pub mod employee {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Employee {
+        pub id: Option<i32>,
+        pub first_name: String,
+        pub last_name: String,
+        pub job_title: String,
+        pub division_id: i32,
+        pub employment_type: String,
+        pub location_id: i32,
+        pub manager_id: Option<i32>,
+        pub email: String,
+        pub phone: String,
+    }
+}
+
+pub mod leave_request {
+    use serde::{Deserialize, Serialize};
+    use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
+    use time::{format_description::well_known::Rfc3339, OffsetDateTime};
+
+    #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
+    #[sqlx(type_name = "valid_leave_statuses", rename_all = "lowercase")] 
+    pub enum LeaveStatus {
+        Pending,
+        MoreInfoReq,
+        Cancelled,
+        Rejected,
+        Accepted,
+    }
+
+    impl PgHasArrayType for LeaveStatus {
+        fn array_type_info() -> PgTypeInfo {
+            PgTypeInfo::with_name("_valid_leave_statuses")
+        }
+    }
+
+    #[serde_with::serde_as]
+    #[derive(Serialize, Deserialize, sqlx::FromRow)]
+    pub struct LeaveRequest {
+        pub id: Option<i32>,
+        pub employee_id: i32,
+        pub leave_type_id: i32,
+        pub leave_status: LeaveStatus,
+        #[serde_as(as = "Rfc3339")]
+        pub date_from: OffsetDateTime,
+        pub date_to: OffsetDateTime,
+        pub first_day_half: bool,
+        pub last_day_half: bool,
+        pub date_requested: OffsetDateTime,
+        pub date_finalised: Option<OffsetDateTime>,
+        pub notes: Option<String>
+            
+    }
+}
