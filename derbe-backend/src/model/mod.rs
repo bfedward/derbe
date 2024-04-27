@@ -57,13 +57,13 @@ pub mod leave_request {
     use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
     #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
-    #[sqlx(type_name = "valid_leave_statuses", rename_all = "lowercase")] 
+    #[sqlx(type_name = "valid_leave_statuses")] 
     pub enum LeaveStatus {
-        Pending,
-        MoreInfoReq,
-        Cancelled,
-        Rejected,
-        Accepted,
+        PENDING,
+        MOREINFOREQ,
+        CANCELLED,
+        REJECTED,
+        ACCEPTED,
     }
 
     impl PgHasArrayType for LeaveStatus {
@@ -73,7 +73,7 @@ pub mod leave_request {
     }
 
     #[serde_with::serde_as]
-    #[derive(Serialize, Deserialize, sqlx::FromRow)]
+    #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
     pub struct LeaveRequest {
         pub id: Option<i32>,
         pub employee_id: i32,
@@ -81,12 +81,14 @@ pub mod leave_request {
         pub leave_status: LeaveStatus,
         #[serde_as(as = "Rfc3339")]
         pub date_from: OffsetDateTime,
+        #[serde_as(as = "Rfc3339")]
         pub date_to: OffsetDateTime,
         pub first_day_half: bool,
         pub last_day_half: bool,
+        #[serde_as(as = "Rfc3339")]
         pub date_requested: OffsetDateTime,
+        #[serde_as(as = "Option<Rfc3339>")]
         pub date_finalised: Option<OffsetDateTime>,
-        pub notes: Option<String>
-            
+        pub notes: Option<String> 
     }
 }

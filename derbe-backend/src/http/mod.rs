@@ -2,7 +2,7 @@ use axum::{http::Method, routing::get, Router};
 use sqlx::PgPool;
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::controller::{leave_types_controller};
+use crate::controller::{leave_request_controller, leave_types_controller};
 
 #[derive(Clone)]
 pub struct AppContext {
@@ -27,6 +27,7 @@ fn app_router(context: AppContext) -> Router {
     Router::new()
         .route("/health", get(health))
         .merge(leave_types_controller::router())
+        .merge(leave_request_controller::router())
         .layer(get_cors_layer())
         .with_state(context)
 }
