@@ -1,7 +1,9 @@
 use crate::{
-    error::AppError, http::AppContext, model::leave_type::LeaveType, repository::leave_types_repository,
+    model::leave_type::LeaveType, repository::leave_types_repository::LeaveTypesRepository,
 };
 
-pub async fn get_leave_types(ctx: &AppContext) -> Result<Vec<LeaveType>, AppError> {
-    leave_types_repository::get_leave_types(ctx).await
-}
+use super::DerbeService;
+
+pub struct LeaveTypesService {}
+
+impl DerbeService<LeaveType, LeaveTypesRepository> for LeaveTypesService {}

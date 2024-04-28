@@ -1,6 +1,6 @@
 use axum::{extract::{Path, State}, routing::{get, post}, Json, Router};
 
-use crate::{error::AppError, http::AppContext, model::leave_request::{self, LeaveRequest}, service::leave_request_service};
+use crate::{error::AppError, http::AppContext, model::leave_request::LeaveRequest, service::{leave_request_service::LeaveRequestService, DerbeService}};
 
 
 
@@ -11,14 +11,14 @@ pub fn router() -> Router<AppContext> {
 }
 
 async fn get_leave_request(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Json<LeaveRequest>, AppError> {
-    match leave_request_service::get_leave_request(id, &ctx).await {
+    match LeaveRequestService::get_entity_by_id(id, &ctx).await {
         Ok(leave_request) => Ok(Json(leave_request)),
         Err(e) => Err(e)
     }
 }
 
 async fn create_leave_request(State(ctx): State<AppContext>, Json(leave_request): Json<LeaveRequest>) -> Result<Json<LeaveRequest>, AppError> {
-    match leave_request_service::create_leave_request(&ctx, leave_request).await {
+    match LeaveRequestService::create_entity(leave_request, &ctx).await {
         Ok(leave_request) => Ok(Json(leave_request)),
         Err(e) => Err(e)
     }

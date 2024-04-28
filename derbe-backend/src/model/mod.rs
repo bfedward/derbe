@@ -1,5 +1,10 @@
+pub trait DerbeModel {}
+
+
 pub mod leave_type {
     use serde::{Deserialize, Serialize};
+
+    use super::DerbeModel;
 
     #[derive(Serialize, Deserialize)]
     pub struct LeaveType {
@@ -11,30 +16,44 @@ pub mod leave_type {
         pub default_in_others_days: bool,
         pub show_in_approve_days: bool
     }
+
+    impl DerbeModel for LeaveType {}
 }
+
+
 
 pub mod division {
     use serde::{Deserialize, Serialize};
+
+    use super::DerbeModel;
 
     #[derive(Serialize, Deserialize)]
     pub struct Division {
         pub id: Option<i32>,
         pub name: String,
     }
+
+    impl DerbeModel for Division {}
 }
 
 pub mod location {
     use serde::{Deserialize, Serialize};
+
+    use super::DerbeModel;
 
     #[derive(Serialize, Deserialize)]
     pub struct Location {
         pub id: Option<i32>,
         pub name: String,
     }
+
+    impl DerbeModel for Location {}
 }
 
 pub mod employee {
     use serde::{Deserialize, Serialize};
+
+    use super::DerbeModel;
 
     #[derive(Serialize, Deserialize)]
     pub struct Employee {
@@ -49,12 +68,16 @@ pub mod employee {
         pub email: String,
         pub phone: String,
     }
+
+    impl DerbeModel for Employee {}
 }
 
 pub mod leave_request {
     use serde::{Deserialize, Serialize};
     use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
     use time::{format_description::well_known::Rfc3339, OffsetDateTime};
+
+    use super::DerbeModel;
 
     #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
     #[sqlx(type_name = "valid_leave_statuses")] 
@@ -88,7 +111,10 @@ pub mod leave_request {
         #[serde_as(as = "Rfc3339")]
         pub date_requested: OffsetDateTime,
         #[serde_as(as = "Option<Rfc3339>")]
+        #[serde(default)]
         pub date_finalised: Option<OffsetDateTime>,
         pub notes: Option<String> 
     }
+
+    impl DerbeModel for LeaveRequest {}
 }

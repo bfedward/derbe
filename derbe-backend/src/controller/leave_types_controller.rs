@@ -1,10 +1,6 @@
-use axum::{
-    extract::{Path, State},
-    routing::{delete, get, post},
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 
-use crate::{error::AppError, http::AppContext, model::leave_type::LeaveType, service::leave_types_service};
+use crate::{error::AppError, http::AppContext, model::leave_type::LeaveType, service::{leave_types_service::LeaveTypesService, DerbeService}};
 
 
 pub fn router() -> Router<AppContext> {
@@ -16,7 +12,7 @@ pub fn router() -> Router<AppContext> {
 }
 
 async fn get_leave_types(State(ctx): State<AppContext>) -> Result<Json<Vec<LeaveType>>, AppError> {
-    match leave_types_service::get_leave_types(&ctx).await {
+    match LeaveTypesService::get_entities(&ctx).await {
         Ok(leave_types) => Ok(Json(leave_types)),
         Err(e) => Err(e),
     }
