@@ -7,5 +7,6 @@ pub async fn get_leave_request(id: i32, ctx: &AppContext) -> Result<LeaveRequest
 }
 
 pub async fn create_leave_request(ctx: &AppContext, new_leave_request: LeaveRequest) -> Result<LeaveRequest, AppError> {
+    // TODO: check all the related entities!
     leave_request_respository::create_leave_request(ctx, new_leave_request).await
 }

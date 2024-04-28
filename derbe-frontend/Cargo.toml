@@ -16,3 +16,5 @@ thiserror = "1.0.58"
 reqwasm = "0.5.0"
 serde_json = "1.0.116"
 stylist = { version = "0.13.0", features = ["yew"] }
+time = "0.3.36"
+serde_with = { version = "3.8.0", features = ["time_0_3"] }
