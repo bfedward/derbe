@@ -1,10 +1,10 @@
 pub mod api_errors;
 
+use chrono::{DateTime, Utc};
 use reqwasm::http::Request;
-use time::OffsetDateTime;
 
 use self::api_errors::ApiError;
-use crate::model::{leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus}, leave_type::LeaveType};
+use crate::model::{leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus, OptionalDateTimeUtc}, leave_type::LeaveType};
 
 const BASE_URL: &str = include_str!("api_base_uri.txt");
 
@@ -25,8 +25,8 @@ pub async fn get_leave_types() -> Result<Vec<LeaveType>, ApiError> {
 
 pub async fn create_leave_request(
     leave_type: i32,
-    date_from: OffsetDateTime,
-    date_to: OffsetDateTime,
+    date_from: DateTime<Utc>,
+    date_to: DateTime<Utc>,
     half_day_opt: HalfDayOptions,
     notes: Option<String>
 ) -> Result<LeaveRequest, ApiError> {
@@ -42,11 +42,11 @@ pub async fn create_leave_request(
         employee_id: 3,
         leave_type_id: leave_type,
         leave_status: LeaveStatus::PENDING,
-        date_from,
-        date_to,
+        date_from: date_from.to_rfc3339(),
+        date_to: date_to.to_rfc3339(),
         first_day_half,
         last_day_half,
-        date_requested: OffsetDateTime::now_utc(),
+        date_requested: Utc::now().to_rfc3339(),
         date_finalised: None,
         notes
     };

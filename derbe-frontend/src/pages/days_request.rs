@@ -1,50 +1,106 @@
 use std::ops::Deref;
 
-use time::OffsetDateTime;
+use chrono::{DateTime, NaiveDate, Utc};
+use gloo::console::log;
+use web_sys::{HtmlInputElement, HtmlSelectElement};
+use wasm_bindgen::JsCast;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 use crate::{api::{self, api_errors::ApiError}, components::organisms::navbar::Navbar, model::{leave_request::HalfDayOptions, leave_type}, router::Route};
 
 #[function_component(DaysRequest)]
 pub fn component() -> Html {
-    let leave_type = use_state(|| 0);
-    let date_from = use_state(|| OffsetDateTime::now_utc());
-    let date_to = use_state(|| OffsetDateTime::now_utc());
+    let now = Utc::now();
+    let leave_type = use_state(|| 1);
+    let date_from = use_state(|| now);
+    let date_to = use_state(|| now);
     let half_day_opt = use_state(|| HalfDayOptions::FullDays);
     let notes = use_state(|| None::<String>);
 
     let leave_types_onchage = {
         let leave_type = leave_type.clone();
-        Callback::from(move |new_leave_type| {
-            leave_type.set(new_leave_type);
+        Callback::from(move |event: Event| {
+            let value = event
+                .target()
+                .unwrap()
+                .unchecked_into::<HtmlSelectElement>()
+                .value();
+            log!(&value);
+
+            let value = value.parse::<i32>().unwrap();
+
+            leave_type.set(value);
         })
     };
 
     let date_from_onchage = {
         let date_from = date_from.clone();
-        Callback::from(move |new_date_from| {
-            date_from.set(new_date_from);
+        Callback::from(move |event: Event| {
+            let value = event
+                .target()
+                .unwrap()
+                .unchecked_into::<HtmlInputElement>()
+                .value();
+            log!(&value);
+
+            let parsed_date = NaiveDate::parse_from_str(&value, "%Y-%m-%d").unwrap();
+            let datetime = DateTime::<Utc>::from_utc(parsed_date.and_hms(0, 0, 0), Utc);
+
+            date_from.set(datetime);
         })
     };
 
     let date_to_onchage = {
         let date_to = date_to.clone();
-        Callback::from(move |new_date_to| {
-            date_to.set(new_date_to);
+        Callback::from(move |event: Event| {
+            let value = event
+                .target()
+                .unwrap()
+                .unchecked_into::<HtmlInputElement>()
+                .value();
+            log!(&value);
+            let parsed_date = NaiveDate::parse_from_str(&value, "%Y-%m-%d").unwrap();
+            let datetime = DateTime::<Utc>::from_utc(parsed_date.and_hms(0, 0, 0), Utc);
+
+            date_to.set(datetime);
         })
     };
 
     let half_day_opt_onchage = {
         let half_day_opt = half_day_opt.clone();
-        Callback::from(move |new_half_day_opt| {
-            half_day_opt.set(new_half_day_opt);
+        Callback::from(move |event: Event| {
+            let target = event
+            .target()
+            .unwrap()
+            .unchecked_into::<HtmlInputElement>();
+            target.set_checked(true);
+
+            let value = match event
+                .target()
+                .unwrap()
+                .unchecked_into::<HtmlInputElement>()
+                .id()
+                .as_str() {
+                    "firstDayHalf" => HalfDayOptions::FirstDayHalf,
+                    "lastDayHalf" => HalfDayOptions::LastDayHalf,
+                    "firstAndLastHalfs" => HalfDayOptions::BothHalfDays,
+                    _ => HalfDayOptions::FullDays
+                };
+
+            half_day_opt.set(value);
         })
     };
 
     let notes_onchange = {
         let notes = notes.clone();
-        Callback::from(move |new_notes| {
-            notes.set(Some(new_notes));
+        Callback::from(move |event: Event| {
+            let value = event
+                .target()
+                .unwrap()
+                .unchecked_into::<HtmlInputElement>()
+                .value();
+
+            notes.set(Some(value));
         })
     };
 
@@ -52,7 +108,7 @@ pub fn component() -> Html {
         let leave_type = leave_type;
         let date_from = date_from;
         let date_to = date_to;
-        let half_day_opt = half_day_opt;
+        let half_day_opt = half_day_opt.clone();
         let notes = notes;
         let history = use_navigator().unwrap();
         
@@ -82,39 +138,51 @@ pub fn component() -> Html {
         })
     };
 
+    let cancel_onclick = {
+        let history = use_navigator().unwrap();
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+            history.push(&Route::MyLeave);
+        })
+    };
+
+    let half_day_opt = half_day_opt.deref().clone();
 
     html! {
         <main class="container">
             <Navbar />
             <section id="form">
-                <form>
+                <form {onsubmit}>
                     <h1>{ "Days Off Request" }</h1>
                     <label for="leaveTypeSelect">{ " Leave Type "}</label>
-                    <select id="leaveTypeSelect" name="leaveTypeSelect" required=true >
+                    <select id="leaveTypeSelect" name="leaveTypeSelect" required=true onchange={leave_types_onchage}>
                         <option value={ 1 } selected=true >{"Annual Leave"}</option>
+                        <option value={ 2 } selected=false >{"Maternity Leave"}</option>
                     </select>
                     
                     <label for="dateFrom">{ "Date From "}</label>
-                    <input type="date" name="dateFrom" />
+                    <input type="date" name="dateFrom" onchange={ date_from_onchage }/>
 
                     <label for="dateTo">{ "Date To "}</label>
-                    <input type="date" name="dateTo" />
+                    <input type="date" name="dateTo" onchange={ date_to_onchage }/>
+
+                    
 
                     <fieldset>
                         <label>
-                            <input type="radio" name="halfDayOps" id="allDaysFull" checked=true />
+                            <input type="radio" name="halfDayOps" id="allDaysFull" checked={ half_day_opt == HalfDayOptions::FullDays } onchange={ half_day_opt_onchage.clone() }/>
                             { "All days are full" }
                         </label>
                         <label>
-                            <input type="radio" name="halfDayOps" id="firstDayHalf" />
+                            <input type="radio" name="halfDayOps" id="firstDayHalf" checked={ half_day_opt == HalfDayOptions::FirstDayHalf } onchange={ half_day_opt_onchage.clone() }/>
                             { "First day is a half day" }
                         </label>
                         <label>
-                            <input type="radio" name="halfDayOps" id="lastDayHalf" />
+                            <input type="radio" name="halfDayOps" id="lastDayHalf" checked={ half_day_opt == HalfDayOptions::LastDayHalf } onchange={ half_day_opt_onchage.clone() }/>
                             { "Last day is a half day" }
                         </label>
                         <label>
-                            <input type="radio" name="halfDayOps" id="firstAndLastHalfs" />
+                            <input type="radio" name="halfDayOps" id="firstAndLastHalfs" checked={ half_day_opt == HalfDayOptions::BothHalfDays } onchange={ half_day_opt_onchage.clone() }/>
                             { "First and last days are half days" }
                         </label>
                     </fieldset>
@@ -122,8 +190,11 @@ pub fn component() -> Html {
                     <textarea
                         name="daysRequestNotes"
                         placeholder="Notes..."
+                        onchange={ notes_onchange }
                     >
                     </textarea>
+                    <button onclick={ cancel_onclick }>{ "Cancel"}</button>
+                    <button>{ "Submit"}</button>
                 </form>
             </section>
         </main>

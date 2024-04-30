@@ -1,4 +1,4 @@
-use axum::{http::Method, routing::get, Router};
+use axum::{http::{HeaderName, Method}, routing::get, Router};
 use sqlx::PgPool;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -33,9 +33,13 @@ fn app_router(context: AppContext) -> Router {
 }
 
 fn get_cors_layer() -> CorsLayer {
+    let content_type_header = HeaderName::from_static("content-type");
+
     CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_origin(Any)
+        // Allow the "Content-Type" header
+        .allow_headers([content_type_header])
 }
 
 async fn health() -> &'static str {
