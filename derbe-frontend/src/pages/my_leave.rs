@@ -18,6 +18,7 @@ pub fn component() -> Html {
     html! {
         <main class="container">
             <Navbar />
+            <h1>{ "My Leave" }</h1>
             <button onclick={ request_onclick }>{ "Request Days Off "}</button>
         </main>
     }

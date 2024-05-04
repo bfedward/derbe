@@ -2,6 +2,7 @@ use crate::{error::AppError, http::AppContext, model::DerbeModel, repository::De
 
 pub mod leave_types_service;
 pub mod leave_request_service;
+pub mod employee_service;
 
 pub trait DerbeService<M: DerbeModel, R: DerbeRepository<M>> {
 

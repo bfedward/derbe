@@ -13,6 +13,24 @@ pub mod leave_type {
     }
 }
 
+pub mod employee {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Employee {
+        pub id: Option<i32>,
+        pub first_name: String,
+        pub last_name: String,
+        pub job_title: String,
+        pub division_id: i32,
+        pub employment_type: String,
+        pub location_id: i32,
+        pub manager_id: Option<i32>,
+        pub email: String,
+        pub phone: String,
+    }
+}
+
 pub mod leave_request {
     use chrono::{DateTime, Utc};
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -107,4 +125,3 @@ pub mod leave_request {
         Ok(OptionalDateTimeUtc(Some(datetime)))
     }
 }
-

@@ -26,7 +26,20 @@ impl DerbeRepository<Employee> for EmployeeRepository {
     }
 
     async fn get_entities(ctx: &AppContext) -> Result<Vec<Employee>, AppError> {
-        todo!()
+        match sqlx::query_as!(
+            Employee,
+            r#"
+            SELECT id, first_name, last_name, job_title, division_id, employment_type, 
+                location_id, manager_id, email, phone
+            FROM employees
+            "#
+        )
+        .fetch_all(&ctx.db)
+        .await
+        {
+            Ok(employees) => Ok(employees),
+            Err(e) => Err(AppError::DatabaseQueryError(e)),
+        }
     }
 
     async fn create_entity(new_entity: Employee, ctx: &AppContext) -> Result<Employee, AppError> {

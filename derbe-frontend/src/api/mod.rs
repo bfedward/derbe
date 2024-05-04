@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use reqwasm::http::Request;
 
 use self::api_errors::ApiError;
-use crate::model::{leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus, OptionalDateTimeUtc}, leave_type::LeaveType};
+use crate::model::{employee::{self, Employee}, leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus, OptionalDateTimeUtc}, leave_type::LeaveType};
 
 const BASE_URL: &str = include_str!("api_base_uri.txt");
 
@@ -23,7 +23,21 @@ pub async fn get_leave_types() -> Result<Vec<LeaveType>, ApiError> {
 
 }
 
+pub async fn get_employees() -> Result<Vec<Employee>, ApiError> {
+    let req = Request::get(&format!("{}/employees", BASE_URL))
+        .send()
+        .await
+        .unwrap();
+
+    if req.ok() {
+        Ok(req.json::<Vec<Employee>>().await.unwrap())
+    } else {
+        Err(handle_errors(req.status()))
+    }
+}
+
 pub async fn create_leave_request(
+    employee: i32,
     leave_type: i32,
     date_from: DateTime<Utc>,
     date_to: DateTime<Utc>,
@@ -39,7 +53,7 @@ pub async fn create_leave_request(
 
     let new_leave_request = LeaveRequest {
         id: None,
-        employee_id: 3,
+        employee_id: employee,
         leave_type_id: leave_type,
         leave_status: LeaveStatus::PENDING,
         date_from: date_from.to_rfc3339(),
