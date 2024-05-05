@@ -16,7 +16,7 @@ pub mod leave_type {
 pub mod employee {
     use serde::{Deserialize, Serialize};
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct Employee {
         pub id: Option<i32>,
         pub first_name: String,
