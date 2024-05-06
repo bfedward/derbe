@@ -293,6 +293,7 @@ pub fn component() -> Html {
     };
 
     let calculated_leave_duration = calculate_requested_days(date_from.deref(), date_to.deref(), &half_day_opt);
+    let duration_gt_one = calculated_leave_duration > 1.0;
 
     html! {
         <main class="container">
@@ -336,11 +337,11 @@ pub fn component() -> Html {
                                     { "First day is a half day" }
                                 </label>
                                 <label>
-                                    <input type="radio" name="halfDayOps" id="lastDayHalf" checked={ half_day_opt == HalfDayOptions::LastDayHalf } onchange={ half_day_opt_onchage.clone() }/>
+                                    <input type="radio" name="halfDayOps" id="lastDayHalf" checked={ half_day_opt == HalfDayOptions::LastDayHalf } disabled={ !duration_gt_one } onchange={ half_day_opt_onchage.clone() }/>
                                     { "Last day is a half day" }
                                 </label>
                                 <label>
-                                    <input type="radio" name="halfDayOps" id="firstAndLastHalfs" checked={ half_day_opt == HalfDayOptions::BothHalfDays } onchange={ half_day_opt_onchage.clone() }/>
+                                    <input type="radio" name="halfDayOps" id="firstAndLastHalfs" checked={ half_day_opt == HalfDayOptions::BothHalfDays } disabled={ !duration_gt_one } onchange={ half_day_opt_onchage.clone() }/>
                                     { "First and last days are half days" }
                                 </label>
                             </fieldset>
