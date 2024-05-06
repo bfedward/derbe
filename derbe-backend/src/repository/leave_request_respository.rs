@@ -1,4 +1,4 @@
-use crate::{error::AppError, http::AppContext, model::leave_request::{LeaveRequest, LeaveStatus}};
+use crate::{dto::request::leave_request::MyLeaveRequest, error::AppError, http::AppContext, model::leave_request::{LeaveRequest, LeaveStatus}};
 use crate::model;
 
 use super::DerbeRepository;
@@ -92,4 +92,44 @@ impl DerbeRepository<LeaveRequest> for LeaveRequestRepository {
     async fn delete_entity(id: i32, ctx: &AppContext) -> Result<(), AppError> {
         todo!()
     }
+}
+
+impl LeaveRequestRepository {
+
+    pub async fn get_my_leave(my_leave_request: MyLeaveRequest, ctx: &AppContext) -> Result<Vec<LeaveRequest>, AppError> {
+        match sqlx::query_as!(
+            LeaveRequest,
+             r#"
+             SELECT id, 
+                     employee_id, 
+                     leave_type_id, 
+                     leave_status AS "leave_status!: model::leave_request::LeaveStatus", 
+                     date_from,
+                     date_to,
+                     first_day_half, 
+                     last_day_half, 
+                     date_requested,
+                     date_finalised,
+                     notes
+             FROM leave_requests
+             WHERE employee_id = $1
+             AND leave_type_id = ANY($2)
+             AND leave_status = ANY($3)
+             AND date_from BETWEEN $4 AND $5 
+             AND date_to BETWEEN $4 AND $5
+             "#,
+             my_leave_request.employee_id,
+             &my_leave_request.leave_type_ids,
+             my_leave_request.leave_statuses as Vec<LeaveStatus>,
+             my_leave_request.date_from,
+             my_leave_request.date_to
+         )
+         .fetch_all(&ctx.db)
+        .await
+        {
+            Ok(leave_requests) => Ok(leave_requests),
+            Err(e) => Err(AppError::DatabaseQueryError(e)),
+        }
+    }
+
 }

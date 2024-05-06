@@ -83,11 +83,12 @@ pub mod leave_request {
     #[sqlx(type_name = "valid_leave_statuses")] 
     pub enum LeaveStatus {
         PENDING,
-        MOREINFOREQ,
+        MORE_INFO_REQ,
         CANCELLED,
         REJECTED,
         ACCEPTED,
     }
+
 
     impl PgHasArrayType for LeaveStatus {
         fn array_type_info() -> PgTypeInfo {

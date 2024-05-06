@@ -2,6 +2,7 @@ use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
 
 mod controller;
+mod dto;
 mod error;
 mod http;
 mod model;
