@@ -21,7 +21,10 @@ impl IntoResponse for AppError {
                 StatusCode::CONFLICT,
                 format!("Cannot delete {} due to related {}!", name, relation),
             ),
-            _ => (StatusCode::INTERNAL_SERVER_ERROR, format!("Unknown server error!"))
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Unknown server error!"),
+            ),
         };
 
         (status, message).into_response()

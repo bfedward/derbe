@@ -1,4 +1,8 @@
-use axum::{http::{HeaderName, Method}, routing::get, Router};
+use axum::{
+    http::{HeaderName, Method},
+    routing::get,
+    Router,
+};
 use sqlx::PgPool;
 use tower_http::cors::{Any, CorsLayer};
 

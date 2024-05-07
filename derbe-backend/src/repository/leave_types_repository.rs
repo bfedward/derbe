@@ -5,7 +5,6 @@ use super::DerbeRepository;
 pub struct LeaveTypesRepository {}
 
 impl DerbeRepository<LeaveType> for LeaveTypesRepository {
-
     async fn get_entity_by_id(id: i32, ctx: &AppContext) -> Result<LeaveType, AppError> {
         match sqlx::query_as!(
             LeaveType,
@@ -47,7 +46,10 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
         todo!()
     }
 
-    async fn update_entity(entity_update: LeaveType, ctx: &AppContext) -> Result<LeaveType, AppError> {
+    async fn update_entity(
+        entity_update: LeaveType,
+        ctx: &AppContext,
+    ) -> Result<LeaveType, AppError> {
         todo!()
     }
 

@@ -46,7 +46,10 @@ impl DerbeRepository<Employee> for EmployeeRepository {
         todo!()
     }
 
-    async fn update_entity(entity_update: Employee, ctx: &AppContext) -> Result<Employee, AppError> {
+    async fn update_entity(
+        entity_update: Employee,
+        ctx: &AppContext,
+    ) -> Result<Employee, AppError> {
         todo!()
     }
 

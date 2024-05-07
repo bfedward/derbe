@@ -1,6 +1,5 @@
 pub trait DerbeModel {}
 
-
 pub mod leave_type {
     use serde::{Deserialize, Serialize};
 
@@ -14,13 +13,11 @@ pub mod leave_type {
         pub can_book_in_future: bool,
         pub show_in_others_days: bool,
         pub default_in_others_days: bool,
-        pub show_in_approve_days: bool
+        pub show_in_approve_days: bool,
     }
 
     impl DerbeModel for LeaveType {}
 }
-
-
 
 pub mod division {
     use serde::{Deserialize, Serialize};
@@ -80,7 +77,7 @@ pub mod leave_request {
     use super::DerbeModel;
 
     #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
-    #[sqlx(type_name = "valid_leave_statuses")] 
+    #[sqlx(type_name = "valid_leave_statuses")]
     pub enum LeaveStatus {
         PENDING,
         MORE_INFO_REQ,
@@ -88,7 +85,6 @@ pub mod leave_request {
         REJECTED,
         ACCEPTED,
     }
-
 
     impl PgHasArrayType for LeaveStatus {
         fn array_type_info() -> PgTypeInfo {
@@ -114,7 +110,7 @@ pub mod leave_request {
         #[serde_as(as = "Option<Rfc3339>")]
         #[serde(default)]
         pub date_finalised: Option<OffsetDateTime>,
-        pub notes: Option<String> 
+        pub notes: Option<String>,
     }
 
     impl DerbeModel for LeaveRequest {}
