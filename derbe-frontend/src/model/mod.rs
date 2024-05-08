@@ -14,6 +14,31 @@ pub mod leave_type {
     }
 }
 
+pub mod my_leave {
+    use serde::{Deserialize, Serialize};
+
+    use super::leave_request::LeaveStatus;
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct MyLeaveRequest {
+        pub employee_id: i32,
+        pub leave_type_ids: Vec<i32>,
+        pub leave_statuses: Vec<LeaveStatus>,
+        pub date_from: String,
+        pub date_to: String,
+    }
+
+    #[derive(Clone, Default, Serialize, Deserialize, PartialEq, Debug)]
+    pub struct MyLeaveResponse {
+        pub leave_request_id: i32,
+        pub leave_type: String,
+        pub leave_status: LeaveStatus,
+        pub date_from: String,
+        pub date_to: String,
+        pub total_duration: f64,
+    }
+}
+
 pub mod employee {
     use serde::{Deserialize, Serialize};
 
@@ -33,17 +58,37 @@ pub mod employee {
 }
 
 pub mod leave_request {
+
     use chrono::{DateTime, Utc};
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
     pub enum LeaveStatus {
         PENDING,
-        MOREINFOREQ,
+        MORE_INFO_REQ,
         CANCELLED,
         REJECTED,
         ACCEPTED,
     }
+
+    impl Default for LeaveStatus {
+        fn default() -> Self {
+            LeaveStatus::PENDING
+        }
+    }
+
+    impl ToString for LeaveStatus {
+        fn to_string(&self) -> String {
+            match self {
+                LeaveStatus::PENDING => String::from("PENDING"),
+                LeaveStatus::MORE_INFO_REQ => String::from("MORE_INFO_REQ"),
+                LeaveStatus::CANCELLED => String::from("CANCELLED"),
+                LeaveStatus::REJECTED => String::from("REJECTED"),
+                LeaveStatus::ACCEPTED => String::from("ACCEPTED"),
+            }
+        }
+    }
+    
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     pub enum HalfDayOptions {
