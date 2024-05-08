@@ -4,8 +4,8 @@ use gloo::console::log;
 use wasm_bindgen_futures::wasm_bindgen::JsValue;
 use yew::prelude::*;
 
-use crate::{api::get_leave_types, model::leave_type::LeaveType};
 use crate::components::organisms::navbar::Navbar;
+use crate::{api::get_leave_types, model::leave_type::LeaveType};
 
 #[function_component(LeaveTypes)]
 pub fn component() -> Html {
@@ -14,7 +14,7 @@ pub fn component() -> Html {
 
     let is_loaded_clone = is_loaded.clone();
     let leave_types_clone = leave_types.clone();
-    
+
     use_effect(move || {
         let leave_types_clone = leave_types_clone.clone();
         if !*is_loaded_clone {

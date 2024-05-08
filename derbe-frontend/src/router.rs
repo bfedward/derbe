@@ -1,7 +1,9 @@
-use yew_router::prelude::*;
 use yew::prelude::*;
+use yew_router::prelude::*;
 
-use crate::pages::{leave_types::LeaveTypes, home::Home, my_leave::MyLeave, days_request::DaysRequest};
+use crate::pages::{
+    days_request::DaysRequest, home::Home, leave_types::LeaveTypes, my_leave::MyLeave,
+};
 
 #[derive(Routable, PartialEq, Clone)]
 pub enum Route {
@@ -12,7 +14,7 @@ pub enum Route {
     #[at("/my-leave")]
     MyLeave,
     #[at("/days-request")]
-    DaysRequest
+    DaysRequest,
 }
 
 pub fn switch(route: Route) -> Html {
@@ -20,6 +22,6 @@ pub fn switch(route: Route) -> Html {
         Route::Home => html! { <Home /> },
         Route::LeaveTypes => html! { <LeaveTypes />},
         Route::MyLeave => html! { <MyLeave />},
-        Route::DaysRequest => html! { <DaysRequest />}
+        Route::DaysRequest => html! { <DaysRequest />},
     }
 }

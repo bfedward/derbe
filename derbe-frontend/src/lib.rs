@@ -3,13 +3,12 @@ use yew_router::prelude::*;
 
 use crate::router::{switch, Route};
 
-
-mod store;
 mod api;
+mod components;
 mod model;
 mod pages;
 mod router;
-mod components;
+mod store;
 
 #[function_component]
 pub fn App() -> Html {

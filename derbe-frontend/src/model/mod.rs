@@ -10,7 +10,7 @@ pub mod leave_type {
         pub show_in_others_days: bool,
         pub default_in_others_days: bool,
         pub default_in_leave_request: bool,
-        pub show_in_approve_days: bool
+        pub show_in_approve_days: bool,
     }
 }
 
@@ -88,7 +88,6 @@ pub mod leave_request {
             }
         }
     }
-    
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     pub enum HalfDayOptions {

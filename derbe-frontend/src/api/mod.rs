@@ -4,10 +4,14 @@ use chrono::{DateTime, Utc};
 use reqwasm::http::Request;
 
 use self::api_errors::ApiError;
-use crate::model::{employee::Employee, leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus}, leave_type::LeaveType, my_leave::{MyLeaveRequest, MyLeaveResponse}};
+use crate::model::{
+    employee::Employee,
+    leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus},
+    leave_type::LeaveType,
+    my_leave::{MyLeaveRequest, MyLeaveResponse},
+};
 
 const BASE_URL: &str = include_str!("api_base_uri.txt");
-
 
 pub async fn get_leave_types() -> Result<Vec<LeaveType>, ApiError> {
     let req = Request::get(&format!("{}/leaveTypes", BASE_URL))
@@ -25,12 +29,11 @@ pub async fn get_leave_types() -> Result<Vec<LeaveType>, ApiError> {
 pub async fn get_my_leave() -> Result<Vec<MyLeaveResponse>, ApiError> {
     let my_leave_request = MyLeaveRequest {
         employee_id: 3,
-        leave_type_ids: vec!(1, 5),
-        leave_statuses: vec!(LeaveStatus::PENDING),
+        leave_type_ids: vec![1, 5],
+        leave_statuses: vec![LeaveStatus::PENDING],
         date_from: "2024-01-08T00:00:00Z".to_owned(),
         date_to: "2024-12-08T00:00:00Z".to_owned(),
     };
-
 
     let req = Request::post(&format!("{}/myLeave", BASE_URL))
         .header("content-type", "application/json")
@@ -66,13 +69,13 @@ pub async fn create_leave_request(
     date_to: DateTime<Utc>,
     half_day_opt: HalfDayOptions,
     total_duration: f64,
-    notes: Option<String>
+    notes: Option<String>,
 ) -> Result<LeaveRequest, ApiError> {
     let (first_day_half, last_day_half) = match half_day_opt {
         HalfDayOptions::FullDays => (false, false),
         HalfDayOptions::FirstDayHalf => (true, false),
         HalfDayOptions::LastDayHalf => (false, true),
-        HalfDayOptions::BothHalfDays => (true, true)
+        HalfDayOptions::BothHalfDays => (true, true),
     };
 
     let new_leave_request = LeaveRequest {
@@ -87,7 +90,7 @@ pub async fn create_leave_request(
         total_duration,
         date_requested: Utc::now().to_rfc3339(),
         date_finalised: None,
-        notes
+        notes,
     };
 
     let request = Request::post(&format!("{}/leaveRequests", BASE_URL))

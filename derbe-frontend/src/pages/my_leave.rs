@@ -1,10 +1,10 @@
 use std::ops::Deref;
 
+use crate::{api::get_my_leave, components::organisms::navbar::Navbar, router::Route};
 use gloo::console::log;
 use wasm_bindgen::JsValue;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
-use crate::{api::get_my_leave, components::organisms::navbar::Navbar, router::Route};
 
 #[function_component(MyLeave)]
 pub fn component() -> Html {
@@ -12,7 +12,7 @@ pub fn component() -> Html {
     let my_leaves = use_state(Vec::new);
 
     let is_loaded_clone = is_loaded.clone();
-    let my_leaves_clone = my_leaves.clone(); 
+    let my_leaves_clone = my_leaves.clone();
 
     use_effect(move || {
         let my_leaves_clone = my_leaves_clone.clone();
@@ -38,7 +38,6 @@ pub fn component() -> Html {
         || {}
     });
 
-
     let request_onclick = {
         let navigator = use_navigator().unwrap();
         Callback::from(move |_: MouseEvent| {
@@ -48,7 +47,6 @@ pub fn component() -> Html {
             })
         })
     };
-
 
     html! {
         <main class="container">
@@ -76,23 +74,26 @@ pub fn component() -> Html {
 }
 
 fn my_leave_html(my_leaves: &Vec<crate::model::my_leave::MyLeaveResponse>) -> Vec<Html> {
-    my_leaves.iter().map(|my_leave| {
-        html! {
-            <tr>
-                <th scope="col">{ &my_leave.leave_type }</th>
-                <td>
-                    { &my_leave.leave_status.to_string() }
-                </td>
-                <td>
-                    { &my_leave.date_from }
-                </td>
-                <td>
-                    { &my_leave.date_to }
-                </td>
-                <td>
-                    { &my_leave.total_duration }
-                </td>
-            </tr>
-        }
-    }).collect()
+    my_leaves
+        .iter()
+        .map(|my_leave| {
+            html! {
+                <tr>
+                    <th scope="col">{ &my_leave.leave_type }</th>
+                    <td>
+                        { &my_leave.leave_status.to_string() }
+                    </td>
+                    <td>
+                        { &my_leave.date_from }
+                    </td>
+                    <td>
+                        { &my_leave.date_to }
+                    </td>
+                    <td>
+                        { &my_leave.total_duration }
+                    </td>
+                </tr>
+            }
+        })
+        .collect()
 }

@@ -1,12 +1,21 @@
 use std::ops::Deref;
 
+use crate::{
+    api::{self, api_errors::ApiError, get_employees, get_leave_types},
+    components::organisms::navbar::Navbar,
+    model::{
+        employee::{self, Employee},
+        leave_request::HalfDayOptions,
+        leave_type::LeaveType,
+    },
+    router::Route,
+};
 use chrono::{DateTime, Datelike, Duration, Months, NaiveDate, NaiveTime, Utc, Weekday};
 use gloo::console::log;
-use web_sys::{HtmlInputElement, HtmlSelectElement};
 use wasm_bindgen::{JsCast, JsValue};
+use web_sys::{HtmlInputElement, HtmlSelectElement};
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
-use crate::{api::{self, api_errors::ApiError, get_employees, get_leave_types}, components::organisms::navbar::Navbar, model::{employee::{self, Employee}, leave_request::HalfDayOptions, leave_type::LeaveType}, router::Route};
 
 #[function_component(DaysRequest)]
 pub fn component() -> Html {
@@ -40,9 +49,11 @@ pub fn component() -> Html {
                     Ok(res) => {
                         let leave_types_clone = leave_types_clone.clone();
                         log!(JsValue::from("Got leave types!"));
-            
-                        if let Some(selected_leave_type) = res.iter()
-                                    .find(|&leave_type| leave_type.default_in_others_days == true) {
+
+                        if let Some(selected_leave_type) = res
+                            .iter()
+                            .find(|&leave_type| leave_type.default_in_others_days == true)
+                        {
                             selected_leave_type_clone.set(Some(selected_leave_type.clone()));
                         } else {
                             log!("No default leave!!");
@@ -59,15 +70,15 @@ pub fn component() -> Html {
                 match get_employees().await {
                     Ok(mut res) => {
                         log!(JsValue::from("Got employees!"));
-                        
+
                         res.sort_by_key(|employee| employee.last_name.clone());
-                        
+
                         if let Some(first) = res.first().cloned() {
                             selected_employee_clone.set(Some(first));
                         } else {
                             selected_employee_clone.set(None);
                         }
-                
+
                         employees_clone.set(res);
                         is_employees_loaded_clone.set(true);
                     }
@@ -75,12 +86,10 @@ pub fn component() -> Html {
                         log!(JsValue::from(error.to_string()));
                     }
                 }
-                
             });
         }
         || {}
     });
-    
 
     let now = Utc::now().with_time(NaiveTime::MIN).unwrap();
 
@@ -93,17 +102,22 @@ pub fn component() -> Html {
     let employees_clone = employees.clone();
     let employee_onchange = {
         Callback::from(move |event: Event| {
-            if let Some(select_element) = event.target().and_then(|t| t.dyn_into::<HtmlSelectElement>().ok()) {
+            if let Some(select_element) = event
+                .target()
+                .and_then(|t| t.dyn_into::<HtmlSelectElement>().ok())
+            {
                 let value = select_element.value();
                 log!(&value);
 
                 if let Ok(value) = value.parse::<i32>() {
-                    if let Some(selected_employee) = employees_clone.iter()
-                        .find(|&employee| employee.id == Some (value)) {
-                            selected_employee_clone.set(Some(selected_employee.clone()));
-                        } else {
-                            selected_employee_clone.set(None);
-                        }
+                    if let Some(selected_employee) = employees_clone
+                        .iter()
+                        .find(|&employee| employee.id == Some(value))
+                    {
+                        selected_employee_clone.set(Some(selected_employee.clone()));
+                    } else {
+                        selected_employee_clone.set(None);
+                    }
                 } else {
                     log!("Error parsing value as i32");
                 }
@@ -112,18 +126,23 @@ pub fn component() -> Html {
             }
         })
     };
-    
+
     let selected_leave_type_clone = selected_leave_type.clone();
     let leave_types_clone = leave_types.clone();
     let leave_types_onchange = {
         Callback::from(move |event: Event| {
-            if let Some(select_element) = event.target().and_then(|t| t.dyn_into::<HtmlSelectElement>().ok()) {
+            if let Some(select_element) = event
+                .target()
+                .and_then(|t| t.dyn_into::<HtmlSelectElement>().ok())
+            {
                 let value = select_element.value();
                 log!(&value);
 
                 if let Ok(value) = value.parse::<i32>() {
-                    if let Some(selected_leave_type) = leave_types_clone.iter()
-                                    .find(|&leave_type| leave_type.id == Some(value)) {
+                    if let Some(selected_leave_type) = leave_types_clone
+                        .iter()
+                        .find(|&leave_type| leave_type.id == Some(value))
+                    {
                         selected_leave_type_clone.set(Some(selected_leave_type.clone()));
                     } else {
                         selected_leave_type_clone.set(None);
@@ -142,7 +161,10 @@ pub fn component() -> Html {
     let is_form_valid_clone = is_form_valid.clone();
     let date_from_onchage = {
         Callback::from(move |event: Event| {
-            if let Some(input_element) = event.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok()) {
+            if let Some(input_element) = event
+                .target()
+                .and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
+            {
                 let value = input_element.value();
                 log!(&value);
 
@@ -157,8 +179,8 @@ pub fn component() -> Html {
                         } else {
                             is_form_valid_clone.set(true);
                         }
-                    }    
-                } 
+                    }
+                }
             }
         })
     };
@@ -168,7 +190,10 @@ pub fn component() -> Html {
     let is_form_valid_clone = is_form_valid.clone();
     let date_to_onchage = {
         Callback::from(move |event: Event| {
-            if let Some(input_element) = event.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok()) {
+            if let Some(input_element) = event
+                .target()
+                .and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
+            {
                 let value = input_element.value();
                 log!(&value);
 
@@ -183,8 +208,8 @@ pub fn component() -> Html {
                         } else {
                             is_form_valid_clone.set(true);
                         }
-                    }    
-                } 
+                    }
+                }
             }
         })
     };
@@ -192,10 +217,7 @@ pub fn component() -> Html {
     let half_day_opt_onchage = {
         let half_day_opt = half_day_opt.clone();
         Callback::from(move |event: Event| {
-            let target = event
-            .target()
-            .unwrap()
-            .unchecked_into::<HtmlInputElement>();
+            let target = event.target().unwrap().unchecked_into::<HtmlInputElement>();
             target.set_checked(true);
 
             let value = match event
@@ -203,12 +225,13 @@ pub fn component() -> Html {
                 .unwrap()
                 .unchecked_into::<HtmlInputElement>()
                 .id()
-                .as_str() {
-                    "firstDayHalf" => HalfDayOptions::FirstDayHalf,
-                    "lastDayHalf" => HalfDayOptions::LastDayHalf,
-                    "firstAndLastHalfs" => HalfDayOptions::BothHalfDays,
-                    _ => HalfDayOptions::FullDays
-                };
+                .as_str()
+            {
+                "firstDayHalf" => HalfDayOptions::FirstDayHalf,
+                "lastDayHalf" => HalfDayOptions::LastDayHalf,
+                "firstAndLastHalfs" => HalfDayOptions::BothHalfDays,
+                _ => HalfDayOptions::FullDays,
+            };
 
             half_day_opt.set(value);
         })
@@ -235,7 +258,7 @@ pub fn component() -> Html {
         let half_day_opt = half_day_opt.clone();
         let notes = notes;
         let history = use_navigator().unwrap();
-        
+
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             let employee = selected_employee_clone.deref().clone();
@@ -243,17 +266,22 @@ pub fn component() -> Html {
             let date_from_clone = *date_from_clone.deref();
             let date_to = *date_to_clone.deref();
             let half_day_opt = half_day_opt.deref().clone();
-            let total_duration = calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
+            let total_duration =
+                calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
             let notes = notes.deref().clone();
             let history = history.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                match api::create_leave_request(employee.unwrap().id.unwrap(), 
-                                                leave_type.unwrap().id.unwrap(), 
-                                                date_from_clone, 
-                                                date_to, 
-                                                half_day_opt,
-                                                total_duration,
-                                                notes).await {
+                match api::create_leave_request(
+                    employee.unwrap().id.unwrap(),
+                    leave_type.unwrap().id.unwrap(),
+                    date_from_clone,
+                    date_to,
+                    half_day_opt,
+                    total_duration,
+                    notes,
+                )
+                .await
+                {
                     Ok(_) => {
                         history.push(&Route::MyLeave);
                     }
@@ -266,7 +294,6 @@ pub fn component() -> Html {
                     }
                 }
             })
-
         })
     };
 
@@ -294,7 +321,8 @@ pub fn component() -> Html {
         None
     };
 
-    let calculated_leave_duration = calculate_requested_days(date_from.deref(), date_to.deref(), &half_day_opt);
+    let calculated_leave_duration =
+        calculate_requested_days(date_from.deref(), date_to.deref(), &half_day_opt);
     let duration_gt_one = calculated_leave_duration > 1.0;
 
     html! {
@@ -316,7 +344,7 @@ pub fn component() -> Html {
                             <select id="leaveTypeSelect" name="leaveTypeSelect" required=true onchange={leave_types_onchange}>
                                 { for leave_type_options_html(&leave_types.deref())}
                             </select>
-                        
+
                             <p class="grid">
                                 <div>
                                     <label for="dateFrom">{ "Date From "}</label>
@@ -327,7 +355,7 @@ pub fn component() -> Html {
                                     <input id="dateTo" type="date" name="dateTo" value={ utc_to_yyyy_mm_dd(&date_to_clone) } min={ utc_to_yyyy_mm_dd(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_to_onchage }/>
                                 </div>
                             </p>
-                            
+
 
                             <fieldset>
                                 <label>
@@ -384,14 +412,18 @@ pub fn component() -> Html {
 }
 
 fn employee_select_options_html(employees: &Vec<Employee>) -> Vec<Html> {
-    employees.iter().enumerate().map(|(index, employee)| {
-        let selected = if index == 0 { true } else { false };
-        html! {
-            <option value={ employee.id.unwrap().to_string() } selected={ selected }>
-                { format!("{} {}", &employee.first_name, &employee.last_name) }
-            </option>
-        }
-    }).collect()
+    employees
+        .iter()
+        .enumerate()
+        .map(|(index, employee)| {
+            let selected = if index == 0 { true } else { false };
+            html! {
+                <option value={ employee.id.unwrap().to_string() } selected={ selected }>
+                    { format!("{} {}", &employee.first_name, &employee.last_name) }
+                </option>
+            }
+        })
+        .collect()
 }
 
 fn leave_type_options_html(leave_types: &Vec<LeaveType>) -> Vec<Html> {
@@ -403,24 +435,18 @@ fn leave_type_options_html(leave_types: &Vec<LeaveType>) -> Vec<Html> {
 }
 
 fn utc_to_yyyy_mm_dd(utc: &DateTime<Utc>) -> String {
-    format!(
-        "{:04}-{:02}-{:02}",
-        utc.year(),
-        utc.month(),
-        utc.day()
-    )
+    format!("{:04}-{:02}-{:02}", utc.year(), utc.month(), utc.day())
 }
 
 fn utc_to_yyyy_mm_dd_next_year_end(utc: &DateTime<Utc>) -> String {
-    format!(
-        "{:04}-{:02}-{:02}",
-        utc.year() + 1,
-        12,
-        31
-    )
+    format!("{:04}-{:02}-{:02}", utc.year() + 1, 12, 31)
 }
 
-fn calculate_requested_days(date_from: &DateTime<Utc>, date_to: &DateTime<Utc>, half_day_op: &HalfDayOptions) -> f64 {
+fn calculate_requested_days(
+    date_from: &DateTime<Utc>,
+    date_to: &DateTime<Utc>,
+    half_day_op: &HalfDayOptions,
+) -> f64 {
     let mut duration_in_days = 0.0;
 
     let mut current_date = *date_from;
@@ -433,7 +459,7 @@ fn calculate_requested_days(date_from: &DateTime<Utc>, date_to: &DateTime<Utc>, 
 
     // Adjust for half day options
     match half_day_op {
-        HalfDayOptions::FullDays => {},
+        HalfDayOptions::FullDays => {}
         HalfDayOptions::FirstDayHalf | HalfDayOptions::LastDayHalf => duration_in_days -= 0.5,
         HalfDayOptions::BothHalfDays => duration_in_days -= 1.0,
     }
@@ -445,4 +471,3 @@ fn calculate_requested_days(date_from: &DateTime<Utc>, date_to: &DateTime<Utc>, 
 
     duration_in_days
 }
-
