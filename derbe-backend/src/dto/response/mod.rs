@@ -14,6 +14,6 @@ pub mod leave_request {
         pub date_from: OffsetDateTime,
         #[serde_as(as = "Rfc3339")]
         pub date_to: OffsetDateTime,
-        pub duration: f64,
+        pub total_duration: f64,
     }
 }

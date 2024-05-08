@@ -243,6 +243,7 @@ pub fn component() -> Html {
             let date_from_clone = *date_from_clone.deref();
             let date_to = *date_to_clone.deref();
             let half_day_opt = half_day_opt.deref().clone();
+            let total_duration = calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
             let notes = notes.deref().clone();
             let history = history.clone();
             wasm_bindgen_futures::spawn_local(async move {
@@ -250,7 +251,8 @@ pub fn component() -> Html {
                                                 leave_type.unwrap().id.unwrap(), 
                                                 date_from_clone, 
                                                 date_to, 
-                                                half_day_opt, 
+                                                half_day_opt,
+                                                total_duration,
                                                 notes).await {
                     Ok(_) => {
                         history.push(&Route::MyLeave);
@@ -418,7 +420,7 @@ fn utc_to_yyyy_mm_dd_next_year_end(utc: &DateTime<Utc>) -> String {
     )
 }
 
-fn calculate_requested_days(date_from: &DateTime<Utc>, date_to: &DateTime<Utc>, half_day_op: &HalfDayOptions) -> f32 {
+fn calculate_requested_days(date_from: &DateTime<Utc>, date_to: &DateTime<Utc>, half_day_op: &HalfDayOptions) -> f64 {
     let mut duration_in_days = 0.0;
 
     let mut current_date = *date_from;

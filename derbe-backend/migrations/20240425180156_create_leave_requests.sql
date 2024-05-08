@@ -7,6 +7,7 @@ CREATE TABLE leave_requests (
     date_to TIMESTAMPTZ NOT NULL,
     first_day_half BOOLEAN NOT NULL DEFAULT FALSE,
     last_day_half BOOLEAN NOT NULL DEFAULT FALSE,
+    total_duration FLOAT NOT NULL,
     date_requested TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     date_finalised TIMESTAMPTZ,
     notes TEXT

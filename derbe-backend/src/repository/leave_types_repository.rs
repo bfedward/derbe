@@ -10,7 +10,7 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
             LeaveType,
             r#"
             SELECT id, name, default_quota, can_book_in_future, 
-                show_in_others_days, default_in_others_days, show_in_approve_days
+                show_in_others_days, default_in_others_days, default_in_leave_request, show_in_approve_days
             FROM leave_types
             WHERE id = $1
             "#,
@@ -30,7 +30,7 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
             LeaveType,
             r#"
             SELECT id, name, default_quota, can_book_in_future, 
-                show_in_others_days, default_in_others_days, show_in_approve_days
+                show_in_others_days, default_in_others_days, default_in_leave_request, show_in_approve_days
             FROM leave_types
             "#,
         )

@@ -5,8 +5,6 @@ use crate::{
     http::AppContext,
     model::leave_request::{LeaveRequest, LeaveStatus},
 };
-use num_traits::cast::ToPrimitive;
-use sqlx::types::BigDecimal;
 
 use super::DerbeRepository;
 
@@ -25,6 +23,7 @@ impl DerbeRepository<LeaveRequest> for LeaveRequestRepository {
                      date_to,
                      first_day_half, 
                      last_day_half, 
+                     total_duration,
                      date_requested,
                      date_finalised,
                      notes
@@ -59,11 +58,12 @@ impl DerbeRepository<LeaveRequest> for LeaveRequestRepository {
                                         date_from, 
                                         date_to,
                                         first_day_half, 
-                                        last_day_half, 
+                                        last_day_half,
+                                        total_duration,
                                         date_requested,
                                         date_finalised,
                                         notes)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id, 
                         employee_id, 
                         leave_type_id, 
@@ -72,6 +72,7 @@ impl DerbeRepository<LeaveRequest> for LeaveRequestRepository {
                         date_to,
                         first_day_half, 
                         last_day_half, 
+                        total_duration,
                         date_requested,
                         date_finalised,
                         notes
@@ -83,6 +84,7 @@ impl DerbeRepository<LeaveRequest> for LeaveRequestRepository {
             new_entity.date_to,
             new_entity.first_day_half,
             new_entity.last_day_half,
+            new_entity.total_duration,
             new_entity.date_requested,
             new_entity.date_finalised,
             new_entity.notes
@@ -112,7 +114,8 @@ impl LeaveRequestRepository {
         my_leave_request: MyLeaveRequest,
         ctx: &AppContext,
     ) -> Result<Vec<MyLeaveResponse>, AppError> {
-        match sqlx::query!(
+        match sqlx::query_as!(
+            MyLeaveResponse,
             r#"
             SELECT
                 lr.id AS "leave_request_id", 
@@ -120,12 +123,7 @@ impl LeaveRequestRepository {
                 lr.leave_status AS "leave_status!: model::leave_request::LeaveStatus", 
                 lr.date_from,
                 lr.date_to,
-                (EXTRACT(EPOCH FROM (lr.date_to - lr.date_from)) / 86400 -
-                    CASE 
-                        WHEN lr.first_day_half AND lr.last_day_half THEN 1.0
-                        WHEN lr.first_day_half OR lr.last_day_half THEN 0.5
-                        ELSE -1.0
-                    END) AS "duration"
+                lr.total_duration
             FROM
                 leave_requests lr
             JOIN
@@ -146,23 +144,7 @@ impl LeaveRequestRepository {
         .fetch_all(&ctx.db)
         .await
         {
-            Ok(leave_requests) => {
-                let leave_responses: Vec<MyLeaveResponse> = leave_requests
-                    .into_iter()
-                    .map(|row| {
-                        let duration: f64 = row.duration.and_then(|bd| bd.to_f64()).unwrap();
-                        MyLeaveResponse {
-                            leave_request_id: row.leave_request_id,
-                            leave_type: row.leave_type,
-                            leave_status: row.leave_status,
-                            date_from: row.date_from,
-                            date_to: row.date_to,
-                            duration,
-                        }
-                    })
-                    .collect();
-                Ok(leave_responses)
-            }
+            Ok(my_leaves) => Ok(my_leaves),
             Err(e) => Err(AppError::DatabaseQueryError(e)),
         }
     }

@@ -13,6 +13,7 @@ pub mod leave_type {
         pub can_book_in_future: bool,
         pub show_in_others_days: bool,
         pub default_in_others_days: bool,
+        pub default_in_leave_request: bool,
         pub show_in_approve_days: bool,
     }
 
@@ -63,7 +64,7 @@ pub mod employee {
         pub location_id: i32,
         pub manager_id: Option<i32>,
         pub email: String,
-        pub phone: String,
+        pub phone: Option<String>,
     }
 
     impl DerbeModel for Employee {}
@@ -105,6 +106,7 @@ pub mod leave_request {
         pub date_to: OffsetDateTime,
         pub first_day_half: bool,
         pub last_day_half: bool,
+        pub total_duration: f64,
         #[serde_as(as = "Rfc3339")]
         pub date_requested: OffsetDateTime,
         #[serde_as(as = "Option<Rfc3339>")]

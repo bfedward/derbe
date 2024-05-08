@@ -51,6 +51,7 @@ pub fn component() -> Html {
                             <th scope="col">{ "Can book in future?" }</th>
                             <th scope="col">{ "Show in \"Others Days\"?" }</th>
                             <th scope="col">{ "Default in \"Others Days\"?" }</th>
+                            <th scope="col">{ "Default in \"Days Request\"?" }</th>
                             <th scope="col">{ "Show in \"Approve Days\"?" }</th>
                         </tr>
                     </thead>
@@ -75,19 +76,23 @@ fn leave_type_html(leave_types: &Vec<LeaveType>) -> Vec<Html> {
                 }
                 <td>
                     <input type="checkbox" id={ "future_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
-                        checked={ leave_type.can_book_in_future } />
+                        checked={ leave_type.can_book_in_future } disabled=true />
                 </td>
                 <td>
                     <input type="checkbox" id={ "show_in_others_days_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
-                        checked={ leave_type.show_in_others_days } />
+                        checked={ leave_type.show_in_others_days } disabled=true />
                 </td>
                 <td>
                     <input type="checkbox" id={ "default_in_others_days_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
-                        checked={ leave_type.default_in_others_days } />
+                        checked={ leave_type.default_in_others_days } disabled=true />
+                </td>
+                <td>
+                    <input type="checkbox" id={ "default_in_days_request_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
+                        checked={ leave_type.default_in_leave_request } disabled=true />
                 </td>
                 <td>
                     <input type="checkbox" id={ "show_in_approve_days_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
-                        checked={ leave_type.show_in_approve_days } />
+                        checked={ leave_type.show_in_approve_days } disabled=true />
                 </td>
 
             </tr>

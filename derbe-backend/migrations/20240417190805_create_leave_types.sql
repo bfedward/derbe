@@ -5,5 +5,6 @@ CREATE TABLE leave_types (
     can_book_in_future BOOLEAN NOT NULL,
     show_in_others_days BOOLEAN NOT NULL,
     default_in_others_days BOOLEAN NOT NULL,
+    default_in_leave_request BOOLEAN NOT NULL,
     show_in_approve_days BOOLEAN NOT NULL
 );

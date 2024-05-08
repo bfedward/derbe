@@ -42,6 +42,7 @@ pub async fn create_leave_request(
     date_from: DateTime<Utc>,
     date_to: DateTime<Utc>,
     half_day_opt: HalfDayOptions,
+    total_duration: f64,
     notes: Option<String>
 ) -> Result<LeaveRequest, ApiError> {
     let (first_day_half, last_day_half) = match half_day_opt {
@@ -60,6 +61,7 @@ pub async fn create_leave_request(
         date_to: date_to.to_rfc3339(),
         first_day_half,
         last_day_half,
+        total_duration,
         date_requested: Utc::now().to_rfc3339(),
         date_finalised: None,
         notes
