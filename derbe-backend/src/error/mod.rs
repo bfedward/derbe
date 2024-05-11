@@ -7,6 +7,7 @@ pub enum AppError {
     DatabaseQueryError(sqlx::Error),
     EntityNotFound(i32, String),
     RelatedEntity(String, String),
+    ConstraintError(String)
 }
 
 impl IntoResponse for AppError {
@@ -15,11 +16,15 @@ impl IntoResponse for AppError {
             Self::DatabaseQueryError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::EntityNotFound(id, name) => (
                 StatusCode::NOT_FOUND,
-                format!("{} with id {} not found!", name, id),
+                format!("{name} with id {id} not found!"),
             ),
             Self::RelatedEntity(name, relation) => (
                 StatusCode::CONFLICT,
-                format!("Cannot delete {} due to related {}!", name, relation),
+                format!("Cannot delete {name} due to related {relation}!"),
+            ),
+            Self::ConstraintError(error) => (
+                StatusCode::CONFLICT,
+                format!("Database constraint error: {error}"),
             ),
             _ => (
                 StatusCode::INTERNAL_SERVER_ERROR,

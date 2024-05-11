@@ -128,4 +128,17 @@ impl DerbeRepository<Employee> for EmployeeRepository {
             Err(e) => Err(AppError::DatabaseQueryError(e)),
         }
     }
+
+    async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError> {
+        match sqlx::query_scalar!(
+            "SELECT EXISTS(SELECT 1 FROM employees WHERE id = $1)",
+            id
+        )
+        .fetch_one(&ctx.db)
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(AppError::DatabaseQueryError(e)),
+        }
+    }
 }

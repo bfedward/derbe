@@ -16,4 +16,6 @@ pub trait DerbeRepository<M: DerbeModel> {
     async fn update_entity(id: i32, entity_update: M, ctx: &AppContext) -> Result<M, AppError>;
 
     async fn delete_entity(id: i32, ctx: &AppContext) -> Result<(), AppError>;
+
+    async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError>;
 }

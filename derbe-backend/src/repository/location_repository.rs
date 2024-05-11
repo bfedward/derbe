@@ -1,4 +1,4 @@
-use crate::{error::AppError, model::location::Location};
+use crate::{error::AppError, http::AppContext, model::location::Location};
 
 use super::DerbeRepository;
 
@@ -7,8 +7,8 @@ pub struct LocationRepository {}
 impl DerbeRepository<Location> for LocationRepository {
     async fn get_entity_by_id(
         id: i32,
-        ctx: &crate::http::AppContext,
-    ) -> Result<Location, crate::error::AppError> {
+        ctx: &AppContext,
+    ) -> Result<Location, AppError> {
         match sqlx::query_as!(
             Location,
             r#"
@@ -28,8 +28,8 @@ impl DerbeRepository<Location> for LocationRepository {
     }
 
     async fn get_entities(
-        ctx: &crate::http::AppContext,
-    ) -> Result<Vec<Location>, crate::error::AppError> {
+        ctx: &AppContext,
+    ) -> Result<Vec<Location>, AppError> {
         match sqlx::query_as!(
             Location,
             r#"
@@ -47,8 +47,8 @@ impl DerbeRepository<Location> for LocationRepository {
 
     async fn create_entity(
         new_entity: Location,
-        ctx: &crate::http::AppContext,
-    ) -> Result<Location, crate::error::AppError> {
+        ctx: &AppContext,
+    ) -> Result<Location, AppError> {
         match sqlx::query_as!(
             Location,
             r#"
@@ -69,8 +69,8 @@ impl DerbeRepository<Location> for LocationRepository {
     async fn update_entity(
         id: i32,
         entity_update: Location,
-        ctx: &crate::http::AppContext,
-    ) -> Result<Location, crate::error::AppError> {
+        ctx: &AppContext,
+    ) -> Result<Location, AppError> {
         match sqlx::query_as!(
             Location,
             r#"
@@ -96,8 +96,8 @@ impl DerbeRepository<Location> for LocationRepository {
 
     async fn delete_entity(
         id: i32,
-        ctx: &crate::http::AppContext,
-    ) -> Result<(), crate::error::AppError> {
+        ctx: &AppContext,
+    ) -> Result<(), AppError> {
         match sqlx::query!(
             r#"DELETE FROM locations
             WHERE id = $1
@@ -105,6 +105,19 @@ impl DerbeRepository<Location> for LocationRepository {
             id
         )
         .execute(&ctx.db)
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(AppError::DatabaseQueryError(e)),
+        }
+    }
+
+    async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError> {
+        match sqlx::query_scalar!(
+            "SELECT EXISTS(SELECT 1 FROM locations WHERE id = $1)",
+            id
+        )
+        .fetch_one(&ctx.db)
         .await
         {
             Ok(_) => Ok(()),
