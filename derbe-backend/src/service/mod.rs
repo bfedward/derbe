@@ -1,8 +1,10 @@
 use crate::{error::AppError, http::AppContext, model::DerbeModel, repository::DerbeRepository};
 
+pub mod division_service;
 pub mod employee_service;
 pub mod leave_request_service;
 pub mod leave_types_service;
+pub mod location_service;
 
 pub trait DerbeService<M: DerbeModel, R: DerbeRepository<M>> {
     async fn get_entity_by_id(id: i32, ctx: &AppContext) -> Result<M, AppError> {
@@ -13,7 +15,12 @@ pub trait DerbeService<M: DerbeModel, R: DerbeRepository<M>> {
         R::get_entities(ctx).await
     }
 
+    async fn pre_create(_new_entity: &M, _ctx: &AppContext) -> Result<(), AppError> {
+        Ok(())
+    }
+
     async fn create_entity(new_entity: M, ctx: &AppContext) -> Result<M, AppError> {
+        Self::pre_create(&new_entity, ctx).await?;
         R::create_entity(new_entity, ctx).await
     }
 

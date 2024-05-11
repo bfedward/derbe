@@ -1,8 +1,10 @@
 use crate::{error::AppError, http::AppContext, model::DerbeModel};
 
+pub mod division_repository;
 pub mod employee_repository;
 pub mod leave_request_respository;
 pub mod leave_types_repository;
+pub mod location_repository;
 
 pub trait DerbeRepository<M: DerbeModel> {
     async fn get_entity_by_id(id: i32, ctx: &AppContext) -> Result<M, AppError>;

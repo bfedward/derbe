@@ -119,7 +119,7 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
         {
             Ok(leave_type) => match leave_type {
                 Some(leave_type) => Ok(leave_type),
-                None => Err(AppError::EntityNotFound(id, "Vehicle".to_owned())),
+                None => Err(AppError::EntityNotFound(id, "Leave Type".to_owned())),
             },
             Err(e) => Err(AppError::DatabaseQueryError(e)),
         }

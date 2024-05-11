@@ -6,11 +6,19 @@ use crate::{
     repository::leave_request_respository::LeaveRequestRepository,
 };
 
-use super::DerbeService;
+use super::{
+    employee_service::EmployeeService, leave_types_service::LeaveTypesService, DerbeService,
+};
 
 pub struct LeaveRequestService {}
 
-impl DerbeService<LeaveRequest, LeaveRequestRepository> for LeaveRequestService {}
+impl DerbeService<LeaveRequest, LeaveRequestRepository> for LeaveRequestService {
+    async fn pre_create(new_entity: &LeaveRequest, ctx: &AppContext) -> Result<(), AppError> {
+        EmployeeService::get_entity_by_id(new_entity.employee_id, ctx).await?;
+        LeaveTypesService::get_entity_by_id(new_entity.leave_type_id, ctx).await?;
+        Ok(())
+    }
+}
 
 impl LeaveRequestService {
     pub async fn get_my_leave(
