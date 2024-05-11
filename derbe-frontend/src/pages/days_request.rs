@@ -3,14 +3,10 @@ use std::ops::Deref;
 use crate::{
     api::{self, api_errors::ApiError, get_employees, get_leave_types},
     components::organisms::navbar::Navbar,
-    model::{
-        employee::{self, Employee},
-        leave_request::HalfDayOptions,
-        leave_type::LeaveType,
-    },
+    model::{employee::Employee, leave_request::HalfDayOptions, leave_type::LeaveType},
     router::Route,
 };
-use chrono::{DateTime, Datelike, Duration, Months, NaiveDate, NaiveTime, Utc, Weekday};
+use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveTime, Utc, Weekday};
 use gloo::console::log;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{HtmlInputElement, HtmlSelectElement};

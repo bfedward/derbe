@@ -1,1 +1,1 @@
-CREATE TYPE valid_leave_statuses AS ENUM ('PENDING', 'MORE_INFO_REQ', 'CANCELLED', 'REJECTED', 'ACCEPTED');
+CREATE TYPE valid_leave_statuses AS ENUM ('Pending', 'MoreInfoReq', 'Cancelled', 'Rejected', 'Accepted');

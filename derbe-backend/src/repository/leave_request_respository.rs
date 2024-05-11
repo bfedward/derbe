@@ -42,7 +42,30 @@ impl DerbeRepository<LeaveRequest> for LeaveRequestRepository {
     }
 
     async fn get_entities(ctx: &AppContext) -> Result<Vec<LeaveRequest>, AppError> {
-        todo!()
+        match sqlx::query_as!(
+            LeaveRequest,
+            r#"
+            SELECT id, 
+                employee_id, 
+                leave_type_id, 
+                leave_status AS "leave_status!: model::leave_request::LeaveStatus", 
+                date_from,
+                date_to,
+                first_day_half, 
+                last_day_half, 
+                total_duration,
+                date_requested,
+                date_finalised,
+                notes
+            FROM leave_requests
+            "#
+        )
+        .fetch_all(&ctx.db)
+        .await
+        {
+            Ok(vehicles) => Ok(vehicles),
+            Err(e) => Err(AppError::DatabaseQueryError(e)),
+        }
     }
 
     async fn create_entity(
@@ -98,14 +121,76 @@ impl DerbeRepository<LeaveRequest> for LeaveRequestRepository {
     }
 
     async fn update_entity(
+        id: i32,
         entity_update: LeaveRequest,
         ctx: &AppContext,
     ) -> Result<LeaveRequest, AppError> {
-        todo!()
+        match sqlx::query_as!(
+            LeaveRequest,
+            r#"
+            UPDATE leave_requests
+            SET employee_id = $1,
+                leave_type_id = $2,
+                leave_status = $3,
+                date_from = $4,
+                date_to = $5,
+                first_day_half = $6,
+                last_day_half = $7,
+                total_duration = $8,
+                date_requested = $9,
+                date_finalised = $10,
+                notes = $11
+            WHERE id = $12
+            RETURNING id, 
+                employee_id, 
+                leave_type_id, 
+                leave_status AS "leave_status!: model::leave_request::LeaveStatus", 
+                date_from, 
+                date_to,
+                first_day_half, 
+                last_day_half, 
+                total_duration,
+                date_requested,
+                date_finalised,
+                notes
+            "#,
+            entity_update.employee_id,
+            entity_update.leave_type_id,
+            entity_update.leave_status as LeaveStatus,
+            entity_update.date_from,
+            entity_update.date_to,
+            entity_update.first_day_half,
+            entity_update.last_day_half,
+            entity_update.total_duration,
+            entity_update.date_requested,
+            entity_update.date_finalised,
+            entity_update.notes,
+            id
+        )
+        .fetch_optional(&ctx.db)
+        .await
+        {
+            Ok(vehicle) => match vehicle {
+                Some(vehicle) => Ok(vehicle),
+                None => Err(AppError::EntityNotFound(id, "LeaveRequest".to_owned())),
+            },
+            Err(e) => Err(AppError::DatabaseQueryError(e)),
+        }
     }
 
     async fn delete_entity(id: i32, ctx: &AppContext) -> Result<(), AppError> {
-        todo!()
+        match sqlx::query!(
+            r#"DELETE FROM leave_requests
+            WHERE id = $1
+            "#,
+            id
+        )
+        .execute(&ctx.db)
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(AppError::DatabaseQueryError(e)),
+        }
     }
 }
 

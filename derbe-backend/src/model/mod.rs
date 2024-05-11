@@ -80,11 +80,11 @@ pub mod leave_request {
     #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
     #[sqlx(type_name = "valid_leave_statuses")]
     pub enum LeaveStatus {
-        PENDING,
-        MORE_INFO_REQ,
-        CANCELLED,
-        REJECTED,
-        ACCEPTED,
+        Pending,
+        MoreInfoReq,
+        Cancelled,
+        Rejected,
+        Accepted,
     }
 
     impl PgHasArrayType for LeaveStatus {

@@ -17,8 +17,8 @@ pub trait DerbeService<M: DerbeModel, R: DerbeRepository<M>> {
         R::create_entity(new_entity, ctx).await
     }
 
-    async fn update_entity(entity_update: M, ctx: &AppContext) -> Result<M, AppError> {
-        R::update_entity(entity_update, ctx).await
+    async fn update_entity(id: i32, entity_update: M, ctx: &AppContext) -> Result<M, AppError> {
+        R::update_entity(id, entity_update, ctx).await
     }
 
     async fn delete_entity(id: i32, ctx: &AppContext) -> Result<(), AppError> {

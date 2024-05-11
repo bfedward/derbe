@@ -30,7 +30,7 @@ pub async fn get_my_leave() -> Result<Vec<MyLeaveResponse>, ApiError> {
     let my_leave_request = MyLeaveRequest {
         employee_id: 3,
         leave_type_ids: vec![1, 5],
-        leave_statuses: vec![LeaveStatus::PENDING],
+        leave_statuses: vec![LeaveStatus::Pending],
         date_from: "2024-01-08T00:00:00Z".to_owned(),
         date_to: "2024-12-08T00:00:00Z".to_owned(),
     };
@@ -82,7 +82,7 @@ pub async fn create_leave_request(
         id: None,
         employee_id: employee,
         leave_type_id: leave_type,
-        leave_status: LeaveStatus::PENDING,
+        leave_status: LeaveStatus::Pending,
         date_from: date_from.to_rfc3339(),
         date_to: date_to.to_rfc3339(),
         first_day_half,

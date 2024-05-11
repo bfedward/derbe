@@ -64,27 +64,27 @@ pub mod leave_request {
 
     #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
     pub enum LeaveStatus {
-        PENDING,
-        MORE_INFO_REQ,
-        CANCELLED,
-        REJECTED,
-        ACCEPTED,
+        Pending,
+        MoreInfoReq,
+        Cancelled,
+        Rejected,
+        Accepted,
     }
 
     impl Default for LeaveStatus {
         fn default() -> Self {
-            LeaveStatus::PENDING
+            LeaveStatus::Pending
         }
     }
 
     impl ToString for LeaveStatus {
         fn to_string(&self) -> String {
             match self {
-                LeaveStatus::PENDING => String::from("PENDING"),
-                LeaveStatus::MORE_INFO_REQ => String::from("MORE_INFO_REQ"),
-                LeaveStatus::CANCELLED => String::from("CANCELLED"),
-                LeaveStatus::REJECTED => String::from("REJECTED"),
-                LeaveStatus::ACCEPTED => String::from("ACCEPTED"),
+                LeaveStatus::Pending => String::from("Pending"),
+                LeaveStatus::MoreInfoReq => String::from("MoreInfoReq"),
+                LeaveStatus::Cancelled => String::from("Cancelled"),
+                LeaveStatus::Rejected => String::from("Rejected"),
+                LeaveStatus::Accepted => String::from("Accepted"),
             }
         }
     }
