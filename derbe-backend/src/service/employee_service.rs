@@ -11,14 +11,19 @@ impl DerbeService<Employee, EmployeeRepository> for EmployeeService {
     async fn pre_update(id: i32, entity: &Employee, ctx: &AppContext) -> Result<(), AppError> {
         if let Some(manager_id) = entity.manager_id {
             if id == manager_id {
-                return Err(AppError::ConstraintError("An employee cannot be their own manager!".to_owned()));
+                return Err(AppError::ConstraintError(
+                    "An employee cannot be their own manager!".to_owned(),
+                ));
             }
         }
         Self::check_related_entities_exist(entity, ctx).await?;
         Ok(())
     }
 
-    async fn check_related_entities_exist(entity: &Employee, ctx: &AppContext) -> Result<(), AppError> {
+    async fn check_related_entities_exist(
+        entity: &Employee,
+        ctx: &AppContext,
+    ) -> Result<(), AppError> {
         LocationService::check_entity_exists(entity.location_id, ctx).await?;
         DivisionService::check_entity_exists(entity.division_id, ctx).await?;
         if let Some(manager_id) = entity.manager_id {

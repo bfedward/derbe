@@ -1,28 +1,12 @@
 use dotenv::dotenv;
-use sqlx::postgres::PgPoolOptions;
 
-mod controller;
-mod dto;
-mod error;
-mod http;
-mod model;
-mod repository;
-mod service;
+use derbe_backend::{configuration::get_configuration, http};
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
 
-    let db_url = std::env::var("DATABASE_URL").unwrap();
+    let configuration = get_configuration().expect("Failed to read configuration.");
 
-    let pool = match PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&db_url)
-        .await
-    {
-        Ok(pool) => pool,
-        Err(e) => panic!("Couldn't establish DB connection: {}", e),
-    };
-
-    http::serve(pool).await
+    http::serve(configuration).await
 }

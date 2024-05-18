@@ -13,7 +13,10 @@ use super::{
 pub struct LeaveRequestService {}
 
 impl DerbeService<LeaveRequest, LeaveRequestRepository> for LeaveRequestService {
-    async fn check_related_entities_exist(entity: &LeaveRequest, ctx: &AppContext) -> Result<(), AppError> {
+    async fn check_related_entities_exist(
+        entity: &LeaveRequest,
+        ctx: &AppContext,
+    ) -> Result<(), AppError> {
         EmployeeService::check_entity_exists(entity.employee_id, ctx).await?;
         LeaveTypesService::check_entity_exists(entity.leave_type_id, ctx).await?;
         Ok(())

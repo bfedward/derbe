@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use crate::{error::AppError, http::AppContext, model::DerbeModel};
 
 pub mod division_repository;
@@ -7,15 +9,31 @@ pub mod leave_types_repository;
 pub mod location_repository;
 
 pub trait DerbeRepository<M: DerbeModel> {
-    async fn get_entity_by_id(id: i32, ctx: &AppContext) -> Result<M, AppError>;
+    fn get_entity_by_id(
+        id: i32,
+        ctx: &AppContext,
+    ) -> impl Future<Output = Result<M, AppError>> + Send;
 
-    async fn get_entities(ctx: &AppContext) -> Result<Vec<M>, AppError>;
+    fn get_entities(ctx: &AppContext) -> impl Future<Output = Result<Vec<M>, AppError>> + Send;
 
-    async fn create_entity(new_entity: M, ctx: &AppContext) -> Result<M, AppError>;
+    fn create_entity(
+        new_entity: M,
+        ctx: &AppContext,
+    ) -> impl Future<Output = Result<M, AppError>> + Send;
 
-    async fn update_entity(id: i32, entity_update: M, ctx: &AppContext) -> Result<M, AppError>;
+    fn update_entity(
+        id: i32,
+        entity_update: M,
+        ctx: &AppContext,
+    ) -> impl Future<Output = Result<M, AppError>> + Send;
 
-    async fn delete_entity(id: i32, ctx: &AppContext) -> Result<(), AppError>;
+    fn delete_entity(
+        id: i32,
+        ctx: &AppContext,
+    ) -> impl Future<Output = Result<(), AppError>> + Send;
 
-    async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError>;
+    fn check_entity_exists(
+        id: i32,
+        ctx: &AppContext,
+    ) -> impl Future<Output = Result<(), AppError>> + Send;
 }

@@ -7,7 +7,7 @@ pub enum AppError {
     DatabaseQueryError(sqlx::Error),
     EntityNotFound(i32, String),
     RelatedEntity(String, String),
-    ConstraintError(String)
+    ConstraintError(String),
 }
 
 impl IntoResponse for AppError {
@@ -26,10 +26,10 @@ impl IntoResponse for AppError {
                 StatusCode::CONFLICT,
                 format!("Database constraint error: {error}"),
             ),
-            _ => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Unknown server error!"),
-            ),
+            // _ => (
+            //     StatusCode::INTERNAL_SERVER_ERROR,
+            //     format!("Unknown server error!"),
+            // ),
         };
 
         (status, message).into_response()

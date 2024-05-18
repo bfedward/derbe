@@ -3,28 +3,42 @@ use axum::{
     routing::get,
     Router,
 };
-use sqlx::PgPool;
+use secrecy::ExposeSecret;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::controller::{employee_controller, leave_request_controller, leave_types_controller};
+use crate::{
+    configuration::Settings,
+    controller::{employee_controller, leave_request_controller, leave_types_controller},
+};
 
 #[derive(Clone)]
 pub struct AppContext {
     pub db: PgPool,
 }
 
-pub async fn serve(db: PgPool) {
-    let context = AppContext { db };
-
-    let app = app_router(context);
-
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+pub async fn serve(configuration: Settings) {
+    let pool = match PgPoolOptions::new()
+        .max_connections(5)
+        .connect(configuration.database.connection_string().expose_secret())
         .await
-        .expect("Could not init router!");
+    {
+        Ok(pool) => pool,
+        Err(e) => panic!("Couldn't establish DB connection: {}", e),
+    };
+
+    let app = app_router(AppContext { db: pool });
+
+    let listener = tokio::net::TcpListener::bind(format!(
+        "{}:{}",
+        configuration.application_host, configuration.application_port
+    ))
+    .await
+    .expect("Could not init router!");
 
     axum::serve(listener, app)
         .await
-        .expect("Could not axum serve");
+        .expect("Could not serve app");
 }
 
 fn app_router(context: AppContext) -> Router {
