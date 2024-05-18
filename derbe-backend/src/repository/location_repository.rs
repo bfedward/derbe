@@ -102,12 +102,15 @@ impl DerbeRepository<Location> for LocationRepository {
     }
 
     async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError> {
-        match sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM locations WHERE id = $1)", id)
+        let exists = sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM locations WHERE id = $1)", id)
             .fetch_one(&ctx.db)
             .await
-        {
-            Ok(_) => Ok(()),
-            Err(e) => Err(AppError::DatabaseQueryError(e)),
+            .map_err(AppError::DatabaseQueryError)?;
+    
+        if exists.unwrap_or(false) {
+            Ok(())
+        } else {
+            Err(AppError::EntityNotFound(id, "Location".to_owned()))
         }
     }
 }
