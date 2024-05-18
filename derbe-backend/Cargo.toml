@@ -17,3 +17,7 @@ time = "0.3.36"
 serde_with = { version = "3.8.1", features = ["time_0_3"] }
 config = "0.14.0"
 secrecy ={ version = "0.8.0", features = ["serde"]}
+uuid = { version = "1.8.0", features = ["v4"]}
+
+[dev-dependencies]
+reqwest = "0.12.4"

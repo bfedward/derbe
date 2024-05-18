@@ -5,6 +5,7 @@ use axum::{
 };
 use secrecy::ExposeSecret;
 use sqlx::{postgres::PgPoolOptions, PgPool};
+use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
@@ -27,11 +28,11 @@ pub async fn serve(configuration: Settings) {
         Err(e) => panic!("Couldn't establish DB connection: {}", e),
     };
 
-    let app = app_router(AppContext { db: pool });
+    let app = app_router(&AppContext { db: pool });
 
-    let listener = tokio::net::TcpListener::bind(format!(
+    let listener = TcpListener::bind(format!(
         "{}:{}",
-        configuration.application_host, configuration.application_port
+        configuration.application.application_host, configuration.application.application_port
     ))
     .await
     .expect("Could not init router!");
@@ -41,14 +42,14 @@ pub async fn serve(configuration: Settings) {
         .expect("Could not serve app");
 }
 
-fn app_router(context: AppContext) -> Router {
+pub fn app_router(context: &AppContext) -> Router {
     Router::new()
         .route("/health", get(health))
         .merge(leave_types_controller::router())
         .merge(leave_request_controller::router())
         .merge(employee_controller::router())
         .layer(get_cors_layer())
-        .with_state(context)
+        .with_state(context.clone())
 }
 
 fn get_cors_layer() -> CorsLayer {
