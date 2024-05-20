@@ -141,15 +141,35 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
     }
 
     async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError> {
-        let exists = sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM leave_types WHERE id = $1)", id)
-            .fetch_one(&ctx.db)
-            .await
-            .map_err(AppError::DatabaseQueryError)?;
-    
+        let exists =
+            sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM leave_types WHERE id = $1)", id)
+                .fetch_one(&ctx.db)
+                .await
+                .map_err(AppError::DatabaseQueryError)?;
+
         if exists.unwrap_or(false) {
             Ok(())
         } else {
             Err(AppError::EntityNotFound(id, "Leave Type".to_owned()))
+        }
+    }
+
+    async fn check_if_entity_is_referenced(id: i32, ctx: &AppContext) -> Result<(), AppError> {
+        let count = sqlx::query_scalar!(
+            "
+            SELECT COUNT(*) FROM leave_requests WHERE leave_type_id = $1
+            ",
+            id
+        )
+        .fetch_one(&ctx.db)
+        .await
+        .map_err(AppError::DatabaseQueryError)?
+        .unwrap_or(0);
+
+        if count > 0 {
+            Err(AppError::RelatedEntity("Leave Type".to_owned()))
+        } else {
+            Ok(())
         }
     }
 }

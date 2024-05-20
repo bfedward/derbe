@@ -1,13 +1,14 @@
 use axum::{
     http::StatusCode,
-    response::{IntoResponse, Response}, Json
+    response::{IntoResponse, Response},
+    Json,
 };
 use serde_json::json;
 
 pub enum AppError {
     DatabaseQueryError(sqlx::Error),
     EntityNotFound(i32, String),
-    RelatedEntity(String, String),
+    RelatedEntity(String),
     ConstraintError(String),
 }
 
@@ -18,12 +19,13 @@ impl IntoResponse for AppError {
             Self::EntityNotFound(id, name) => {
                 println!("{name} with id {id} not found!");
                 (
-                StatusCode::NOT_FOUND,
-                format!("{name} with id {id} not found!"),
-            )},
-            Self::RelatedEntity(name, relation) => (
+                    StatusCode::NOT_FOUND,
+                    format!("{name} with id {id} not found!"),
+                )
+            }
+            Self::RelatedEntity(name) => (
                 StatusCode::CONFLICT,
-                format!("Cannot delete {name} due to related {relation}!"),
+                format!("Cannot delete {name} due to related entity!"),
             ),
             Self::ConstraintError(error) => (
                 StatusCode::CONFLICT,

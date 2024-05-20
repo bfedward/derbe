@@ -130,15 +130,36 @@ impl DerbeRepository<Employee> for EmployeeRepository {
     }
 
     async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError> {
-        let exists = sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM employees WHERE id = $1)", id)
-            .fetch_one(&ctx.db)
-            .await
-            .map_err(AppError::DatabaseQueryError)?;
-    
+        let exists =
+            sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM employees WHERE id = $1)", id)
+                .fetch_one(&ctx.db)
+                .await
+                .map_err(AppError::DatabaseQueryError)?;
+
         if exists.unwrap_or(false) {
             Ok(())
         } else {
             Err(AppError::EntityNotFound(id, "Employee".to_owned()))
+        }
+    }
+
+    async fn check_if_entity_is_referenced(id: i32, ctx: &AppContext) -> Result<(), AppError> {
+        let count = sqlx::query_scalar!(
+            "
+            SELECT ((SELECT COUNT(*) FROM employees WHERE manager_id = $1) +
+            (SELECT COUNT(*) FROM leave_requests WHERE employee_id = $1)) AS count
+            ",
+            id
+        )
+        .fetch_one(&ctx.db)
+        .await
+        .map_err(AppError::DatabaseQueryError)?
+        .unwrap_or(0);
+
+        if count > 0 {
+            Err(AppError::RelatedEntity("Employee".to_owned()))
+        } else {
+            Ok(())
         }
     }
 }

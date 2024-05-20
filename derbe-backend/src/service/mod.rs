@@ -61,9 +61,7 @@ pub trait DerbeService<M: DerbeModel + Sync + Send, R: DerbeRepository<M>> {
     fn check_related_entities_exist(
         _entity: &M,
         _ctx: &AppContext,
-    ) -> impl Future<Output = Result<(), AppError>> + Send {
-        async { Ok(()) }
-    }
+    ) -> impl Future<Output = Result<(), AppError>> + Send;
 
     fn update_entity(
         id: i32,
@@ -76,11 +74,11 @@ pub trait DerbeService<M: DerbeModel + Sync + Send, R: DerbeRepository<M>> {
         }
     }
 
-    fn pre_delete(
-        _id: i32,
-        _ctx: &AppContext,
-    ) -> impl Future<Output = Result<(), AppError>> + Send {
-        async { Ok(()) }
+    fn pre_delete(id: i32, ctx: &AppContext) -> impl Future<Output = Result<(), AppError>> + Send {
+        async move {
+            R::check_if_entity_is_referenced(id, ctx).await?;
+            Ok(())
+        }
     }
 
     fn delete_entity(

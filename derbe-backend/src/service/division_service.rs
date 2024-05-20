@@ -8,7 +8,10 @@ use super::DerbeService;
 pub struct DivisionService {}
 
 impl DerbeService<Division, DivisionRepository> for DivisionService {
-    async fn pre_delete(_id: i32, _ctx: &AppContext) -> Result<(), AppError> {
-        todo!()
+    async fn check_related_entities_exist(
+        _entity: &Division,
+        _ctx: &AppContext,
+    ) -> Result<(), AppError> {
+        Ok(())
     }
 }

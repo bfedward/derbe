@@ -36,4 +36,9 @@ pub trait DerbeRepository<M: DerbeModel> {
         id: i32,
         ctx: &AppContext,
     ) -> impl Future<Output = Result<(), AppError>> + Send;
+
+    fn check_if_entity_is_referenced(
+        id: i32,
+        ctx: &AppContext,
+    ) -> impl Future<Output = Result<(), AppError>> + Send;
 }

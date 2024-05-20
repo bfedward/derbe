@@ -194,16 +194,23 @@ impl DerbeRepository<LeaveRequest> for LeaveRequestRepository {
     }
 
     async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError> {
-        let exists = sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM leave_requests WHERE id = $1)", id)
-            .fetch_one(&ctx.db)
-            .await
-            .map_err(AppError::DatabaseQueryError)?;
-    
+        let exists = sqlx::query_scalar!(
+            "SELECT EXISTS(SELECT 1 FROM leave_requests WHERE id = $1)",
+            id
+        )
+        .fetch_one(&ctx.db)
+        .await
+        .map_err(AppError::DatabaseQueryError)?;
+
         if exists.unwrap_or(false) {
             Ok(())
         } else {
             Err(AppError::EntityNotFound(id, "Leave Request".to_owned()))
         }
+    }
+
+    async fn check_if_entity_is_referenced(_id: i32, _ctx: &AppContext) -> Result<(), AppError> {
+        Ok(())
     }
 }
 

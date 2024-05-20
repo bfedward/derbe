@@ -101,8 +101,7 @@ async fn create_leave_request_fails_with_unknown_employee() {
     println!("Response text: {}", response_text);
 
     // Attempt to parse the response as JSON
-    let error_message: serde_json::Value = serde_json::from_str(&response_text)
-        .expect("Failed to parse JSON");
+    let error_message: serde_json::Value =
+        serde_json::from_str(&response_text).expect("Failed to parse JSON");
     assert_eq!(error_message["error"], "Employee with id 0 not found!");
 }
-
