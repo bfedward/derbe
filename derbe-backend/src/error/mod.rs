@@ -10,6 +10,7 @@ pub enum AppError {
     EntityNotFound(i32, String),
     RelatedEntity(String),
     ConstraintError(String),
+    InvalidStructArgs(String),
 }
 
 impl IntoResponse for AppError {
@@ -30,6 +31,10 @@ impl IntoResponse for AppError {
             Self::ConstraintError(error) => (
                 StatusCode::CONFLICT,
                 format!("Database constraint error: {error}"),
+            ),
+            Self::InvalidStructArgs(error) => (
+                StatusCode::BAD_REQUEST,
+                format!("Invalid struct args: {error}"),
             ),
         };
 
