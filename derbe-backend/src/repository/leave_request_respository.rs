@@ -1,3 +1,5 @@
+use time::OffsetDateTime;
+
 use crate::model;
 use crate::{
     dto::{request::leave_request::MyLeaveRequest, response::leave_request::MyLeaveResponse},
@@ -251,6 +253,37 @@ impl LeaveRequestRepository {
         {
             Ok(my_leaves) => Ok(my_leaves),
             Err(e) => Err(AppError::DatabaseQueryError(e)),
+        }
+    }
+
+    pub async fn check_for_accepted_leave_for_employee_and_date_range(
+        employee_id: i32,
+        date_from: OffsetDateTime,
+        date_to: OffsetDateTime,
+        ctx: &AppContext,
+    ) -> Result<(), AppError> {
+        let exists = sqlx::query_scalar!(
+            "SELECT EXISTS(SELECT 1 
+                FROM leave_requests 
+                WHERE employee_id = $1 
+                AND leave_status = $2
+                AND date_from BETWEEN $3 AND $4 
+                AND date_to BETWEEN $3 AND $4)",
+            employee_id,
+            LeaveStatus::Accepted as LeaveStatus,
+            date_from,
+            date_to
+        )
+        .fetch_one(&ctx.db)
+        .await
+        .map_err(AppError::DatabaseQueryError)?;
+
+        if exists.unwrap_or(false) {
+            Ok(())
+        } else {
+            Err(AppError::ValidationFailed(
+                "Employee has an Accepted leave request within this date range".to_owned(),
+            ))
         }
     }
 }

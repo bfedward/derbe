@@ -1,10 +1,12 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
 use super::{deserialization::deserialize_non_negative_f64, DerbeModel};
 
-#[derive(Debug, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "valid_leave_statuses")]
 pub enum LeaveStatus {
     Pending,
@@ -17,6 +19,18 @@ pub enum LeaveStatus {
 impl PgHasArrayType for LeaveStatus {
     fn array_type_info() -> PgTypeInfo {
         PgTypeInfo::with_name("_valid_leave_statuses")
+    }
+}
+
+impl Display for LeaveStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LeaveStatus::Pending => write!(f, "Pending"),
+            LeaveStatus::MoreInfoReq => write!(f, "MoreInfoReq"),
+            LeaveStatus::Cancelled => write!(f, "Cancelled"),
+            LeaveStatus::Rejected => write!(f, "Rejected"),
+            LeaveStatus::Accepted => write!(f, "Accepted"),
+        }
     }
 }
 
@@ -38,7 +52,7 @@ pub struct LeaveRequest {
     #[serde_as(as = "Rfc3339")]
     pub date_requested: OffsetDateTime,
     #[serde_as(as = "Option<Rfc3339>")]
-    #[serde(default)]
+    // #[serde(default)]
     pub date_finalised: Option<OffsetDateTime>,
     pub notes: Option<String>,
 }

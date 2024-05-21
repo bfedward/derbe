@@ -26,9 +26,15 @@ pub trait DerbeService<M: DerbeModel + Sync + Send, R: DerbeRepository<M>> {
     ) -> impl Future<Output = Result<(), AppError>> + Send {
         async {
             Self::check_related_entities_exist(entity, ctx).await?;
+            Self::pre_create_validation(entity, ctx).await?;
             Ok(())
         }
     }
+
+    fn pre_create_validation(
+        entity: &M,
+        ctx: &AppContext,
+    ) -> impl Future<Output = Result<(), AppError>> + Send;
 
     fn create_entity(
         entity: M,
@@ -41,15 +47,22 @@ pub trait DerbeService<M: DerbeModel + Sync + Send, R: DerbeRepository<M>> {
     }
 
     fn pre_update(
-        _id: i32,
+        id: i32,
         entity: &M,
         ctx: &AppContext,
     ) -> impl Future<Output = Result<(), AppError>> + Send {
-        async {
+        async move {
             Self::check_related_entities_exist(entity, ctx).await?;
+            Self::pre_update_validation(id, entity, ctx).await?;
             Ok(())
         }
     }
+
+    fn pre_update_validation(
+        id: i32,
+        entity: &M,
+        ctx: &AppContext,
+    ) -> impl Future<Output = Result<(), AppError>> + Send;
 
     fn check_entity_exists(
         id: i32,
@@ -73,6 +86,8 @@ pub trait DerbeService<M: DerbeModel + Sync + Send, R: DerbeRepository<M>> {
             R::update_entity(id, entity_update, ctx).await
         }
     }
+
+    fn pre_create_and_pre_update_validation(entity: &M) -> Result<(), AppError>;
 
     fn pre_delete(id: i32, ctx: &AppContext) -> impl Future<Output = Result<(), AppError>> + Send {
         async move {

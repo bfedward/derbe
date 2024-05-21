@@ -11,6 +11,7 @@ pub enum AppError {
     RelatedEntity(String),
     ConstraintError(String),
     InvalidStructArgs(String),
+    ValidationFailed(String),
 }
 
 impl IntoResponse for AppError {
@@ -36,6 +37,7 @@ impl IntoResponse for AppError {
                 StatusCode::BAD_REQUEST,
                 format!("Invalid struct args: {error}"),
             ),
+            Self::ValidationFailed(message) => (StatusCode::BAD_REQUEST, message),
         };
 
         // Return a JSON response
