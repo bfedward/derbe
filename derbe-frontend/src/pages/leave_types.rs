@@ -4,8 +4,9 @@ use gloo::console::log;
 use wasm_bindgen_futures::wasm_bindgen::JsValue;
 use yew::prelude::*;
 
+use crate::api::leave_types::get_leave_types;
 use crate::components::organisms::navbar::Navbar;
-use crate::{api::get_leave_types, model::leave_type::LeaveType};
+use crate::model::leave_type::LeaveType;
 
 #[function_component(LeaveTypes)]
 pub fn component() -> Html {

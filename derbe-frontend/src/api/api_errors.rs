@@ -7,3 +7,10 @@ pub enum ApiError {
     #[error("Unknown Network error")]
     Unknown,
 }
+
+pub fn handle_errors(status: u16) -> ApiError {
+    match status {
+        401 => ApiError::NotAuthenticated,
+        _ => ApiError::Unknown,
+    }
+}

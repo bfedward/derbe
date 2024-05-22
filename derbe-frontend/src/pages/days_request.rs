@@ -1,17 +1,21 @@
 use std::ops::Deref;
 
-use crate::{
-    api::{self, api_errors::ApiError, get_employees, get_leave_types},
-    components::organisms::navbar::Navbar,
-    model::{employee::Employee, leave_request::HalfDayOptions, leave_type::LeaveType},
-    router::Route,
-};
 use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveTime, Utc, Weekday};
 use gloo::console::log;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{HtmlInputElement, HtmlSelectElement};
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
+
+use crate::api::employees::get_employees;
+use crate::api::leave_requests::create_leave_request;
+use crate::api::leave_types::get_leave_types;
+use crate::{
+    api::api_errors::ApiError,
+    components::organisms::navbar::Navbar,
+    model::{employee::Employee, leave_request::HalfDayOptions, leave_type::LeaveType},
+    router::Route,
+};
 
 #[function_component(DaysRequest)]
 pub fn component() -> Html {
@@ -267,7 +271,7 @@ pub fn component() -> Html {
             let notes = notes.deref().clone();
             let history = history.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                match api::create_leave_request(
+                match create_leave_request(
                     employee.unwrap().id.unwrap(),
                     leave_type.unwrap().id.unwrap(),
                     date_from_clone,

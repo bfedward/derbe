@@ -5,6 +5,7 @@ use crate::router::{switch, Route};
 
 mod api;
 mod components;
+mod dto;
 mod model;
 mod pages;
 mod router;

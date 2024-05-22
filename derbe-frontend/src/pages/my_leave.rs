@@ -1,10 +1,13 @@
 use std::ops::Deref;
 
-use crate::{api::get_my_leave, components::organisms::navbar::Navbar, router::Route};
 use gloo::console::log;
 use wasm_bindgen::JsValue;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
+
+use crate::api::leave_requests::get_my_leave;
+use crate::dto::leave_request::MyLeaveResponse;
+use crate::{components::organisms::navbar::Navbar, router::Route};
 
 #[function_component(MyLeave)]
 pub fn component() -> Html {
@@ -73,7 +76,7 @@ pub fn component() -> Html {
     }
 }
 
-fn my_leave_html(my_leaves: &Vec<crate::model::my_leave::MyLeaveResponse>) -> Vec<Html> {
+fn my_leave_html(my_leaves: &Vec<MyLeaveResponse>) -> Vec<Html> {
     my_leaves
         .iter()
         .map(|my_leave| {
