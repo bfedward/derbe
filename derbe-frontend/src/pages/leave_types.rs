@@ -17,13 +17,8 @@ pub fn component() -> Html {
     let leave_types_clone = leave_types.clone();
 
     use_effect(move || {
-        let leave_types_clone = leave_types_clone.clone();
         if !*is_loaded_clone {
-            let leave_types_clone = leave_types_clone.clone();
-            let is_loaded_clone = is_loaded_clone.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                let leave_types_clone = leave_types_clone.clone();
-                let is_loaded_clone = is_loaded_clone.clone();
                 match get_leave_types().await {
                     Ok(res) => {
                         let leave_types_clone = leave_types_clone.clone();

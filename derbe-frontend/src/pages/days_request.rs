@@ -35,21 +35,11 @@ pub fn component() -> Html {
     let selected_employee_clone = selected_employee.clone();
 
     use_effect(move || {
-        let leave_types_clone = leave_types_clone.clone();
-        let employees_clone = employees_clone.clone();
         if !*is_leave_types_loaded_clone && !*is_employees_loaded_clone {
-            let leave_types_clone = leave_types_clone.clone();
-            let employees_clone = employees_clone.clone();
-            let is_leave_types_loaded_clone = is_leave_types_loaded_clone.clone();
-            let is_employees_loaded_clone = is_employees_loaded_clone.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                let leave_types_clone = leave_types_clone.clone();
-                let employees_clone = employees_clone.clone();
                 match get_leave_types().await {
                     Ok(res) => {
-                        let leave_types_clone = leave_types_clone.clone();
                         log!(JsValue::from("Got leave types!"));
-
                         if let Some(selected_leave_type) = res
                             .iter()
                             .find(|&leave_type| leave_type.default_in_others_days == true)
@@ -59,7 +49,6 @@ pub fn component() -> Html {
                             log!("No default leave!!");
                             selected_leave_type_clone.set(None);
                         }
-
                         leave_types_clone.set(res);
                         is_leave_types_loaded_clone.set(true);
                     }
@@ -70,15 +59,12 @@ pub fn component() -> Html {
                 match get_employees().await {
                     Ok(mut res) => {
                         log!(JsValue::from("Got employees!"));
-
                         res.sort_by_key(|employee| employee.last_name.clone());
-
                         if let Some(first) = res.first().cloned() {
                             selected_employee_clone.set(Some(first));
                         } else {
                             selected_employee_clone.set(None);
                         }
-
                         employees_clone.set(res);
                         is_employees_loaded_clone.set(true);
                     }
@@ -214,7 +200,7 @@ pub fn component() -> Html {
         })
     };
 
-    let half_day_opt_onchage = {
+    let half_day_opt_onchange = {
         let half_day_opt = half_day_opt.clone();
         Callback::from(move |event: Event| {
             let target = event.target().unwrap().unchecked_into::<HtmlInputElement>();
@@ -359,19 +345,19 @@ pub fn component() -> Html {
 
                             <fieldset>
                                 <label>
-                                    <input type="radio" name="halfDayOps" id="allDaysFull" checked={ half_day_opt == HalfDayOptions::FullDays } onchange={ half_day_opt_onchage.clone() }/>
+                                    <input type="radio" name="halfDayOps" id="allDaysFull" checked={ half_day_opt == HalfDayOptions::FullDays } onchange={ half_day_opt_onchange.clone() }/>
                                     { "All days are full" }
                                 </label>
                                 <label>
-                                    <input type="radio" name="halfDayOps" id="firstDayHalf" checked={ half_day_opt == HalfDayOptions::FirstDayHalf } onchange={ half_day_opt_onchage.clone() }/>
+                                    <input type="radio" name="halfDayOps" id="firstDayHalf" checked={ half_day_opt == HalfDayOptions::FirstDayHalf } onchange={ half_day_opt_onchange.clone() }/>
                                     { "First day is a half day" }
                                 </label>
                                 <label>
-                                    <input type="radio" name="halfDayOps" id="lastDayHalf" checked={ half_day_opt == HalfDayOptions::LastDayHalf } disabled={ !duration_gt_one } onchange={ half_day_opt_onchage.clone() }/>
+                                    <input type="radio" name="halfDayOps" id="lastDayHalf" checked={ half_day_opt == HalfDayOptions::LastDayHalf } disabled={ !duration_gt_one } onchange={ half_day_opt_onchange.clone() }/>
                                     { "Last day is a half day" }
                                 </label>
                                 <label>
-                                    <input type="radio" name="halfDayOps" id="firstAndLastHalfs" checked={ half_day_opt == HalfDayOptions::BothHalfDays } disabled={ !duration_gt_one } onchange={ half_day_opt_onchage.clone() }/>
+                                    <input type="radio" name="halfDayOps" id="firstAndLastHalfs" checked={ half_day_opt == HalfDayOptions::BothHalfDays } disabled={ !duration_gt_one } onchange={ half_day_opt_onchange.clone() }/>
                                     { "First and last days are half days" }
                                 </label>
                             </fieldset>
@@ -393,7 +379,7 @@ pub fn component() -> Html {
                                 <p>{ "You are requesting " }<kbd>{ calculated_leave_duration }</kbd>{ format!(" days of {}.", leave_type_name) }</p>
                                 if let Some(quota) = leave_type_quota {
                                     <p>{ "You have a total quota of " }<kbd>{quota}</kbd>{ format!(" days of {}.", leave_type_name) }</p>
-                                    <p>{ "After this request has been Accepted, you will have " }<kbd>{"4"}</kbd>{ " days remaining."}</p>
+                                    <p>{ "After this request has been Accepted, you will have " }<kbd>{"???"}</kbd>{ " days remaining."}</p>
                                 }
                             </section>
                         }

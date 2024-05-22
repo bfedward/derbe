@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, TimeZone, Utc};
 use reqwasm::http::Request;
 
 use crate::api::api_errors::{handle_errors, ApiError};
@@ -7,12 +7,18 @@ use crate::dto::leave_request::{MyLeaveRequest, MyLeaveResponse};
 use crate::model::leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus};
 
 pub async fn get_my_leave() -> Result<Vec<MyLeaveResponse>, ApiError> {
+    let current_year = Utc::now().year();
+    let start_jan: DateTime<Utc> = Utc.with_ymd_and_hms(current_year, 1, 1, 0, 0, 0).unwrap();
+    let end_dec: DateTime<Utc> = Utc
+        .with_ymd_and_hms(current_year + 1, 1, 1, 0, 0, 0)
+        .unwrap();
+
     let my_leave_request = MyLeaveRequest {
         employee_id: 3,
         leave_type_ids: vec![1, 5],
         leave_statuses: vec![LeaveStatus::Pending],
-        date_from: "2024-01-08T00:00:00Z".to_owned(),
-        date_to: "2024-12-08T00:00:00Z".to_owned(),
+        date_from: start_jan,
+        date_to: end_dec,
     };
 
     let req = Request::post(&format!("{}/myLeave", BASE_URL))
@@ -50,8 +56,8 @@ pub async fn create_leave_request(
         employee_id: employee,
         leave_type_id: leave_type,
         leave_status: LeaveStatus::Pending,
-        date_from: date_from.to_rfc3339(),
-        date_to: date_to.to_rfc3339(),
+        date_from: date_from,
+        date_to: date_to,
         first_day_half,
         last_day_half,
         total_duration,

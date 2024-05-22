@@ -18,13 +18,8 @@ pub fn component() -> Html {
     let my_leaves_clone = my_leaves.clone();
 
     use_effect(move || {
-        let my_leaves_clone = my_leaves_clone.clone();
         if !*is_loaded_clone {
-            let my_leaves_clone = my_leaves_clone.clone();
-            let is_loaded_clone = is_loaded_clone.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                let my_leaves_clone = my_leaves_clone.clone();
-                let is_loaded_clone = is_loaded_clone.clone();
                 match get_my_leave().await {
                     Ok(res) => {
                         let my_leaves_clone = my_leaves_clone.clone();
@@ -87,10 +82,10 @@ fn my_leave_html(my_leaves: &Vec<MyLeaveResponse>) -> Vec<Html> {
                         { &my_leave.leave_status.to_string() }
                     </td>
                     <td>
-                        { &my_leave.date_from }
+                        { &my_leave.date_from.to_string() }
                     </td>
                     <td>
-                        { &my_leave.date_to }
+                        { &my_leave.date_to.to_string() }
                     </td>
                     <td>
                         { &my_leave.total_duration }
