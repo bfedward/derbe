@@ -1,5 +1,6 @@
 use crate::{
-    error::AppError, http::AppContext, model::leave_type::LeaveType, repository::leave_types_repository::LeaveTypesRepository
+    error::AppError, http::AppContext, model::leave_type::LeaveType,
+    repository::leave_types_repository::LeaveTypesRepository,
 };
 
 use super::DerbeService;
@@ -14,22 +15,19 @@ impl DerbeService<LeaveType, LeaveTypesRepository> for LeaveTypesService {
         Ok(())
     }
 
-    async fn pre_create_validation(
-        entity: &LeaveType,
-        ctx: &AppContext,
-    ) -> Result<(), AppError> {
+    async fn pre_create_validation(_entity: &LeaveType, _ctx: &AppContext) -> Result<(), AppError> {
         todo!()
     }
 
     async fn pre_update_validation(
-        id: i32,
-        entity: &LeaveType,
-        ctx: &AppContext,
+        _id: i32,
+        _entity: &LeaveType,
+        _ctx: &AppContext,
     ) -> Result<(), AppError> {
         todo!()
     }
-    
-    fn pre_create_and_pre_update_validation(entity: &LeaveType) -> Result<(), AppError> {
+
+    fn pre_create_and_pre_update_validation(_entity: &LeaveType) -> Result<(), AppError> {
         todo!()
     }
 }

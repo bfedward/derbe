@@ -15,19 +15,19 @@ impl DerbeService<Division, DivisionRepository> for DivisionService {
         Ok(())
     }
 
-    async fn pre_create_validation(entity: &Division, ctx: &AppContext) -> Result<(), AppError> {
+    async fn pre_create_validation(_entity: &Division, _ctx: &AppContext) -> Result<(), AppError> {
         todo!()
     }
 
     async fn pre_update_validation(
-        id: i32,
-        entity: &Division,
-        ctx: &AppContext,
+        _id: i32,
+        _entity: &Division,
+        _ctx: &AppContext,
     ) -> Result<(), AppError> {
         todo!()
     }
-    
-    fn pre_create_and_pre_update_validation(entity: &Division) -> Result<(), AppError> {
+
+    fn pre_create_and_pre_update_validation(_entity: &Division) -> Result<(), AppError> {
         todo!()
     }
 }

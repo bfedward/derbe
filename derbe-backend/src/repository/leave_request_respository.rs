@@ -1,4 +1,4 @@
-use time::OffsetDateTime;
+use sqlx::types::chrono::{DateTime, Utc};
 
 use crate::model;
 use crate::{
@@ -258,8 +258,8 @@ impl LeaveRequestRepository {
 
     pub async fn check_for_accepted_leave_for_employee_and_date_range(
         employee_id: i32,
-        date_from: OffsetDateTime,
-        date_to: OffsetDateTime,
+        date_from: DateTime<Utc>,
+        date_to: DateTime<Utc>,
         ctx: &AppContext,
     ) -> Result<(), AppError> {
         let exists = sqlx::query_scalar!(

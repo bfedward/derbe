@@ -26,7 +26,7 @@ impl DerbeService<Employee, EmployeeRepository> for EmployeeService {
         Ok(())
     }
 
-    async fn pre_create_validation(entity: &Employee, ctx: &AppContext) -> Result<(), AppError> {
+    async fn pre_create_validation(entity: &Employee, _ctx: &AppContext) -> Result<(), AppError> {
         Self::pre_create_and_pre_update_validation(entity)?;
         todo!()
     }
@@ -34,7 +34,7 @@ impl DerbeService<Employee, EmployeeRepository> for EmployeeService {
     async fn pre_update_validation(
         id: i32,
         entity: &Employee,
-        ctx: &AppContext,
+        _ctx: &AppContext,
     ) -> Result<(), AppError> {
         Self::pre_create_and_pre_update_validation(entity)?;
         if let Some(manager_id) = entity.manager_id {
@@ -46,8 +46,8 @@ impl DerbeService<Employee, EmployeeRepository> for EmployeeService {
         }
         todo!()
     }
-    
-    fn pre_create_and_pre_update_validation(entity: &Employee) -> Result<(), AppError> {
+
+    fn pre_create_and_pre_update_validation(_entity: &Employee) -> Result<(), AppError> {
         todo!()
     }
 }

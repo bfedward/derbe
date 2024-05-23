@@ -1,4 +1,6 @@
-use std::time::SystemTime;
+use chrono::Utc;
+
+use LeaveStatus::*;
 
 use crate::{
     dto::{request::leave_request::MyLeaveRequest, response::leave_request::MyLeaveResponse},
@@ -7,8 +9,6 @@ use crate::{
     model::leave_request::{LeaveRequest, LeaveStatus},
     repository::leave_request_respository::LeaveRequestRepository,
 };
-
-use LeaveStatus::*;
 
 use super::{
     employee_service::EmployeeService, leave_types_service::LeaveTypesService, DerbeService,
@@ -56,7 +56,6 @@ impl DerbeService<LeaveRequest, LeaveRequestRepository> for LeaveRequestService 
     ) -> Result<(), AppError> {
         Self::pre_create_and_pre_update_validation(entity)?;
         let existing_entity = Self::get_entity_by_id(id, ctx).await?;
-        
 
         let leave_status_state_change_ok: bool = matches!(
             (&entity.leave_status, &existing_entity.leave_status),
@@ -98,7 +97,7 @@ impl DerbeService<LeaveRequest, LeaveRequestRepository> for LeaveRequestService 
             ));
         }
 
-        if entity.date_requested > SystemTime::now() {
+        if entity.date_requested > Utc::now() {
             return Err(AppError::ValidationFailed(
                 "Date Requested cannot be in the future".to_owned(),
             ));

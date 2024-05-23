@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
-use time::{format_description::well_known::Rfc3339, OffsetDateTime};
+use sqlx::types::chrono::{DateTime, Utc};
 
 use super::{deserialization::deserialize_non_negative_f64, DerbeModel};
 
@@ -41,19 +41,14 @@ pub struct LeaveRequest {
     pub employee_id: i32,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
-    #[serde_as(as = "Rfc3339")]
-    pub date_from: OffsetDateTime,
-    #[serde_as(as = "Rfc3339")]
-    pub date_to: OffsetDateTime,
+    pub date_from: DateTime<Utc>,
+    pub date_to: DateTime<Utc>,
     pub first_day_half: bool,
     pub last_day_half: bool,
     #[serde(deserialize_with = "deserialize_non_negative_f64")]
     pub total_duration: f64,
-    #[serde_as(as = "Rfc3339")]
-    pub date_requested: OffsetDateTime,
-    #[serde_as(as = "Option<Rfc3339>")]
-    // #[serde(default)]
-    pub date_finalised: Option<OffsetDateTime>,
+    pub date_requested: DateTime<Utc>,
+    pub date_finalised: Option<DateTime<Utc>>,
     pub notes: Option<String>,
 }
 
