@@ -31,7 +31,7 @@ pub fn component() -> Html {
                              { "Configuration" }
                             </summary>
                             <ul dir="rtl">
-                                <Link<Route> to={Route::LeaveTypes}>{ "Leave Types" }</Link<Route>>
+                                <li><Link<Route> to={Route::LeaveTypes}>{ "Leave Types" }</Link<Route>></li>
                             </ul>
                         </details>
                     </li>

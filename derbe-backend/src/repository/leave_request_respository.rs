@@ -241,6 +241,7 @@ impl LeaveRequestRepository {
                 AND leave_status = ANY($3)
                 AND date_from BETWEEN $4 AND $5 
                 AND date_to BETWEEN $4 AND $5
+            ORDER BY lr.date_from DESC
             "#,
             my_leave_request.employee_id,
             &my_leave_request.leave_type_ids,
