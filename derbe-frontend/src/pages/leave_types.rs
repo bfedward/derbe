@@ -38,6 +38,7 @@ pub fn component() -> Html {
     html! {
         <main class="container">
             <Navbar />
+            <h1>{ "Leave Types" }</h1>
             if *is_loaded.deref() {
                 <table>
                     <thead>
@@ -60,7 +61,7 @@ pub fn component() -> Html {
     }
 }
 
-fn leave_type_html(leave_types: &Vec<LeaveType>) -> Vec<Html> {
+fn leave_type_html(leave_types: &[LeaveType]) -> Vec<Html> {
     leave_types.iter().map(|leave_type| {
         html! {
             <tr>

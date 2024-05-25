@@ -1,5 +1,5 @@
+use chrono::{DateTime, Datelike, Utc};
 use std::ops::Deref;
-use chrono::{Datelike, DateTime, Utc};
 
 use gloo::console::log;
 use wasm_bindgen::JsValue;
@@ -84,7 +84,7 @@ pub fn component() -> Html {
     }
 }
 
-fn my_leave_html(my_leaves: &Vec<MyLeaveResponse>) -> Vec<Html> {
+fn my_leave_html(my_leaves: &[MyLeaveResponse]) -> Vec<Html> {
     my_leaves
         .iter()
         .map(|my_leave| {
@@ -120,7 +120,12 @@ fn format_my_leave_date(date_time: DateTime<Utc>) -> String {
         2 | 22 => "nd",
         3 | 23 => "rd",
         4..=20 | 24..=30 => "th",
-        _ => panic!("Unknown day: {}", date_time.day())
+        _ => panic!("Unknown day: {}", date_time.day()),
     };
-    format!("{}{}{}", date_time.format("%A, %e"), day_ending, date_time.format(" of %B, %Y"))
+    format!(
+        "{}{}{}",
+        date_time.format("%A, %e"),
+        day_ending,
+        date_time.format(" of %B, %Y")
+    )
 }

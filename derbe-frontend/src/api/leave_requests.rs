@@ -56,8 +56,8 @@ pub async fn create_leave_request(
         employee_id: employee,
         leave_type_id: leave_type,
         leave_status: LeaveStatus::Pending,
-        date_from: date_from,
-        date_to: date_to,
+        date_from,
+        date_to,
         first_day_half,
         last_day_half,
         total_duration,
@@ -69,6 +69,19 @@ pub async fn create_leave_request(
     let request = Request::post(&format!("{}/leaveRequests", BASE_URL))
         .header("content-type", "application/json")
         .body(serde_json::to_string(&new_leave_request).unwrap())
+        .send()
+        .await
+        .unwrap();
+
+    if request.ok() {
+        Ok(request.json::<LeaveRequest>().await.unwrap())
+    } else {
+        Err(handle_errors(request.status()))
+    }
+}
+
+pub async fn get_leave_request(id: &i32) -> Result<LeaveRequest, ApiError> {
+    let request = Request::get(&format!("{}/leaveRequests/{}", BASE_URL, id))
         .send()
         .await
         .unwrap();

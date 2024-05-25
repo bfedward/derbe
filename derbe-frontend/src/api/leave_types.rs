@@ -16,3 +16,16 @@ pub async fn get_leave_types() -> Result<Vec<LeaveType>, ApiError> {
         Err(handle_errors(req.status()))
     }
 }
+
+pub async fn get_leave_type(id: &i32) -> Result<LeaveType, ApiError> {
+    let req = Request::get(&format!("{}/leaveTypes/{}", BASE_URL, id))
+        .send()
+        .await
+        .unwrap();
+
+    if req.ok() {
+        Ok(req.json::<LeaveType>().await.unwrap())
+    } else {
+        Err(handle_errors(req.status()))
+    }
+}

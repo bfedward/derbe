@@ -42,7 +42,7 @@ pub fn component() -> Html {
                         log!(JsValue::from("Got leave types!"));
                         if let Some(selected_leave_type) = res
                             .iter()
-                            .find(|&leave_type| leave_type.default_in_others_days == true)
+                            .find(|&leave_type| leave_type.default_in_others_days)
                         {
                             selected_leave_type_clone.set(Some(selected_leave_type.clone()));
                         } else {
@@ -292,8 +292,8 @@ pub fn component() -> Html {
     };
 
     let half_day_opt = half_day_opt.deref().clone();
-    let date_from_clone = date_from.deref().clone();
-    let date_to_clone = date_to.deref().clone();
+    let date_from_clone = *date_from.deref();
+    let date_to_clone = *date_to.deref();
 
     let leave_type_name = if let Some(leave_type) = selected_leave_type.deref() {
         leave_type.name.clone()
@@ -323,12 +323,12 @@ pub fn component() -> Html {
                         <div>
                             <label for="employeeSelect">{ "Employee "}</label>
                             <select id="employeeSelect" name="employeeSelect" required=true onchange={employee_onchange}>
-                                { for employee_select_options_html(&employees.deref()) }
+                                { for employee_select_options_html(employees.deref()) }
                             </select>
 
                             <label for="leaveTypeSelect">{ " Leave Type "}</label>
                             <select id="leaveTypeSelect" name="leaveTypeSelect" required=true onchange={leave_types_onchange}>
-                                { for leave_type_options_html(&leave_types.deref())}
+                                { for leave_type_options_html(leave_types.deref())}
                             </select>
 
                             <p class="grid">
@@ -397,12 +397,12 @@ pub fn component() -> Html {
     }
 }
 
-fn employee_select_options_html(employees: &Vec<Employee>) -> Vec<Html> {
+fn employee_select_options_html(employees: &[Employee]) -> Vec<Html> {
     employees
         .iter()
         .enumerate()
         .map(|(index, employee)| {
-            let selected = if index == 0 { true } else { false };
+            let selected = index == 0;
             html! {
                 <option value={ employee.id.unwrap().to_string() } selected={ selected }>
                     { format!("{} {}", &employee.first_name, &employee.last_name) }
@@ -412,7 +412,7 @@ fn employee_select_options_html(employees: &Vec<Employee>) -> Vec<Html> {
         .collect()
 }
 
-fn leave_type_options_html(leave_types: &Vec<LeaveType>) -> Vec<Html> {
+fn leave_type_options_html(leave_types: &[LeaveType]) -> Vec<Html> {
     leave_types.iter().map(|leave_type| {
         html! {
             <option value={ leave_type.id.unwrap().to_string() } selected={ leave_type.default_in_others_days }>{ &leave_type.name }</option>

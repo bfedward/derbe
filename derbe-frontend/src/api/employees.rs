@@ -16,3 +16,16 @@ pub async fn get_employees() -> Result<Vec<Employee>, ApiError> {
         Err(handle_errors(req.status()))
     }
 }
+
+pub async fn get_employee(id: &i32) -> Result<Employee, ApiError> {
+    let req = Request::get(&format!("{}/employees/{}", BASE_URL, id))
+        .send()
+        .await
+        .unwrap();
+
+    if req.ok() {
+        Ok(req.json::<Employee>().await.unwrap())
+    } else {
+        Err(handle_errors(req.status()))
+    }
+}
