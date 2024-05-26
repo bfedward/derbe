@@ -21,6 +21,14 @@ use crate::{
 pub fn component() -> Html {
     let is_leave_types_loaded = use_state(|| false);
     let is_employees_loaded = use_state(|| false);
+
+    let now = Utc::now().with_time(NaiveTime::MIN).unwrap();
+
+    let date_from = use_state(|| now);
+    let date_to = use_state(|| now);
+    let half_day_opt = use_state(|| HalfDayOptions::FullDays);
+    let notes = use_state(|| None::<String>);
+
     let leave_types = use_state(Vec::new);
     let selected_leave_type = use_state(|| None);
     let employees = use_state(Vec::new);
@@ -76,13 +84,6 @@ pub fn component() -> Html {
         }
         || {}
     });
-
-    let now = Utc::now().with_time(NaiveTime::MIN).unwrap();
-
-    let date_from = use_state(|| now);
-    let date_to = use_state(|| now);
-    let half_day_opt = use_state(|| HalfDayOptions::FullDays);
-    let notes = use_state(|| None::<String>);
 
     let selected_employee_clone = selected_employee.clone();
     let employees_clone = employees.clone();
@@ -250,7 +251,7 @@ pub fn component() -> Html {
             let employee = selected_employee_clone.deref().clone();
             let leave_type = selected_leave_type_clone.deref().clone();
             let date_from_clone = *date_from_clone.deref();
-            let date_to = *date_to_clone.deref();
+            let date_to_clone = *date_to_clone.deref();
             let half_day_opt = half_day_opt.deref().clone();
             let total_duration =
                 calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
@@ -261,7 +262,7 @@ pub fn component() -> Html {
                     employee.unwrap().id.unwrap(),
                     leave_type.unwrap().id.unwrap(),
                     date_from_clone,
-                    date_to,
+                    date_to_clone,
                     half_day_opt,
                     total_duration,
                     notes,
@@ -321,7 +322,7 @@ pub fn component() -> Html {
 
                         <div class="grid">
                         <div>
-                            <label for="employeeSelect">{ "Employee "}</label>
+                            <label for="employeeSelect">{ "Employee" }</label>
                             <select id="employeeSelect" name="employeeSelect" required=true onchange={employee_onchange}>
                                 { for employee_select_options_html(employees.deref()) }
                             </select>

@@ -3,7 +3,7 @@ use std::fmt::Display;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Default)]
 pub enum LeaveStatus {
     #[default]
     Pending,
@@ -25,8 +25,9 @@ impl Display for LeaveStatus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum HalfDayOptions {
+    #[default]
     FullDays,
     FirstDayHalf,
     LastDayHalf,
@@ -44,7 +45,7 @@ pub struct LeaveRequest {
     pub first_day_half: bool,
     pub last_day_half: bool,
     pub total_duration: f64,
-    pub date_requested: String,
+    pub date_requested: DateTime<Utc>,
     pub date_finalised: Option<DateTime<Utc>>,
     pub notes: Option<String>,
 }
