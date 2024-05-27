@@ -51,6 +51,8 @@ pub fn component(props: &Props) -> Html {
     let leave_type_clone = leave_type.clone();
     let date_from_clone = date_from.clone();
     let date_to_clone = date_to.clone();
+    let half_day_opt_clone = half_day_opt.clone();
+    let notes_clone = notes.clone();
     let id = props.id;
     use_effect(move || {
         if !*is_leave_request_loaded_clone
@@ -66,6 +68,13 @@ pub fn component(props: &Props) -> Html {
                         leave_request_clone.set(res_clone.clone());
                         date_from_clone.set(res_clone.date_from);
                         date_to_clone.set(res_clone.date_to);
+                        notes_clone.set(res_clone.notes);
+                        half_day_opt_clone.set(match (res_clone.first_day_half, res_clone.last_day_half) {
+                            (true, true) => HalfDayOptions::BothHalfDays,
+                            (true, false) => HalfDayOptions::FirstDayHalf,
+                            (false, true) => HalfDayOptions::LastDayHalf,
+                            (false, false) => HalfDayOptions::BothHalfDays
+                        });
 
                         wasm_bindgen_futures::spawn_local(async move {
                             if !*is_leave_type_loaded_clone {
@@ -197,41 +206,57 @@ pub fn component(props: &Props) -> Html {
         })
     };
 
+    let leave_request_id = leave_request.id;
+    let employee_id = employee.id;
+    let leave_type_id = leave_type.id;
+    let leave_status = leave_request.leave_status;
     let date_from_clone = date_from.clone();
     let date_to_clone = date_to.clone();
-    let leave_type_clone = leave_type.clone();
-    let employee_clone = employee.clone();
-    let leave_request_clone = leave_request.clone();
+    let date_requested = leave_request.date_requested;
+    let date_finalised = leave_request.date_finalised;
+    let notes_clone = notes.clone();
+    
     let onsubmit = {
+        
         let half_day_opt = half_day_opt.clone();
-        let notes = notes;
+        let total_duration =
+                calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
         let history = use_navigator().unwrap();
 
+        let (first_day_half, last_day_half) = match half_day_opt.deref() {
+            HalfDayOptions::FullDays => (false, false),
+            HalfDayOptions::FirstDayHalf => (true, false),
+            HalfDayOptions::LastDayHalf => (false, true),
+            HalfDayOptions::BothHalfDays => (true, true),
+        }; 
+        
         Callback::from(move |event: SubmitEvent| {
+            let note_clone = notes_clone.deref().clone();
+            let employee_id = employee_id.unwrap();
+            let leave_type_id = leave_type_id.unwrap();
+
+            let updated_leave_request = LeaveRequest { 
+                id: leave_request_id,
+                employee_id,
+                leave_type_id,
+                leave_status,
+                date_from: *date_from_clone,
+                date_to: *date_to_clone,
+                first_day_half,
+                last_day_half,
+                total_duration,
+                date_requested,
+                date_finalised,
+                notes: note_clone
+            }; 
+
+
             event.prevent_default();
-            let leave_request_clone = leave_request_clone.clone();
-            let employee_id = employee_clone.deref().clone().id.unwrap();
-            let leave_type_id = leave_type_clone.deref().clone().id.unwrap();
-            let date_from_clone = *date_from_clone.deref();
-            let date_to_clone = *date_to_clone.deref();
-            let half_day_opt = half_day_opt.deref().clone();
-            let total_duration =
-                calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
-            let notes = notes.deref().clone();
+            let updated_leave_request = updated_leave_request.clone();
             let history = history.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 match update_leave_request(
-                    &leave_request_clone.id.unwrap(),
-                    &employee_id,
-                    &leave_type_id,
-                    &leave_request_clone.leave_status,
-                    date_from_clone,
-                    date_to_clone,
-                    half_day_opt,
-                    total_duration,
-                    &leave_request_clone.date_requested,
-                    &leave_request_clone.date_finalised,
-                    notes,
+                    &updated_leave_request
                 )
                 .await
                 {
@@ -250,6 +275,15 @@ pub fn component(props: &Props) -> Html {
         })
     };
 
+    let cancel_onclick = {
+        let history = use_navigator().unwrap();
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+            history.push(&Route::MyLeave);
+        })
+    };
+
+
     let leave_type_name = leave_type.name.clone();
 
     let calculated_leave_duration =
@@ -258,13 +292,16 @@ pub fn component(props: &Props) -> Html {
 
     let half_day_opt = half_day_opt.deref().clone();
 
+    let notes_clone = notes.clone();
+    let notes_string = notes_clone.deref().clone().unwrap_or(String::new());
+
     html! {
         <main class="container">
             <Navbar />
             <h1>{ "Leave Request Details" }</h1>
             if *is_leave_request_loaded.deref() && *is_employee_loaded.deref() && *is_leave_type_loaded.deref() {
                 <section id="form">
-                    <form {onsubmit}>
+                    <form onsubmit = {onsubmit}>
                         <label for="employeeName">{ "Employee" }</label>
                         <input type="text" id="employeeName" readonly=true value={format!("{} {}", employee.first_name, employee.last_name)} />
 
@@ -274,11 +311,11 @@ pub fn component(props: &Props) -> Html {
                         <p class="grid">
                             <div>
                                 <label for="dateFrom">{ "Date From "}</label>
-                                <input id="dateFrom" type="date" name="dateFrom" value={ utc_to_yyyy_mm_dd(&leave_request.date_from) } min={ utc_to_yyyy_mm_dd(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_from_onchage }/>
+                                <input id="dateFrom" type="date" name="dateFrom" value={ utc_to_yyyy_mm_dd(&leave_request.date_from) } min={ utc_to_yyyy_mm_dd_this_year_start(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_from_onchage }/>
                             </div>
                             <div>
                                 <label for="dateTo">{ "Date To "}</label>
-                                <input id="dateTo" type="date" name="dateTo" value={ utc_to_yyyy_mm_dd(&leave_request.date_to) } min={ utc_to_yyyy_mm_dd(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_to_onchage }/>
+                                <input id="dateTo" type="date" name="dateTo" value={ utc_to_yyyy_mm_dd(&leave_request.date_to) } min={ utc_to_yyyy_mm_dd_this_year_start(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_to_onchage }/>
                             </div>
                         </p>
 
@@ -305,12 +342,16 @@ pub fn component(props: &Props) -> Html {
                                 name="daysRequestNotes"
                                 placeholder="Notes..."
                                 onchange={ notes_onchange }
-                            >
-                            </textarea>
-                            <small id="notesHelp">
-                                <i>{ "Optional" }</i>
-                            </small>
+                                value={notes_string}
+                        />
+                        <small id="notesHelp">
+                            <i>{ "Optional" }</i>
+                        </small>
 
+                        <p class="grid">
+                            <button onclick={ cancel_onclick } class="secondary">{ "Cancel"}</button>
+                            <button disabled={ !*is_form_valid }>{ "Submit"}</button>
+                        </p>
                     </form>
                 </section>
             }
@@ -320,6 +361,10 @@ pub fn component(props: &Props) -> Html {
 
 fn utc_to_yyyy_mm_dd(utc: &DateTime<Utc>) -> String {
     format!("{:04}-{:02}-{:02}", utc.year(), utc.month(), utc.day())
+}
+
+fn utc_to_yyyy_mm_dd_this_year_start(utc: &DateTime<Utc>) -> String {
+    format!("{:04}-{:02}-{:02}", utc.year(), 1, 1)
 }
 
 fn utc_to_yyyy_mm_dd_next_year_end(utc: &DateTime<Utc>) -> String {

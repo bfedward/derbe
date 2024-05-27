@@ -94,43 +94,11 @@ pub async fn create_leave_request(
 }
 
 pub async fn update_leave_request(
-    id: &i32,
-    employee_id: &i32,
-    leave_type_id: &i32,
-    leave_status: &LeaveStatus,
-    date_from: DateTime<Utc>,
-    date_to: DateTime<Utc>,
-    half_day_opt: HalfDayOptions,
-    total_duration: f64,
-    date_requested: &DateTime<Utc>,
-    date_finalised: &Option<DateTime<Utc>>,
-    notes: Option<String>,
+    leave_request: &LeaveRequest
 ) -> Result<LeaveRequest, ApiError> {
-    let (first_day_half, last_day_half) = match half_day_opt {
-        HalfDayOptions::FullDays => (false, false),
-        HalfDayOptions::FirstDayHalf => (true, false),
-        HalfDayOptions::LastDayHalf => (false, true),
-        HalfDayOptions::BothHalfDays => (true, true),
-    };
-
-    let updated_leave_request = LeaveRequest {
-        id: Some(*id),
-        employee_id: *employee_id,
-        leave_type_id: *leave_type_id,
-        leave_status: *leave_status,
-        date_from,
-        date_to,
-        first_day_half,
-        last_day_half,
-        total_duration,
-        date_requested: *date_requested,
-        date_finalised: *date_finalised,
-        notes,
-    };
-
-    let request = Request::put(&format!("{}/leaveRequests/{}", BASE_URL, id))
+    let request = Request::put(&format!("{}/leaveRequests/{}", BASE_URL, leave_request.id.unwrap()))
         .header("content-type", "application/json")
-        .body(serde_json::to_string(&updated_leave_request).unwrap())
+        .body(serde_json::to_string(leave_request).unwrap())
         .send()
         .await
         .unwrap();
