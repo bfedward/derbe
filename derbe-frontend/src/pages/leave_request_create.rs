@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveTime, Utc, Weekday};
+use chrono::{Datelike, NaiveDate, Utc};
 use gloo::console::log;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{HtmlInputElement, HtmlSelectElement};
@@ -10,6 +10,7 @@ use yew_router::hooks::use_navigator;
 use crate::api::employees::get_employees;
 use crate::api::leave_requests::create_leave_request;
 use crate::api::leave_types::get_leave_types;
+use crate::utils::date_utils::{calculate_requested_days, naive_date_to_yyyy_mm_dd_next_year_end};
 use crate::{
     api::api_errors::ApiError,
     components::organisms::navbar::Navbar,
@@ -17,12 +18,12 @@ use crate::{
     router::Route,
 };
 
-#[function_component(DaysRequest)]
+#[function_component(LeaveRequestCreate)]
 pub fn component() -> Html {
     let is_leave_types_loaded = use_state(|| false);
     let is_employees_loaded = use_state(|| false);
 
-    let now = Utc::now().with_time(NaiveTime::MIN).unwrap();
+    let now = Utc::now().date_naive();
 
     let date_from = use_state(|| now);
     let date_to = use_state(|| now);
@@ -156,16 +157,13 @@ pub fn component() -> Html {
                 log!(&value);
 
                 if let Ok(parsed_date) = NaiveDate::parse_from_str(&value, "%Y-%m-%d") {
-                    if let Some(naive_dt) = parsed_date.and_hms_opt(0, 0, 0) {
-                        let datetime = DateTime::from_naive_utc_and_offset(naive_dt, Utc);
-                        date_from_clone.set(datetime);
+                    date_from_clone.set(parsed_date);
 
-                        if *date_to_clone < datetime {
-                            log!("Dates invalid!");
-                            is_form_valid_clone.set(false);
-                        } else {
-                            is_form_valid_clone.set(true);
-                        }
+                    if *date_to_clone < parsed_date {
+                        log!("Dates invalid!");
+                        is_form_valid_clone.set(false);
+                    } else {
+                        is_form_valid_clone.set(true);
                     }
                 }
             }
@@ -185,16 +183,13 @@ pub fn component() -> Html {
                 log!(&value);
 
                 if let Ok(parsed_date) = NaiveDate::parse_from_str(&value, "%Y-%m-%d") {
-                    if let Some(naive_dt) = parsed_date.and_hms_opt(0, 0, 0) {
-                        let datetime = DateTime::from_naive_utc_and_offset(naive_dt, Utc);
-                        date_to_clone.set(datetime);
+                    date_to_clone.set(parsed_date);
 
-                        if *date_from_clone > datetime {
-                            log!("Dates invalid!");
-                            is_form_valid_clone.set(false);
-                        } else {
-                            is_form_valid_clone.set(true);
-                        }
+                    if *date_from_clone > parsed_date {
+                        log!("Dates invalid!");
+                        is_form_valid_clone.set(false);
+                    } else {
+                        is_form_valid_clone.set(true);
                     }
                 }
             }
@@ -318,7 +313,7 @@ pub fn component() -> Html {
             if *is_leave_types_loaded.deref() && *is_employees_loaded.deref() {
                 <section id="form">
                     <form {onsubmit}>
-                        <h1>{ "Days Off Request" }</h1>
+                        <h1>{ "Leave Request" }</h1>
 
                         <div class="grid">
                         <div>
@@ -335,11 +330,11 @@ pub fn component() -> Html {
                             <p class="grid">
                                 <div>
                                     <label for="dateFrom">{ "Date From "}</label>
-                                    <input id="dateFrom" type="date" name="dateFrom" value={ utc_to_yyyy_mm_dd(&date_from_clone) } min={ utc_to_yyyy_mm_dd(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_from_onchage }/>
+                                    <input id="dateFrom" type="date" name="dateFrom" value={ naive_date_to_yyyy_mm_dd(&date_from_clone) } min={ naive_date_to_yyyy_mm_dd(&now) } max={ naive_date_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_from_onchage }/>
                                 </div>
                                 <div>
                                     <label for="dateTo">{ "Date To "}</label>
-                                    <input id="dateTo" type="date" name="dateTo" value={ utc_to_yyyy_mm_dd(&date_to_clone) } min={ utc_to_yyyy_mm_dd(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_to_onchage }/>
+                                    <input id="dateTo" type="date" name="dateTo" value={ naive_date_to_yyyy_mm_dd(&date_to_clone) } min={ naive_date_to_yyyy_mm_dd(&now) } max={ naive_date_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_to_onchage }/>
                                 </div>
                             </p>
 
@@ -363,6 +358,7 @@ pub fn component() -> Html {
                                 </label>
                             </fieldset>
 
+                            <label for="daysRequestNotes">{ "Notes"}</label>
                             <textarea
                                 name="daysRequestNotes"
                                 placeholder="Notes..."
@@ -421,40 +417,11 @@ fn leave_type_options_html(leave_types: &[LeaveType]) -> Vec<Html> {
     }).collect()
 }
 
-fn utc_to_yyyy_mm_dd(utc: &DateTime<Utc>) -> String {
-    format!("{:04}-{:02}-{:02}", utc.year(), utc.month(), utc.day())
-}
-
-fn utc_to_yyyy_mm_dd_next_year_end(utc: &DateTime<Utc>) -> String {
-    format!("{:04}-{:02}-{:02}", utc.year() + 1, 12, 31)
-}
-
-fn calculate_requested_days(
-    date_from: &DateTime<Utc>,
-    date_to: &DateTime<Utc>,
-    half_day_op: &HalfDayOptions,
-) -> f64 {
-    let mut duration_in_days = 0.0;
-
-    let mut current_date = *date_from;
-    while current_date <= *date_to {
-        if current_date.weekday() != Weekday::Sat && current_date.weekday() != Weekday::Sun {
-            duration_in_days += 1.0;
-        }
-        current_date += Duration::days(1);
-    }
-
-    // Adjust for half day options
-    match half_day_op {
-        HalfDayOptions::FullDays => {}
-        HalfDayOptions::FirstDayHalf | HalfDayOptions::LastDayHalf => duration_in_days -= 0.5,
-        HalfDayOptions::BothHalfDays => duration_in_days -= 1.0,
-    }
-
-    // Ensure duration_in_days is non-negative
-    if duration_in_days < 0.0 {
-        duration_in_days = 0.0;
-    }
-
-    duration_in_days
+fn naive_date_to_yyyy_mm_dd(naive_date: &NaiveDate) -> String {
+    format!(
+        "{:04}-{:02}-{:02}",
+        naive_date.year(),
+        naive_date.month(),
+        naive_date.day()
+    )
 }

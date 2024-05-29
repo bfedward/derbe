@@ -14,8 +14,12 @@ use crate::{
         leave_type::LeaveType,
     },
     router::Route,
+    utils::date_utils::{
+        calculate_requested_days, naive_date_to_yyyy_mm_dd, naive_date_to_yyyy_mm_dd_next_year_end,
+        naive_date_to_yyyy_mm_dd_this_year_start,
+    },
 };
-use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveTime, Utc, Weekday};
+use chrono::{NaiveDate, Utc};
 use gloo::console::log;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::HtmlInputElement;
@@ -37,7 +41,7 @@ pub fn component(props: &Props) -> Html {
     let leave_type = use_state(LeaveType::default);
     let is_form_valid = use_state(|| true);
 
-    let now = Utc::now().with_time(NaiveTime::MIN).unwrap();
+    let now = Utc::now().date_naive();
     let date_from = use_state(|| now);
     let date_to = use_state(|| now);
     let half_day_opt = use_state(HalfDayOptions::default);
@@ -69,12 +73,14 @@ pub fn component(props: &Props) -> Html {
                         date_from_clone.set(res_clone.date_from);
                         date_to_clone.set(res_clone.date_to);
                         notes_clone.set(res_clone.notes);
-                        half_day_opt_clone.set(match (res_clone.first_day_half, res_clone.last_day_half) {
-                            (true, true) => HalfDayOptions::BothHalfDays,
-                            (true, false) => HalfDayOptions::FirstDayHalf,
-                            (false, true) => HalfDayOptions::LastDayHalf,
-                            (false, false) => HalfDayOptions::BothHalfDays
-                        });
+                        half_day_opt_clone.set(
+                            match (res_clone.first_day_half, res_clone.last_day_half) {
+                                (true, true) => HalfDayOptions::BothHalfDays,
+                                (true, false) => HalfDayOptions::FirstDayHalf,
+                                (false, true) => HalfDayOptions::LastDayHalf,
+                                (false, false) => HalfDayOptions::BothHalfDays,
+                            },
+                        );
 
                         wasm_bindgen_futures::spawn_local(async move {
                             if !*is_leave_type_loaded_clone {
@@ -125,16 +131,13 @@ pub fn component(props: &Props) -> Html {
                 log!(&value);
 
                 if let Ok(parsed_date) = NaiveDate::parse_from_str(&value, "%Y-%m-%d") {
-                    if let Some(naive_dt) = parsed_date.and_hms_opt(0, 0, 0) {
-                        let datetime = DateTime::from_naive_utc_and_offset(naive_dt, Utc);
-                        date_from_clone.set(datetime);
+                    date_from_clone.set(parsed_date);
 
-                        if *date_to_clone < datetime {
-                            log!("Dates invalid!");
-                            is_form_valid_clone.set(false);
-                        } else {
-                            is_form_valid_clone.set(true);
-                        }
+                    if *date_to_clone < parsed_date {
+                        log!("Dates invalid!");
+                        is_form_valid_clone.set(false);
+                    } else {
+                        is_form_valid_clone.set(true);
                     }
                 }
             }
@@ -154,16 +157,13 @@ pub fn component(props: &Props) -> Html {
                 log!(&value);
 
                 if let Ok(parsed_date) = NaiveDate::parse_from_str(&value, "%Y-%m-%d") {
-                    if let Some(naive_dt) = parsed_date.and_hms_opt(0, 0, 0) {
-                        let datetime = DateTime::from_naive_utc_and_offset(naive_dt, Utc);
-                        date_to_clone.set(datetime);
+                    date_to_clone.set(parsed_date);
 
-                        if *date_from_clone > datetime {
-                            log!("Dates invalid!");
-                            is_form_valid_clone.set(false);
-                        } else {
-                            is_form_valid_clone.set(true);
-                        }
+                    if *date_from_clone > parsed_date {
+                        log!("Dates invalid!");
+                        is_form_valid_clone.set(false);
+                    } else {
+                        is_form_valid_clone.set(true);
                     }
                 }
             }
@@ -215,12 +215,11 @@ pub fn component(props: &Props) -> Html {
     let date_requested = leave_request.date_requested;
     let date_finalised = leave_request.date_finalised;
     let notes_clone = notes.clone();
-    
+
     let onsubmit = {
-        
         let half_day_opt = half_day_opt.clone();
         let total_duration =
-                calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
+            calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
         let history = use_navigator().unwrap();
 
         let (first_day_half, last_day_half) = match half_day_opt.deref() {
@@ -228,14 +227,14 @@ pub fn component(props: &Props) -> Html {
             HalfDayOptions::FirstDayHalf => (true, false),
             HalfDayOptions::LastDayHalf => (false, true),
             HalfDayOptions::BothHalfDays => (true, true),
-        }; 
-        
+        };
+
         Callback::from(move |event: SubmitEvent| {
             let note_clone = notes_clone.deref().clone();
             let employee_id = employee_id.unwrap();
             let leave_type_id = leave_type_id.unwrap();
 
-            let updated_leave_request = LeaveRequest { 
+            let updated_leave_request = LeaveRequest {
                 id: leave_request_id,
                 employee_id,
                 leave_type_id,
@@ -247,19 +246,14 @@ pub fn component(props: &Props) -> Html {
                 total_duration,
                 date_requested,
                 date_finalised,
-                notes: note_clone
-            }; 
-
+                notes: note_clone,
+            };
 
             event.prevent_default();
             let updated_leave_request = updated_leave_request.clone();
             let history = history.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                match update_leave_request(
-                    &updated_leave_request
-                )
-                .await
-                {
+                match update_leave_request(&updated_leave_request).await {
                     Ok(_) => {
                         history.push(&Route::MyLeave);
                     }
@@ -282,7 +276,6 @@ pub fn component(props: &Props) -> Html {
             history.push(&Route::MyLeave);
         })
     };
-
 
     let leave_type_name = leave_type.name.clone();
 
@@ -311,11 +304,11 @@ pub fn component(props: &Props) -> Html {
                         <p class="grid">
                             <div>
                                 <label for="dateFrom">{ "Date From "}</label>
-                                <input id="dateFrom" type="date" name="dateFrom" value={ utc_to_yyyy_mm_dd(&leave_request.date_from) } min={ utc_to_yyyy_mm_dd_this_year_start(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_from_onchage }/>
+                                <input id="dateFrom" type="date" name="dateFrom" value={ naive_date_to_yyyy_mm_dd(&date_from) } min={ naive_date_to_yyyy_mm_dd_this_year_start(&now) } max={ naive_date_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_from_onchage }/>
                             </div>
                             <div>
                                 <label for="dateTo">{ "Date To "}</label>
-                                <input id="dateTo" type="date" name="dateTo" value={ utc_to_yyyy_mm_dd(&leave_request.date_to) } min={ utc_to_yyyy_mm_dd_this_year_start(&now) } max={ utc_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_to_onchage }/>
+                                <input id="dateTo" type="date" name="dateTo" value={ naive_date_to_yyyy_mm_dd(&date_to) } min={ naive_date_to_yyyy_mm_dd_this_year_start(&now) } max={ naive_date_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_to_onchage }/>
                             </div>
                         </p>
 
@@ -338,6 +331,7 @@ pub fn component(props: &Props) -> Html {
                             </label>
                         </fieldset>
 
+                        <label for="daysRequestNotes">{ "Notes" }</label>
                         <textarea
                                 name="daysRequestNotes"
                                 placeholder="Notes..."
@@ -357,46 +351,4 @@ pub fn component(props: &Props) -> Html {
             }
         </main>
     }
-}
-
-fn utc_to_yyyy_mm_dd(utc: &DateTime<Utc>) -> String {
-    format!("{:04}-{:02}-{:02}", utc.year(), utc.month(), utc.day())
-}
-
-fn utc_to_yyyy_mm_dd_this_year_start(utc: &DateTime<Utc>) -> String {
-    format!("{:04}-{:02}-{:02}", utc.year(), 1, 1)
-}
-
-fn utc_to_yyyy_mm_dd_next_year_end(utc: &DateTime<Utc>) -> String {
-    format!("{:04}-{:02}-{:02}", utc.year() + 1, 12, 31)
-}
-
-fn calculate_requested_days(
-    date_from: &DateTime<Utc>,
-    date_to: &DateTime<Utc>,
-    half_day_op: &HalfDayOptions,
-) -> f64 {
-    let mut duration_in_days = 0.0;
-
-    let mut current_date = *date_from;
-    while current_date <= *date_to {
-        if current_date.weekday() != Weekday::Sat && current_date.weekday() != Weekday::Sun {
-            duration_in_days += 1.0;
-        }
-        current_date += Duration::days(1);
-    }
-
-    // Adjust for half day options
-    match half_day_op {
-        HalfDayOptions::FullDays => {}
-        HalfDayOptions::FirstDayHalf | HalfDayOptions::LastDayHalf => duration_in_days -= 0.5,
-        HalfDayOptions::BothHalfDays => duration_in_days -= 1.0,
-    }
-
-    // Ensure duration_in_days is non-negative
-    if duration_in_days < 0.0 {
-        duration_in_days = 0.0;
-    }
-
-    duration_in_days
 }

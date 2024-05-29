@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Default)]
@@ -40,8 +40,8 @@ pub struct LeaveRequest {
     pub employee_id: i32,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
-    pub date_from: DateTime<Utc>,
-    pub date_to: DateTime<Utc>,
+    pub date_from: NaiveDate,
+    pub date_to: NaiveDate,
     pub first_day_half: bool,
     pub last_day_half: bool,
     pub total_duration: f64,

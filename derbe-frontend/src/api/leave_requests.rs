@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, TimeZone, Utc};
+use chrono::{Datelike, NaiveDate, Utc};
 use reqwasm::http::Request;
 
 use crate::api::api_errors::{handle_errors, ApiError};
@@ -21,10 +21,8 @@ pub async fn get_leave_request(id: &i32) -> Result<LeaveRequest, ApiError> {
 
 pub async fn get_my_leave() -> Result<Vec<MyLeaveResponse>, ApiError> {
     let current_year = Utc::now().year();
-    let start_jan: DateTime<Utc> = Utc.with_ymd_and_hms(current_year, 1, 1, 0, 0, 0).unwrap();
-    let end_dec: DateTime<Utc> = Utc
-        .with_ymd_and_hms(current_year + 1, 1, 1, 0, 0, 0)
-        .unwrap();
+    let start_jan: NaiveDate = NaiveDate::from_ymd_opt(current_year, 1, 1).unwrap();
+    let end_dec: NaiveDate = NaiveDate::from_ymd_opt(current_year + 1, 12, 31).unwrap();
 
     let my_leave_request = MyLeaveRequest {
         employee_id: 3,
@@ -51,8 +49,8 @@ pub async fn get_my_leave() -> Result<Vec<MyLeaveResponse>, ApiError> {
 pub async fn create_leave_request(
     employee_id: i32,
     leave_type_id: i32,
-    date_from: DateTime<Utc>,
-    date_to: DateTime<Utc>,
+    date_from: NaiveDate,
+    date_to: NaiveDate,
     half_day_opt: HalfDayOptions,
     total_duration: f64,
     notes: Option<String>,
@@ -93,15 +91,17 @@ pub async fn create_leave_request(
     }
 }
 
-pub async fn update_leave_request(
-    leave_request: &LeaveRequest
-) -> Result<LeaveRequest, ApiError> {
-    let request = Request::put(&format!("{}/leaveRequests/{}", BASE_URL, leave_request.id.unwrap()))
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(leave_request).unwrap())
-        .send()
-        .await
-        .unwrap();
+pub async fn update_leave_request(leave_request: &LeaveRequest) -> Result<LeaveRequest, ApiError> {
+    let request = Request::put(&format!(
+        "{}/leaveRequests/{}",
+        BASE_URL,
+        leave_request.id.unwrap()
+    ))
+    .header("content-type", "application/json")
+    .body(serde_json::to_string(leave_request).unwrap())
+    .send()
+    .await
+    .unwrap();
 
     if request.ok() {
         Ok(request.json::<LeaveRequest>().await.unwrap())

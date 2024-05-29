@@ -10,6 +10,7 @@ mod model;
 mod pages;
 mod router;
 mod store;
+mod utils;
 
 #[function_component]
 pub fn App() -> Html {

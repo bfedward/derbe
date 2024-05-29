@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Utc};
+use chrono::{Datelike, NaiveDate};
 use std::ops::Deref;
 
 use gloo::console::log;
@@ -43,7 +43,7 @@ pub fn component() -> Html {
         Callback::from(move |_: MouseEvent| {
             let navigator = navigator.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                navigator.push(&Route::DaysRequest);
+                navigator.push(&Route::LeaveRequestCreate);
             })
         })
     };
@@ -114,18 +114,18 @@ fn my_leave_html(my_leaves: &[MyLeaveResponse]) -> Vec<Html> {
         .collect()
 }
 
-fn format_my_leave_date(date_time: DateTime<Utc>) -> String {
-    let day_ending = match date_time.day() {
+fn format_my_leave_date(naive_date: NaiveDate) -> String {
+    let day_ending = match naive_date.day() {
         1 | 21 | 31 => "st",
         2 | 22 => "nd",
         3 | 23 => "rd",
         4..=20 | 24..=30 => "th",
-        _ => panic!("Unknown day: {}", date_time.day()),
+        _ => panic!("Unknown day: {}", naive_date.day()),
     };
     format!(
         "{}{}{}",
-        date_time.format("%A, %e"),
+        naive_date.format("%A, %e"),
         day_ending,
-        date_time.format(" of %B, %Y")
+        naive_date.format(" of %B, %Y")
     )
 }
