@@ -1,4 +1,3 @@
-use chrono::{Datelike, NaiveDate};
 use std::ops::Deref;
 
 use gloo::console::log;
@@ -9,6 +8,7 @@ use yew_router::hooks::use_navigator;
 
 use crate::api::leave_requests::get_my_leave;
 use crate::dto::leave_request::MyLeaveResponse;
+use crate::utils::date_utils::format_my_leave_date;
 use crate::{components::organisms::navbar::Navbar, router::Route};
 
 #[function_component(MyLeave)]
@@ -48,16 +48,6 @@ pub fn component() -> Html {
         })
     };
 
-    // let leave_onclick = {
-    //     let navigator = use_navigator().unwrap();
-    //     Callback::from(move |_: MouseEvent| {
-    //         let navigator = navigator.clone();
-    //         wasm_bindgen_futures::spawn_local(async move {
-    //
-    //         })
-    //     })
-    // };
-
     html! {
         <main class="container">
             <Navbar />
@@ -95,10 +85,10 @@ fn my_leave_html(my_leaves: &[MyLeaveResponse]) -> Vec<Html> {
                         { &my_leave.leave_status.to_string() }
                     </td>
                     <td>
-                        { format_my_leave_date(my_leave.date_from) }
+                        { format_my_leave_date(&my_leave.date_from) }
                     </td>
                     <td>
-                        { format_my_leave_date(my_leave.date_to) }
+                        { format_my_leave_date(&my_leave.date_to) }
                     </td>
                     <td>
                         { &my_leave.total_duration }
@@ -112,20 +102,4 @@ fn my_leave_html(my_leaves: &[MyLeaveResponse]) -> Vec<Html> {
             }
         })
         .collect()
-}
-
-fn format_my_leave_date(naive_date: NaiveDate) -> String {
-    let day_ending = match naive_date.day() {
-        1 | 21 | 31 => "st",
-        2 | 22 => "nd",
-        3 | 23 => "rd",
-        4..=20 | 24..=30 => "th",
-        _ => panic!("Unknown day: {}", naive_date.day()),
-    };
-    format!(
-        "{}{}{}",
-        naive_date.format("%A, %e"),
-        day_ending,
-        naive_date.format(" of %B, %Y")
-    )
 }

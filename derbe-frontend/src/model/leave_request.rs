@@ -53,6 +53,14 @@ impl HalfDayOptions {
         }
     }
 
+    pub fn to_f64(&self) -> f64 {
+        match self {
+            HalfDayOptions::FullDays => 0.0,
+            HalfDayOptions::FirstDayHalf | HalfDayOptions::LastDayHalf => 0.5,
+            HalfDayOptions::BothHalfDays => 1.0,
+        }
+    }
+
     pub fn from_string(s: &str) -> HalfDayOptions {
         match s {
             "firstDayHalf" => HalfDayOptions::FirstDayHalf,
