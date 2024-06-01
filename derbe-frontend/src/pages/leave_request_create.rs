@@ -1,19 +1,21 @@
 use std::ops::Deref;
 
-use chrono::{Datelike, NaiveDate, Utc};
+use chrono::{NaiveDate, Utc};
 use gloo::console::log;
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{HtmlInputElement, HtmlSelectElement};
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
 use crate::api::employees::get_employees;
 use crate::api::leave_requests::create_leave_request;
 use crate::api::leave_types::get_leave_types;
-use crate::utils::date_utils::{calculate_requested_days, naive_date_to_yyyy_mm_dd_next_year_end};
+use crate::utils::date_utils::{
+    calculate_requested_days, naive_date_to_yyyy_mm_dd, naive_date_to_yyyy_mm_dd_next_year_end,
+};
 use crate::{
     api::api_errors::ApiError,
-    components::organisms::navbar::Navbar,
+    components::{atoms::dds_select::DDSSelect, organisms::navbar::Navbar},
     model::{employee::Employee, leave_request::HalfDayOptions, leave_type::LeaveType},
     router::Route,
 };
@@ -89,28 +91,14 @@ pub fn component() -> Html {
     let selected_employee_clone = selected_employee.clone();
     let employees_clone = employees.clone();
     let employee_onchange = {
-        Callback::from(move |event: Event| {
-            if let Some(select_element) = event
-                .target()
-                .and_then(|t| t.dyn_into::<HtmlSelectElement>().ok())
+        Callback::from(move |employee_id: i32| {
+            if let Some(selected_employee) = employees_clone
+                .iter()
+                .find(|&employee| employee.id == Some(employee_id))
             {
-                let value = select_element.value();
-                log!(&value);
-
-                if let Ok(value) = value.parse::<i32>() {
-                    if let Some(selected_employee) = employees_clone
-                        .iter()
-                        .find(|&employee| employee.id == Some(value))
-                    {
-                        selected_employee_clone.set(Some(selected_employee.clone()));
-                    } else {
-                        selected_employee_clone.set(None);
-                    }
-                } else {
-                    log!("Error parsing value as i32");
-                }
+                selected_employee_clone.set(Some(selected_employee.clone()));
             } else {
-                log!("Error getting select element");
+                selected_employee_clone.set(None);
             }
         })
     };
@@ -118,28 +106,14 @@ pub fn component() -> Html {
     let selected_leave_type_clone = selected_leave_type.clone();
     let leave_types_clone = leave_types.clone();
     let leave_types_onchange = {
-        Callback::from(move |event: Event| {
-            if let Some(select_element) = event
-                .target()
-                .and_then(|t| t.dyn_into::<HtmlSelectElement>().ok())
+        Callback::from(move |leave_type_id: i32| {
+            if let Some(selected_leave_type) = leave_types_clone
+                .iter()
+                .find(|&leave_type| leave_type.id == Some(leave_type_id))
             {
-                let value = select_element.value();
-                log!(&value);
-
-                if let Ok(value) = value.parse::<i32>() {
-                    if let Some(selected_leave_type) = leave_types_clone
-                        .iter()
-                        .find(|&leave_type| leave_type.id == Some(value))
-                    {
-                        selected_leave_type_clone.set(Some(selected_leave_type.clone()));
-                    } else {
-                        selected_leave_type_clone.set(None);
-                    }
-                } else {
-                    log!("Error parsing value as i32");
-                }
+                selected_leave_type_clone.set(Some(selected_leave_type.clone()));
             } else {
-                log!("Error getting select element");
+                selected_leave_type_clone.set(None);
             }
         })
     };
@@ -317,15 +291,17 @@ pub fn component() -> Html {
 
                         <div class="grid">
                         <div>
-                            <label for="employeeSelect">{ "Employee" }</label>
-                            <select id="employeeSelect" name="employeeSelect" required=true onchange={employee_onchange}>
-                                { for employee_select_options_html(employees.deref()) }
-                            </select>
+                            <DDSSelect id="employeeSelect"
+                                    name="employeeSelect" 
+                                    label="Employee"
+                                    options={Employee::to_select_options_html(employees.deref())} 
+                                    onchange={employee_onchange}/>
 
-                            <label for="leaveTypeSelect">{ " Leave Type "}</label>
-                            <select id="leaveTypeSelect" name="leaveTypeSelect" required=true onchange={leave_types_onchange}>
-                                { for leave_type_options_html(leave_types.deref())}
-                            </select>
+                            <DDSSelect id="leaveTypeSelect"
+                                    name="leaveTypeSelect"
+                                    label="Leave Type"
+                                    options={ LeaveType::to_select_options_html(leave_types.deref()) }
+                                    onchange={leave_types_onchange}/>
 
                             <p class="grid">
                                 <div>
@@ -392,36 +368,4 @@ pub fn component() -> Html {
             }
         </main>
     }
-}
-
-fn employee_select_options_html(employees: &[Employee]) -> Vec<Html> {
-    employees
-        .iter()
-        .enumerate()
-        .map(|(index, employee)| {
-            let selected = index == 0;
-            html! {
-                <option value={ employee.id.unwrap().to_string() } selected={ selected }>
-                    { format!("{} {}", &employee.first_name, &employee.last_name) }
-                </option>
-            }
-        })
-        .collect()
-}
-
-fn leave_type_options_html(leave_types: &[LeaveType]) -> Vec<Html> {
-    leave_types.iter().map(|leave_type| {
-        html! {
-            <option value={ leave_type.id.unwrap().to_string() } selected={ leave_type.default_in_others_days }>{ &leave_type.name }</option>
-        }
-    }).collect()
-}
-
-fn naive_date_to_yyyy_mm_dd(naive_date: &NaiveDate) -> String {
-    format!(
-        "{:04}-{:02}-{:02}",
-        naive_date.year(),
-        naive_date.month(),
-        naive_date.day()
-    )
 }
