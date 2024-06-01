@@ -34,6 +34,36 @@ pub enum HalfDayOptions {
     BothHalfDays,
 }
 
+impl HalfDayOptions {
+    pub fn from_bools(first_day_half: bool, last_day_half: bool) -> HalfDayOptions {
+        match (first_day_half, last_day_half) {
+            (true, true) => HalfDayOptions::BothHalfDays,
+            (true, false) => HalfDayOptions::FirstDayHalf,
+            (false, true) => HalfDayOptions::LastDayHalf,
+            (false, false) => HalfDayOptions::FullDays,
+        }
+    }
+
+    pub fn to_bools(&self) -> (bool, bool) {
+        match self {
+            HalfDayOptions::FullDays => (false, false),
+            HalfDayOptions::FirstDayHalf => (true, false),
+            HalfDayOptions::LastDayHalf => (false, true),
+            HalfDayOptions::BothHalfDays => (true, true),
+        }
+    }
+
+    pub fn from_string(s: &str) -> HalfDayOptions {
+        match s {
+            "firstDayHalf" => HalfDayOptions::FirstDayHalf,
+            "lastDayHalf" => HalfDayOptions::LastDayHalf,
+            "firstAndLastHalfs" => HalfDayOptions::BothHalfDays,
+            "allDaysFull" => HalfDayOptions::FullDays,
+            _ => panic!("Unknown HalfDayOption: {}", s),
+        }
+    }
+}
+
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct LeaveRequest {
     pub id: Option<i32>,

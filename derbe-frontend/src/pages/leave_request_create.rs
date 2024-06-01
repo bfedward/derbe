@@ -141,23 +141,13 @@ pub fn component() -> Html {
     let half_day_opt_onchange = {
         let half_day_opt = half_day_opt.clone();
         Callback::from(move |event: Event| {
-            let target = event.target().unwrap().unchecked_into::<HtmlInputElement>();
-            target.set_checked(true);
-
-            let value = match event
+            if let Some(input_element) = event
                 .target()
-                .unwrap()
-                .unchecked_into::<HtmlInputElement>()
-                .id()
-                .as_str()
+                .and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
             {
-                "firstDayHalf" => HalfDayOptions::FirstDayHalf,
-                "lastDayHalf" => HalfDayOptions::LastDayHalf,
-                "firstAndLastHalfs" => HalfDayOptions::BothHalfDays,
-                _ => HalfDayOptions::FullDays,
-            };
-
-            half_day_opt.set(value);
+                let option = HalfDayOptions::from_string(&input_element.id());
+                half_day_opt.set(option);
+            }
         })
     };
 

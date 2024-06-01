@@ -73,14 +73,10 @@ pub fn component(props: &Props) -> Html {
                         date_from_clone.set(res_clone.date_from);
                         date_to_clone.set(res_clone.date_to);
                         notes_clone.set(res_clone.notes);
-                        half_day_opt_clone.set(
-                            match (res_clone.first_day_half, res_clone.last_day_half) {
-                                (true, true) => HalfDayOptions::BothHalfDays,
-                                (true, false) => HalfDayOptions::FirstDayHalf,
-                                (false, true) => HalfDayOptions::LastDayHalf,
-                                (false, false) => HalfDayOptions::BothHalfDays,
-                            },
-                        );
+                        half_day_opt_clone.set(HalfDayOptions::from_bools(
+                            res.first_day_half,
+                            res.last_day_half,
+                        ));
 
                         wasm_bindgen_futures::spawn_local(async move {
                             if !*is_leave_type_loaded_clone {
@@ -139,23 +135,13 @@ pub fn component(props: &Props) -> Html {
     let half_day_opt_onchange = {
         let half_day_opt = half_day_opt.clone();
         Callback::from(move |event: Event| {
-            let target = event.target().unwrap().unchecked_into::<HtmlInputElement>();
-            target.set_checked(true);
-
-            let value = match event
+            if let Some(input_element) = event
                 .target()
-                .unwrap()
-                .unchecked_into::<HtmlInputElement>()
-                .id()
-                .as_str()
+                .and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
             {
-                "firstDayHalf" => HalfDayOptions::FirstDayHalf,
-                "lastDayHalf" => HalfDayOptions::LastDayHalf,
-                "firstAndLastHalfs" => HalfDayOptions::BothHalfDays,
-                _ => HalfDayOptions::FullDays,
-            };
-
-            half_day_opt.set(value);
+                let option = HalfDayOptions::from_string(&input_element.id());
+                half_day_opt.set(option);
+            }
         })
     };
 
@@ -188,12 +174,7 @@ pub fn component(props: &Props) -> Html {
             calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
         let history = use_navigator().unwrap();
 
-        let (first_day_half, last_day_half) = match half_day_opt.deref() {
-            HalfDayOptions::FullDays => (false, false),
-            HalfDayOptions::FirstDayHalf => (true, false),
-            HalfDayOptions::LastDayHalf => (false, true),
-            HalfDayOptions::BothHalfDays => (true, true),
-        };
+        let (first_day_half, last_day_half) = half_day_opt.deref().to_bools();
 
         Callback::from(move |event: SubmitEvent| {
             let note_clone = notes_clone.deref().clone();
@@ -249,7 +230,7 @@ pub fn component(props: &Props) -> Html {
         calculate_requested_days(date_from.deref(), date_to.deref(), &half_day_opt);
     let duration_gt_one = calculated_leave_duration > 1.0;
 
-    let half_day_opt = half_day_opt.deref().clone();
+    let half_day_opt_clone = half_day_opt.deref().clone();
 
     let notes_clone = notes.clone();
     let notes_string = notes_clone.deref().clone().unwrap_or(String::new());
@@ -293,19 +274,19 @@ pub fn component(props: &Props) -> Html {
 
                         <fieldset>
                             <label>
-                                <input type="radio" name="halfDayOps" id="allDaysFull" checked={ half_day_opt == HalfDayOptions::FullDays } onchange={ half_day_opt_onchange.clone() }/>
+                                <input type="radio" name="halfDayOps" id="allDaysFull" checked={ half_day_opt_clone == HalfDayOptions::FullDays } onchange={ half_day_opt_onchange.clone() }/>
                                 { "All days are full" }
                             </label>
                             <label>
-                                <input type="radio" name="halfDayOps" id="firstDayHalf" checked={ half_day_opt == HalfDayOptions::FirstDayHalf } onchange={ half_day_opt_onchange.clone() }/>
+                                <input type="radio" name="halfDayOps" id="firstDayHalf" checked={ half_day_opt_clone == HalfDayOptions::FirstDayHalf } onchange={ half_day_opt_onchange.clone() }/>
                                 { "First day is a half day" }
                             </label>
                             <label>
-                                <input type="radio" name="halfDayOps" id="lastDayHalf" checked={ half_day_opt == HalfDayOptions::LastDayHalf } disabled={ !duration_gt_one } onchange={ half_day_opt_onchange.clone() }/>
+                                <input type="radio" name="halfDayOps" id="lastDayHalf" checked={ half_day_opt_clone == HalfDayOptions::LastDayHalf } disabled={ !duration_gt_one } onchange={ half_day_opt_onchange.clone() }/>
                                 { "Last day is a half day" }
                             </label>
                             <label>
-                                <input type="radio" name="halfDayOps" id="firstAndLastHalfs" checked={ half_day_opt == HalfDayOptions::BothHalfDays } disabled={ !duration_gt_one } onchange={ half_day_opt_onchange.clone() }/>
+                                <input type="radio" name="halfDayOps" id="firstAndLastHalfs" checked={ half_day_opt_clone == HalfDayOptions::BothHalfDays } disabled={ !duration_gt_one } onchange={ half_day_opt_onchange.clone() }/>
                                 { "First and last days are half days" }
                             </label>
                         </fieldset>

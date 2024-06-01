@@ -55,12 +55,7 @@ pub async fn create_leave_request(
     total_duration: f64,
     notes: Option<String>,
 ) -> Result<LeaveRequest, ApiError> {
-    let (first_day_half, last_day_half) = match half_day_opt {
-        HalfDayOptions::FullDays => (false, false),
-        HalfDayOptions::FirstDayHalf => (true, false),
-        HalfDayOptions::LastDayHalf => (false, true),
-        HalfDayOptions::BothHalfDays => (true, true),
-    };
+    let (first_day_half, last_day_half) = HalfDayOptions::to_bools(&half_day_opt);
 
     let new_leave_request = LeaveRequest {
         id: None,
