@@ -21,3 +21,9 @@ pub struct MyLeaveResponse {
     pub date_to: NaiveDate,
     pub total_duration: f64,
 }
+
+#[derive(Debug, Serialize)]
+pub struct LeaveRequestStatusUpdate {
+    pub leave_status: LeaveStatus,
+    pub notes: Option<String>,
+}

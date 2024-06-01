@@ -3,7 +3,10 @@ use chrono::Utc;
 use LeaveStatus::*;
 
 use crate::{
-    dto::{request::leave_request::MyLeaveRequest, response::leave_request::MyLeaveResponse},
+    dto::{
+        request::leave_request::{LeaveRequestStatusUpdate, MyLeaveRequest},
+        response::leave_request::MyLeaveResponse,
+    },
     error::AppError,
     http::AppContext,
     model::leave_request::{LeaveRequest, LeaveStatus},
@@ -58,7 +61,7 @@ impl DerbeService<LeaveRequest, LeaveRequestRepository> for LeaveRequestService 
         let existing_entity = Self::get_entity_by_id(id, ctx).await?;
 
         let leave_status_state_change_ok: bool = matches!(
-            (&entity.leave_status, &existing_entity.leave_status),
+            (&existing_entity.leave_status, &entity.leave_status),
             (Pending, _)
                 | (MoreInfoReq, Pending)
                 | (MoreInfoReq, MoreInfoReq)
@@ -113,5 +116,19 @@ impl LeaveRequestService {
         ctx: &AppContext,
     ) -> Result<Vec<MyLeaveResponse>, AppError> {
         LeaveRequestRepository::get_my_leave(my_leave_request, ctx).await
+    }
+
+    pub async fn update_leave_request_status(
+        id: i32,
+        request: LeaveRequestStatusUpdate,
+        ctx: &AppContext,
+    ) -> Result<LeaveRequest, AppError> {
+        let mut updated_leave_request = Self::get_entity_by_id(id, ctx).await?;
+        updated_leave_request.leave_status = request.leave_status;
+        updated_leave_request.notes = request.notes;
+
+        updated_leave_request = Self::update_entity(id, updated_leave_request, ctx).await?;
+
+        Ok(updated_leave_request)
     }
 }

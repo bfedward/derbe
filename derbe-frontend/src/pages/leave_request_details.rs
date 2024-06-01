@@ -4,16 +4,17 @@ use crate::{
     api::{
         api_errors::ApiError,
         employees::get_employee,
-        leave_requests::{get_leave_request, update_leave_request},
+        leave_requests::{get_leave_request, update_leave_request, update_leave_request_status},
         leave_types::get_leave_type,
     },
     components::{
-        atoms::{dds_date_input::DDSDateInput, dds_date_input::DateType},
+        atoms::dds_date_input::{DDSDateInput, DateType},
         organisms::navbar::Navbar,
     },
+    dto::leave_request::LeaveRequestStatusUpdate,
     model::{
         employee::Employee,
-        leave_request::{HalfDayOptions, LeaveRequest},
+        leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus},
         leave_type::LeaveType,
     },
     router::Route,
@@ -224,6 +225,51 @@ pub fn component(props: &Props) -> Html {
         })
     };
 
+    let more_info_req_onclick = {
+        let history = use_navigator().unwrap();
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+            history.push(&Route::MyLeave);
+        })
+    };
+
+    let rejected_onclick = {
+        let history = use_navigator().unwrap();
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+            history.push(&Route::MyLeave);
+        })
+    };
+
+    let notes_clone = notes.clone();
+    let id = leave_request.id;
+    let accepted_onclick = {
+        let history = use_navigator().unwrap();
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+            let note_clone_str = notes_clone.deref().clone();
+            let req = LeaveRequestStatusUpdate {
+                leave_status: LeaveStatus::Accepted,
+                notes: note_clone_str,
+            };
+            let history = history.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                match update_leave_request_status(&id.unwrap(), req).await {
+                    Ok(_) => {
+                        history.push(&Route::MyLeave);
+                    }
+                    Err(ApiError::NotAuthenticated) => {
+                        history.push(&Route::Home);
+                    }
+                    Err(error) => {
+                        gloo::console::error!(error.to_string());
+                        panic!();
+                    }
+                }
+            })
+        })
+    };
+
     let leave_type_name = leave_type.name.clone();
 
     let calculated_leave_duration =
@@ -302,10 +348,17 @@ pub fn component(props: &Props) -> Html {
                             <i>{ "Optional" }</i>
                         </small>
 
-                        <p class="grid">
+                        <div role="group">
                             <button onclick={ cancel_onclick } class="secondary">{ "Cancel"}</button>
                             <button disabled={ !*is_form_valid }>{ "Submit"}</button>
-                        </p>
+                        </div>
+
+                        <div role="group">
+                            <button onclick={ more_info_req_onclick } disabled={ !*is_form_valid }>{ "More Info Required" }</button>
+                            <button onclick={ rejected_onclick } disabled={ !*is_form_valid }>{ "Reject" }</button>
+                            <button onclick={ accepted_onclick } disabled={ !*is_form_valid } aria-current="true">{ "Accept" }</button>
+                        </div>
+
                     </form>
                 </section>
             }

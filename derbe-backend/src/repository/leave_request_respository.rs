@@ -279,7 +279,7 @@ impl LeaveRequestRepository {
         .await
         .map_err(AppError::DatabaseQueryError)?;
 
-        if exists.unwrap_or(false) {
+        if !exists.unwrap_or(false) {
             Ok(())
         } else {
             Err(AppError::ValidationFailed(

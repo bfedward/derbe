@@ -13,4 +13,10 @@ pub mod leave_request {
         pub date_from: NaiveDate,
         pub date_to: NaiveDate,
     }
+
+    #[derive(Debug, Deserialize)]
+    pub struct LeaveRequestStatusUpdate {
+        pub leave_status: LeaveStatus,
+        pub notes: Option<String>,
+    }
 }

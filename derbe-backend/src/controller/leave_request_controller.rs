@@ -2,12 +2,15 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::{get, post, put},
+    routing::{get, patch, post, put},
     Json, Router,
 };
 
 use crate::{
-    dto::{request::leave_request::MyLeaveRequest, response::leave_request::MyLeaveResponse},
+    dto::{
+        request::leave_request::{LeaveRequestStatusUpdate, MyLeaveRequest},
+        response::leave_request::MyLeaveResponse,
+    },
     error::AppError,
     http::AppContext,
     model::leave_request::LeaveRequest,
@@ -20,6 +23,7 @@ pub fn router() -> Router<AppContext> {
         .route("/leaveRequests", post(create_leave_request))
         .route("/myLeave", post(get_my_leave))
         .route("/leaveRequests/:id", put(update_leave_request))
+        .route("/leaveRequests/:id", patch(update_leave_request_status))
 }
 
 async fn get_my_leave(
@@ -61,6 +65,17 @@ async fn update_leave_request(
     Json(leave_request): Json<LeaveRequest>,
 ) -> Result<Json<LeaveRequest>, AppError> {
     match LeaveRequestService::update_entity(id, leave_request, &ctx).await {
+        Ok(leave_request) => Ok(Json(leave_request)),
+        Err(e) => Err(e),
+    }
+}
+
+async fn update_leave_request_status(
+    State(ctx): State<AppContext>,
+    Path(id): Path<i32>,
+    Json(state_request): Json<LeaveRequestStatusUpdate>,
+) -> Result<Json<LeaveRequest>, AppError> {
+    match LeaveRequestService::update_leave_request_status(id, state_request, &ctx).await {
         Ok(leave_request) => Ok(Json(leave_request)),
         Err(e) => Err(e),
     }

@@ -56,7 +56,7 @@ fn get_cors_layer() -> CorsLayer {
     let content_type_header = HeaderName::from_static("content-type");
 
     CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::PATCH, Method::DELETE])
         .allow_origin(Any)
         // Allow the "Content-Type" header
         .allow_headers([content_type_header])

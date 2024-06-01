@@ -3,7 +3,7 @@ use reqwasm::http::Request;
 
 use crate::api::api_errors::{handle_errors, ApiError};
 use crate::api::BASE_URL;
-use crate::dto::leave_request::{MyLeaveRequest, MyLeaveResponse};
+use crate::dto::leave_request::{LeaveRequestStatusUpdate, MyLeaveRequest, MyLeaveResponse};
 use crate::model::leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus};
 
 pub async fn get_leave_request(id: &i32) -> Result<LeaveRequest, ApiError> {
@@ -97,6 +97,24 @@ pub async fn update_leave_request(leave_request: &LeaveRequest) -> Result<LeaveR
     .send()
     .await
     .unwrap();
+
+    if request.ok() {
+        Ok(request.json::<LeaveRequest>().await.unwrap())
+    } else {
+        Err(handle_errors(request.status()))
+    }
+}
+
+pub async fn update_leave_request_status(
+    id: &i32,
+    status_update: LeaveRequestStatusUpdate,
+) -> Result<LeaveRequest, ApiError> {
+    let request = Request::patch(&format!("{}/leaveRequests/{}", BASE_URL, id))
+        .header("content-type", "application/json")
+        .body(serde_json::to_string(&status_update).unwrap())
+        .send()
+        .await
+        .unwrap();
 
     if request.ok() {
         Ok(request.json::<LeaveRequest>().await.unwrap())
