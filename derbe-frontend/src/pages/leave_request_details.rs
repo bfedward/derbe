@@ -7,17 +7,17 @@ use crate::{
         leave_requests::{get_leave_request, update_leave_request},
         leave_types::get_leave_type,
     },
-    components::organisms::navbar::Navbar,
+    components::{
+        atoms::{dds_date_input::DDSDateInput, dds_date_input::DateType},
+        organisms::navbar::Navbar,
+    },
     model::{
         employee::Employee,
         leave_request::{HalfDayOptions, LeaveRequest},
         leave_type::LeaveType,
     },
     router::Route,
-    utils::date_utils::{
-        calculate_requested_days, naive_date_to_yyyy_mm_dd, naive_date_to_yyyy_mm_dd_next_year_end,
-        naive_date_to_yyyy_mm_dd_this_year_start,
-    },
+    utils::date_utils::calculate_requested_days,
 };
 use chrono::{NaiveDate, Utc};
 use gloo::console::log;
@@ -118,55 +118,21 @@ pub fn component(props: &Props) -> Html {
         || {}
     });
 
-    let date_to_clone = date_to.clone();
     let date_from_clone = date_from.clone();
     let is_form_valid_clone = is_form_valid.clone();
-    let date_from_onchage = {
-        Callback::from(move |event: Event| {
-            if let Some(input_element) = event
-                .target()
-                .and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
-            {
-                let value = input_element.value();
-                log!(&value);
-
-                if let Ok(parsed_date) = NaiveDate::parse_from_str(&value, "%Y-%m-%d") {
-                    date_from_clone.set(parsed_date);
-
-                    if *date_to_clone < parsed_date {
-                        log!("Dates invalid!");
-                        is_form_valid_clone.set(false);
-                    } else {
-                        is_form_valid_clone.set(true);
-                    }
-                }
-            }
+    let date_from_onchange = {
+        Callback::from(move |(new_date, valid): (NaiveDate, bool)| {
+            date_from_clone.set(new_date);
+            is_form_valid_clone.set(valid);
         })
     };
 
-    let date_from_clone = date_from.clone();
     let date_to_clone = date_to.clone();
     let is_form_valid_clone = is_form_valid.clone();
-    let date_to_onchage = {
-        Callback::from(move |event: Event| {
-            if let Some(input_element) = event
-                .target()
-                .and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
-            {
-                let value = input_element.value();
-                log!(&value);
-
-                if let Ok(parsed_date) = NaiveDate::parse_from_str(&value, "%Y-%m-%d") {
-                    date_to_clone.set(parsed_date);
-
-                    if *date_from_clone > parsed_date {
-                        log!("Dates invalid!");
-                        is_form_valid_clone.set(false);
-                    } else {
-                        is_form_valid_clone.set(true);
-                    }
-                }
-            }
+    let date_to_onchange = {
+        Callback::from(move |(new_date, valid): (NaiveDate, bool)| {
+            date_to_clone.set(new_date);
+            is_form_valid_clone.set(valid);
         })
     };
 
@@ -288,6 +254,9 @@ pub fn component(props: &Props) -> Html {
     let notes_clone = notes.clone();
     let notes_string = notes_clone.deref().clone().unwrap_or(String::new());
 
+    let date_from_clone = *date_from.deref();
+    let date_to_clone = *date_to.deref();
+
     html! {
         <main class="container">
             <Navbar />
@@ -302,14 +271,24 @@ pub fn component(props: &Props) -> Html {
                         <input type="text" id="leaveTypeName" readonly=true value={leave_type_name} />
 
                         <p class="grid">
-                            <div>
-                                <label for="dateFrom">{ "Date From "}</label>
-                                <input id="dateFrom" type="date" name="dateFrom" value={ naive_date_to_yyyy_mm_dd(&date_from) } min={ naive_date_to_yyyy_mm_dd_this_year_start(&now) } max={ naive_date_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_from_onchage }/>
-                            </div>
-                            <div>
-                                <label for="dateTo">{ "Date To "}</label>
-                                <input id="dateTo" type="date" name="dateTo" value={ naive_date_to_yyyy_mm_dd(&date_to) } min={ naive_date_to_yyyy_mm_dd_this_year_start(&now) } max={ naive_date_to_yyyy_mm_dd_next_year_end(&now)} onchange={ date_to_onchage }/>
-                            </div>
+                            <DDSDateInput id="dateFrom"
+                                name="dateFrom"
+                                label="Date From"
+                                value={date_from_clone}
+                                date_type={DateType::DateFrom}
+                                other_date={date_to_clone}
+                                min={now}
+                                max={now}
+                                on_change={date_from_onchange}/>
+                            <DDSDateInput id="dateTo"
+                                name="dateTo"
+                                label="Date To"
+                                value={date_to_clone}
+                                date_type={DateType::DateTo}
+                                other_date={date_from_clone}
+                                min={now}
+                                max={now}
+                                on_change={date_to_onchange}/>
                         </p>
 
                         <fieldset>

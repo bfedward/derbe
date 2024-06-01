@@ -14,7 +14,7 @@ pub struct Props {
 
 #[function_component(DDSSelect)]
 pub fn dds_select(props: &Props) -> Html {
-    let onchange = {
+    let on_change = {
         let props_onchange = props.onchange.clone();
         Callback::from(move |event: Event| {
             if let Some(select_element) = event
@@ -38,7 +38,7 @@ pub fn dds_select(props: &Props) -> Html {
     html! {
         <>
             <label for={props.id.clone()}>{ props.label.clone() }</label>
-            <select id={props.id.clone()} name={props.name.clone()} required=true {onchange}>
+            <select id={props.id.clone()} name={props.name.clone()} required=true onchange={on_change}>
                 { for props.options.clone() }
             </select>
         </>
