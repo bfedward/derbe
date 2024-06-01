@@ -1,5 +1,7 @@
 use axum::{
     extract::{Path, State},
+    http::StatusCode,
+    response::{IntoResponse, Response},
     routing::{get, post, put},
     Json, Router,
 };
@@ -43,9 +45,12 @@ async fn get_leave_request(
 async fn create_leave_request(
     State(ctx): State<AppContext>,
     Json(leave_request): Json<LeaveRequest>,
-) -> Result<Json<LeaveRequest>, AppError> {
+) -> Result<Response, AppError> {
     match LeaveRequestService::create_entity(leave_request, &ctx).await {
-        Ok(leave_request) => Ok(Json(leave_request)),
+        Ok(leave_request) => {
+            let response = (StatusCode::CREATED, Json(leave_request)).into_response();
+            Ok(response)
+        }
         Err(e) => Err(e),
     }
 }
