@@ -9,6 +9,7 @@ use crate::{
     },
     components::{
         atoms::dds_date_input::{DDSDateInput, DateType},
+        molecules::half_day_op_radio_group::HalfDayOpRadioGroup,
         organisms::navbar::Navbar,
     },
     dto::leave_request::LeaveRequestStatusUpdate,
@@ -135,14 +136,8 @@ pub fn component(props: &Props) -> Html {
 
     let half_day_opt_onchange = {
         let half_day_opt = half_day_opt.clone();
-        Callback::from(move |event: Event| {
-            if let Some(input_element) = event
-                .target()
-                .and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
-            {
-                let option = HalfDayOptions::from_string(&input_element.id());
-                half_day_opt.set(option);
-            }
+        Callback::from(move |half_day_op: HalfDayOptions| {
+            half_day_opt.set(half_day_op);
         })
     };
 
@@ -318,24 +313,11 @@ pub fn component(props: &Props) -> Html {
                                 on_change={date_to_onchange}/>
                         </p>
 
-                        <fieldset>
-                            <label>
-                                <input type="radio" name="halfDayOps" id="allDaysFull" checked={ half_day_opt_clone == HalfDayOptions::FullDays } onchange={ half_day_opt_onchange.clone() }/>
-                                { "All days are full" }
-                            </label>
-                            <label>
-                                <input type="radio" name="halfDayOps" id="firstDayHalf" checked={ half_day_opt_clone == HalfDayOptions::FirstDayHalf } onchange={ half_day_opt_onchange.clone() }/>
-                                { "First day is a half day" }
-                            </label>
-                            <label>
-                                <input type="radio" name="halfDayOps" id="lastDayHalf" checked={ half_day_opt_clone == HalfDayOptions::LastDayHalf } disabled={ !duration_gt_one } onchange={ half_day_opt_onchange.clone() }/>
-                                { "Last day is a half day" }
-                            </label>
-                            <label>
-                                <input type="radio" name="halfDayOps" id="firstAndLastHalfs" checked={ half_day_opt_clone == HalfDayOptions::BothHalfDays } disabled={ !duration_gt_one } onchange={ half_day_opt_onchange.clone() }/>
-                                { "First and last days are half days" }
-                            </label>
-                        </fieldset>
+                        <HalfDayOpRadioGroup
+                            duration_gt_one={!duration_gt_one}
+                            selected={half_day_opt_clone}
+                            on_change={half_day_opt_onchange}
+                        />
 
                         <label for="daysRequestNotes">{ "Notes" }</label>
                         <textarea
