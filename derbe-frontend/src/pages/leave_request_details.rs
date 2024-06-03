@@ -8,7 +8,11 @@ use crate::{
         leave_types::get_leave_type,
     },
     components::{
-        atoms::dds_date_input::{DDSDateInput, DateType},
+        atoms::{
+            dds_date_input::{DDSDateInput, DateType},
+            dds_text_area::DDSTextArea,
+            dds_text_input::DDSTextInput,
+        },
         molecules::half_day_op_radio_group::HalfDayOpRadioGroup,
         organisms::navbar::Navbar,
     },
@@ -23,8 +27,7 @@ use crate::{
 };
 use chrono::{NaiveDate, Utc};
 use gloo::console::log;
-use wasm_bindgen::{JsCast, JsValue};
-use web_sys::HtmlInputElement;
+use wasm_bindgen::JsValue;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
@@ -143,14 +146,8 @@ pub fn component(props: &Props) -> Html {
 
     let notes_onchange = {
         let notes = notes.clone();
-        Callback::from(move |event: Event| {
-            let value = event
-                .target()
-                .unwrap()
-                .unchecked_into::<HtmlInputElement>()
-                .value();
-
-            notes.set(Some(value));
+        Callback::from(move |new_notes: Option<String>| {
+            notes.set(new_notes);
         })
     };
 
@@ -286,11 +283,20 @@ pub fn component(props: &Props) -> Html {
             if *is_leave_request_loaded.deref() && *is_employee_loaded.deref() && *is_leave_type_loaded.deref() {
                 <section id="form">
                     <form onsubmit = {onsubmit}>
-                        <label for="employeeName">{ "Employee" }</label>
-                        <input type="text" id="employeeName" readonly=true value={format!("{} {}", employee.first_name, employee.last_name)} />
-
-                        <label for="leaveTypeName">{ "Leave Type" }</label>
-                        <input type="text" id="leaveTypeName" readonly=true value={leave_type_name} />
+                        <DDSTextInput
+                            id="employeeName"
+                            label="Employee"
+                            readonly=true
+                            value={format!("{} {}", employee.first_name, employee.last_name)}
+                            on_change={None::<Callback<String>>}
+                        />
+                        <DDSTextInput
+                            id="leaveTypeName"
+                            label="Leave Type"
+                            readonly=true
+                            value={leave_type_name}
+                            on_change={None::<Callback<String>>}
+                        />
 
                         <p class="grid">
                             <DDSDateInput id="dateFrom"
@@ -319,16 +325,14 @@ pub fn component(props: &Props) -> Html {
                             on_change={half_day_opt_onchange}
                         />
 
-                        <label for="daysRequestNotes">{ "Notes" }</label>
-                        <textarea
-                                name="daysRequestNotes"
-                                placeholder="Notes..."
-                                onchange={ notes_onchange }
-                                value={notes_string}
+                        <DDSTextArea
+                            name="daysRequestNotes"
+                            placeholder="Notes..."
+                            label="Notes"
+                            value={notes_string}
+                            small={Some("Optional".to_owned())}
+                            on_change={notes_onchange}
                         />
-                        <small id="notesHelp">
-                            <i>{ "Optional" }</i>
-                        </small>
 
                         <div role="group">
                             <button onclick={ cancel_onclick } class="secondary">{ "Cancel"}</button>

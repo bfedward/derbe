@@ -2,8 +2,7 @@ use std::ops::Deref;
 
 use chrono::{NaiveDate, Utc};
 use gloo::console::log;
-use wasm_bindgen::{JsCast, JsValue};
-use web_sys::HtmlInputElement;
+use wasm_bindgen::JsValue;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
@@ -15,7 +14,7 @@ use crate::utils::date_utils::calculate_requested_days;
 use crate::{
     api::api_errors::ApiError,
     components::{
-        atoms::{dds_date_input::DDSDateInput, dds_select::DDSSelect},
+        atoms::{dds_date_input::DDSDateInput, dds_select::DDSSelect, dds_text_area::DDSTextArea},
         molecules::half_day_op_radio_group::HalfDayOpRadioGroup,
         organisms::navbar::Navbar,
     },
@@ -148,14 +147,13 @@ pub fn component() -> Html {
 
     let notes_onchange = {
         let notes = notes.clone();
-        Callback::from(move |event: Event| {
-            let value = event
-                .target()
-                .unwrap()
-                .unchecked_into::<HtmlInputElement>()
-                .value();
+        Callback::from(move |new_notes: Option<String>| {
+            match &new_notes {
+                Some(n) => log!(n),
+                None => log!("None notes!".to_owned()),
+            }
 
-            notes.set(Some(value));
+            notes.set(new_notes);
         })
     };
 
@@ -165,7 +163,7 @@ pub fn component() -> Html {
     let selected_employee_clone = selected_employee.clone();
     let onsubmit = {
         let half_day_opt = half_day_opt.clone();
-        let notes = notes;
+        let notes_clone = notes.clone();
         let history = use_navigator().unwrap();
 
         Callback::from(move |event: SubmitEvent| {
@@ -177,7 +175,7 @@ pub fn component() -> Html {
             let half_day_opt = half_day_opt.deref().clone();
             let total_duration =
                 calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
-            let notes = notes.deref().clone();
+            let notes = notes_clone.deref().clone();
             let history = history.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 match create_leave_request(
@@ -234,7 +232,8 @@ pub fn component() -> Html {
         calculate_requested_days(date_from.deref(), date_to.deref(), &half_day_opt_clone);
     let duration_gt_one = calculated_leave_duration > 1.0;
 
-    
+    let notes_clone = notes.clone();
+    let notes_string = notes_clone.deref().clone().unwrap_or(String::new());
 
     html! {
         <main class="container">
@@ -286,16 +285,14 @@ pub fn component() -> Html {
                                 on_change={half_day_opt_onchange}
                             />
 
-                            <label for="daysRequestNotes">{ "Notes"}</label>
-                            <textarea
+                            <DDSTextArea
                                 name="daysRequestNotes"
                                 placeholder="Notes..."
-                                onchange={ notes_onchange }
-                            >
-                            </textarea>
-                            <small id="notesHelp">
-                                <i>{ "Optional" }</i>
-                            </small>
+                                label="Notes"
+                                value={notes_string}
+                                small={Some("Optional".to_owned())}
+                                on_change={notes_onchange}
+                            />
                         </div>
 
                         <div>
