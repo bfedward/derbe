@@ -109,7 +109,7 @@ pub async fn update_leave_request_status(
     id: &i32,
     status_update: LeaveRequestStatusUpdate,
 ) -> Result<LeaveRequest, ApiError> {
-    let request = Request::patch(&format!("{}/leaveRequests/{}", BASE_URL, id))
+    let request = Request::put(&format!("{}/leaveRequests/{}/status", BASE_URL, id))
         .header("content-type", "application/json")
         .body(serde_json::to_string(&status_update).unwrap())
         .send()

@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::{get, patch, post, put},
+    routing::{get, post, put},
     Json, Router,
 };
 
@@ -23,7 +23,7 @@ pub fn router() -> Router<AppContext> {
         .route("/leaveRequests", post(create_leave_request))
         .route("/myLeave", post(get_my_leave))
         .route("/leaveRequests/:id", put(update_leave_request))
-        .route("/leaveRequests/:id", patch(update_leave_request_status))
+        .route("/leaveRequests/:id/status", put(update_leave_request_status))
 }
 
 async fn get_my_leave(
