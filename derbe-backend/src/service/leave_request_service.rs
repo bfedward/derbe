@@ -90,6 +90,15 @@ impl DerbeService<LeaveRequest, LeaveRequestRepository> for LeaveRequestService 
             .await?;
         }
 
+        if (entity.leave_status == LeaveStatus::Accepted
+            || entity.leave_status == LeaveStatus::Rejected)
+            && entity.date_finalised.is_none()
+        {
+            return Err(AppError::ValidationFailed(
+                "Accepted and Rejected leave requests must have a finalised date".to_string(),
+            ));
+        }
+
         Ok(())
     }
 
@@ -126,6 +135,12 @@ impl LeaveRequestService {
         let mut updated_leave_request = Self::get_entity_by_id(id, ctx).await?;
         updated_leave_request.leave_status = request.leave_status;
         updated_leave_request.notes = request.notes;
+
+        if request.leave_status == LeaveStatus::Accepted
+            || request.leave_status == LeaveStatus::Rejected
+        {
+            updated_leave_request.date_finalised = Some(Utc::now());
+        }
 
         updated_leave_request = Self::update_entity(id, updated_leave_request, ctx).await?;
 

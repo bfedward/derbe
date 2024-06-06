@@ -7,7 +7,7 @@ use sqlx::types::chrono::{DateTime, Utc};
 
 use super::{deserialization::deserialize_non_negative_f64, DerbeModel};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "valid_leave_statuses")]
 pub enum LeaveStatus {
     Pending,
