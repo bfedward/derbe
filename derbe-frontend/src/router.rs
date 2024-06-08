@@ -7,7 +7,7 @@ use crate::pages::{
         leave_request_create::LeaveRequestCreate, leave_request_details::LeaveRequestDetails,
         my_leave::MyLeave,
     },
-    employees::organisation::Organisation,
+    employees::{employee_details::EmployeeDetails, organisation::Organisation},
     home::Home,
 };
 
@@ -25,6 +25,8 @@ pub enum Route {
     LeaveRequestDetails { id: i32 },
     #[at("/organisation")]
     Organisation,
+    #[at("/employee/:id")]
+    EmployeeDetails { id: i32 },
 }
 
 pub fn switch(route: Route) -> Html {
@@ -35,5 +37,6 @@ pub fn switch(route: Route) -> Html {
         Route::LeaveRequestCreate => html! { <LeaveRequestCreate />},
         Route::LeaveRequestDetails { id } => html! { <LeaveRequestDetails id={id} /> },
         Route::Organisation => html! { <Organisation />},
+        Route::EmployeeDetails { id } => html!( <EmployeeDetails id={id} /> ),
     }
 }

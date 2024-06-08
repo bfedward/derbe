@@ -192,6 +192,7 @@ impl EmployeeRepository {
                 locations l ON e.location_id = l.id
             LEFT JOIN
                 employees m ON e.manager_id = m.id
+            ORDER BY e.last_name, e.first_name
             "#
         )
         .fetch_all(&ctx.db)
