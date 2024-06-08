@@ -1,4 +1,7 @@
-use crate::{error::AppError, http::AppContext, model::employee::Employee};
+use crate::{
+    dto::response::employee::EmployeeDetailsResponse, error::AppError, http::AppContext,
+    model::employee::Employee,
+};
 
 use super::DerbeRepository;
 
@@ -160,6 +163,42 @@ impl DerbeRepository<Employee> for EmployeeRepository {
             Err(AppError::RelatedEntity("Employee".to_owned()))
         } else {
             Ok(())
+        }
+    }
+}
+
+impl EmployeeRepository {
+    pub async fn get_employee_details_table(
+        ctx: &AppContext,
+    ) -> Result<Vec<EmployeeDetailsResponse>, AppError> {
+        match sqlx::query_as!(
+            EmployeeDetailsResponse,
+            r#"
+            SELECT
+                e.id,
+                CONCAT(e.first_name, ' ', e.last_name) AS "name!: std::string::String",
+                e.job_title,
+                d.name AS "division!: std::string::String",
+                e.employment_type AS "employment_type!: std::string::String",
+                l.name AS "location!: std::string::String",
+                CONCAT(m.first_name, ' ', m.last_name) AS "manager!: std::option::Option<std::string::String>",
+                e.email AS "email!: std::string::String",
+                e.phone AS "phone!: std::option::Option<std::string::String>"
+            FROM
+                employees e
+            JOIN
+                divisions d ON e.division_id = d.id
+            JOIN
+                locations l ON e.location_id = l.id
+            LEFT JOIN
+                employees m ON e.manager_id = m.id
+            "#
+        )
+        .fetch_all(&ctx.db)
+        .await
+        {
+            Ok(employees) => Ok(employees),
+            Err(e) => Err(AppError::DatabaseQueryError(e)),
         }
     }
 }

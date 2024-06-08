@@ -19,9 +19,20 @@ pub fn component() -> Html {
                             </summary>
                             <ul dir="rtl">
                                 <li><Link<Route> to={Route::MyLeave}>{ "My Leave" }</Link<Route>></li>
-                                <li><a href="#">{"Settings"}</a></li>
-                                <li><a href="#">{"Security"}</a></li>
-                                <li><a href="#">{"Logout"}</a></li>
+                                <li><a href="#">{"All Leave"}</a></li>
+                            </ul>
+                        </details>
+                    </li>
+                    <li>
+                        <details class="dropdown">
+                            <summary>
+                             { "Employees" }
+                            </summary>
+                            <ul dir="rtl">
+                                <li><a href="#">{"My Profile"}</a></li>
+                                <li><Link<Route> to={Route::Organisation}>{"Organisation"}</Link<Route>></li>
+                                <li><a href="#">{"Goals"}</a></li>
+                                <li><a href="#">{"Feedback"}</a></li>
                             </ul>
                         </details>
                     </li>

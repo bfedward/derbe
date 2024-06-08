@@ -1,6 +1,6 @@
 use crate::{
-    error::AppError, http::AppContext, model::employee::Employee,
-    repository::employee_repository::EmployeeRepository,
+    dto::response::employee::EmployeeDetailsResponse, error::AppError, http::AppContext,
+    model::employee::Employee, repository::employee_repository::EmployeeRepository,
 };
 
 use super::{division_service::DivisionService, location_service::LocationService, DerbeService};
@@ -49,5 +49,13 @@ impl DerbeService<Employee, EmployeeRepository> for EmployeeService {
 
     fn pre_create_and_pre_update_validation(_entity: &Employee) -> Result<(), AppError> {
         todo!()
+    }
+}
+
+impl EmployeeService {
+    pub async fn get_employee_details_table(
+        ctx: &AppContext,
+    ) -> Result<Vec<EmployeeDetailsResponse>, AppError> {
+        EmployeeRepository::get_employee_details_table(ctx).await
     }
 }

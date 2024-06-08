@@ -10,7 +10,10 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
     configuration::Settings,
-    controller::{employee_controller, leave_request_controller, leave_types_controller},
+    controller::{
+        divisions_controller, employee_controller, leave_request_controller,
+        leave_types_controller, locations_controller,
+    },
 };
 
 #[derive(Clone)]
@@ -46,6 +49,8 @@ pub fn app_router(context: &AppContext) -> Router {
     Router::new()
         .route("/health", get(health))
         .merge(leave_types_controller::router())
+        .merge(divisions_controller::router())
+        .merge(locations_controller::router())
         .merge(leave_request_controller::router())
         .merge(employee_controller::router())
         .layer(get_cors_layer())
@@ -56,12 +61,7 @@ fn get_cors_layer() -> CorsLayer {
     let content_type_header = HeaderName::from_static("content-type");
 
     CorsLayer::new()
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::DELETE,
-        ])
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_origin(Any)
         // Allow the "Content-Type" header
         .allow_headers([content_type_header])

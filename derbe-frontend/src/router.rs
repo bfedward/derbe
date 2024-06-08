@@ -1,9 +1,15 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::leave_request_create::LeaveRequestCreate;
-use crate::pages::leave_request_details::LeaveRequestDetails;
-use crate::pages::{home::Home, leave_types::LeaveTypes, my_leave::MyLeave};
+use crate::pages::{
+    configuration::leave_types::LeaveTypes,
+    days::{
+        leave_request_create::LeaveRequestCreate, leave_request_details::LeaveRequestDetails,
+        my_leave::MyLeave,
+    },
+    employees::organisation::Organisation,
+    home::Home,
+};
 
 #[derive(Routable, PartialEq, Clone)]
 pub enum Route {
@@ -17,6 +23,8 @@ pub enum Route {
     LeaveRequestCreate,
     #[at("/leave-request/:id")]
     LeaveRequestDetails { id: i32 },
+    #[at("/organisation")]
+    Organisation,
 }
 
 pub fn switch(route: Route) -> Html {
@@ -26,5 +34,6 @@ pub fn switch(route: Route) -> Html {
         Route::MyLeave => html! { <MyLeave />},
         Route::LeaveRequestCreate => html! { <LeaveRequestCreate />},
         Route::LeaveRequestDetails { id } => html! { <LeaveRequestDetails id={id} /> },
+        Route::Organisation => html! { <Organisation />},
     }
 }

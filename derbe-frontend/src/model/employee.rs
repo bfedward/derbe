@@ -16,6 +16,10 @@ pub struct Employee {
 }
 
 impl Employee {
+    pub fn first_name_and_last_name(&self) -> String {
+        format!("{} {}", self.first_name, self.last_name)
+    }
+
     pub fn to_select_options_html(employees: &[Employee]) -> Vec<Html> {
         employees
             .iter()
