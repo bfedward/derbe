@@ -7,8 +7,8 @@ pub struct Props {
     pub id: String,
     pub label: String,
     pub readonly: bool,
-    pub value: String,
-    pub on_change: Option<Callback<String>>,
+    pub value: Option<String>,
+    pub on_change: Option<Callback<Option<String>>>,
 }
 
 #[function_component(DDSTextInput)]
@@ -21,7 +21,9 @@ pub fn dds_text_input(props: &Props) -> Html {
                     .target()
                     .and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
                 {
-                    oc.emit(input_element.value());
+                    oc.emit(Some(input_element.value()));
+                } else {
+                    oc.emit(None);
                 }
             }),
             None => Callback::from(|_: Event| {}),

@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use yew::prelude::*;
 
-#[derive(Serialize, Deserialize, Clone, Default)]
+use super::Selectable;
+
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq)]
 pub struct Employee {
     pub id: Option<i32>,
     pub first_name: String,
@@ -15,23 +17,36 @@ pub struct Employee {
     pub phone: Option<String>,
 }
 
-impl Employee {
-    pub fn first_name_and_last_name(&self) -> String {
-        format!("{} {}", self.first_name, self.last_name)
+impl Selectable for Employee {
+    fn get_id(&self) -> i32 {
+        self.id.unwrap_or(0)
     }
 
-    pub fn to_select_options_html(employees: &[Employee]) -> Vec<Html> {
-        employees
+    fn get_name(&self) -> &str {
+        &self.first_name
+    }
+
+    fn to_select_options_html(items: &[Self], selected_id: i32) -> Vec<Html>
+    where
+        Self: Sized,
+    {
+        items
             .iter()
             .enumerate()
-            .map(|(index, employee)| {
-                let selected = index == 0;
+            .map(|(index, item)| {
+                let selected = index == 0 || item.get_id() == selected_id;
                 html! {
-                    <option value={ employee.id.unwrap().to_string() } selected={ selected }>
-                        { format!("{} {}", &employee.first_name, &employee.last_name) }
+                    <option value={ item.get_id().to_string() } {selected} >
+                        { &item.get_full_name() }
                     </option>
                 }
             })
             .collect()
+    }
+}
+
+impl Employee {
+    fn get_full_name(&self) -> String {
+        format!("{} {}", self.first_name, self.last_name)
     }
 }

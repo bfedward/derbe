@@ -288,14 +288,14 @@ pub fn component(props: &Props) -> Html {
                             label="Employee"
                             readonly=true
                             value={format!("{} {}", employee.first_name, employee.last_name)}
-                            on_change={None::<Callback<String>>}
+                            on_change={None::<Callback<Option<String>>>}
                         />
                         <DDSTextInput
                             id="leaveTypeName"
                             label="Leave Type"
                             readonly=true
                             value={leave_type_name}
-                            on_change={None::<Callback<String>>}
+                            on_change={None::<Callback<Option<String>>>}
                         />
 
                         <p class="grid">

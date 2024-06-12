@@ -245,16 +245,20 @@ pub fn component() -> Html {
 
                         <div class="grid">
                         <div>
-                            <DDSSelect id="employeeSelect"
+                            <DDSSelect<Employee>
+                                    id="employeeSelect"
                                     name="employeeSelect"
                                     label="Employee"
-                                    options={Employee::to_select_options_html(employees.deref())}
+                                    selected_id={selected_employee.clone().as_ref().unwrap().id.unwrap()}
+                                    options={employees.deref().clone()}
                                     onchange={employee_onchange}/>
 
-                            <DDSSelect id="leaveTypeSelect"
+                            <DDSSelect<LeaveType>
+                                    id="leaveTypeSelect"
                                     name="leaveTypeSelect"
                                     label="Leave Type"
-                                    options={ LeaveType::to_select_options_html(leave_types.deref()) }
+                                    selected_id={selected_leave_type.clone().as_ref().unwrap().id.unwrap()}
+                                    options={leave_types.deref().clone()}
                                     onchange={leave_types_onchange}/>
 
                             <p class="grid">
