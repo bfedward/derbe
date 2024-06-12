@@ -249,7 +249,9 @@ pub fn component() -> Html {
                                     id="employeeSelect"
                                     name="employeeSelect"
                                     label="Employee"
-                                    selected_id={selected_employee.clone().as_ref().unwrap().id.unwrap()}
+                                    selected_id={selected_employee.clone().as_ref().unwrap().id}
+                                    excluded_id={None}
+                                    is_optional_field=false
                                     options={employees.deref().clone()}
                                     onchange={employee_onchange}/>
 
@@ -257,7 +259,9 @@ pub fn component() -> Html {
                                     id="leaveTypeSelect"
                                     name="leaveTypeSelect"
                                     label="Leave Type"
-                                    selected_id={selected_leave_type.clone().as_ref().unwrap().id.unwrap()}
+                                    selected_id={selected_leave_type.clone().as_ref().unwrap().id}
+                                    excluded_id={None}
+                                    is_optional_field=false
                                     options={leave_types.deref().clone()}
                                     onchange={leave_types_onchange}/>
 

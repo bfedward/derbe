@@ -10,7 +10,9 @@ pub struct Props<T: Selectable + PartialEq + 'static> {
     pub id: String,
     pub name: String,
     pub label: String,
-    pub selected_id: i32,
+    pub selected_id: Option<i32>,
+    pub excluded_id: Option<i32>,
+    pub is_optional_field: bool,
     pub options: Vec<T>,
     pub onchange: Callback<i32>,
 }
@@ -47,7 +49,18 @@ pub fn dds_select<T: Selectable + PartialEq + 'static>(props: &Props<T>) -> Html
         <>
             <label for={props.id.clone()}>{ &props.label }</label>
             <select id={props.id.clone()} name={props.name.clone()} required=true onchange={on_change}>
-                { for T::to_select_options_html(&props.options, props.selected_id) }
+                { if props.selected_id.is_none() && props.is_optional_field { 
+                    html! {
+                        <option value={""} selected=true>{""}</option>
+                    }
+                } else if props.selected_id.is_some() && props.is_optional_field { 
+                    html! {
+                        <option value={""}>{""}</option>
+                    }
+                } else {
+                    html! {}
+                }}
+                { for T::to_select_options_html(&props.options, props.selected_id, props.excluded_id) }
             </select>
         </>
     }

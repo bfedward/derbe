@@ -24,7 +24,7 @@ impl Selectable for LeaveType {
         &self.name
     }
 
-    fn to_select_options_html(items: &[Self], _selected_id: i32) -> Vec<Html> {
+    fn to_select_options_html(items: &[Self], _selected_id: Option<i32>, _excluded_id: Option<i32>) -> Vec<Html> {
         items
             .iter()
             .map(|leave_type| {
