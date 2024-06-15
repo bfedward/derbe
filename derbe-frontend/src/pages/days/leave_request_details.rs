@@ -1,17 +1,15 @@
-use std::ops::Deref;
+use std::cmp::Ordering;
 
 use crate::{
     api::{
         api_errors::ApiError,
-        employees::get_employee,
         leave_requests::{get_leave_request, update_leave_request, update_leave_request_status},
-        leave_types::get_leave_type,
     },
     components::{
         atoms::{
             dds_date_input::{DDSDateInput, DateType},
             dds_text_area::DDSTextArea,
-            dds_text_input::DDSTextInput,
+            dds_text_input::DDSTextInputForSelectable,
         },
         molecules::half_day_op_radio_group::HalfDayOpRadioGroup,
         organisms::navbar::Navbar,
@@ -23,7 +21,6 @@ use crate::{
         leave_type::LeaveType,
     },
     router::Route,
-    utils::date_utils::calculate_requested_days,
 };
 use chrono::{NaiveDate, Utc};
 use gloo::console::log;
@@ -38,77 +35,19 @@ pub struct Props {
 
 #[function_component(LeaveRequestDetails)]
 pub fn component(props: &Props) -> Html {
-    let is_leave_request_loaded = use_state(|| false);
-    let is_employee_loaded = use_state(|| false);
-    let is_leave_type_loaded = use_state(|| false);
-    let leave_request = use_state(LeaveRequest::default);
-    let employee = use_state(Employee::default);
-    let leave_type = use_state(LeaveType::default);
+    let leave_request = use_state(|| None::<LeaveRequest>);
     let is_form_valid = use_state(|| true);
-
     let now = Utc::now().date_naive();
-    let date_from = use_state(|| now);
-    let date_to = use_state(|| now);
-    let half_day_opt = use_state(HalfDayOptions::default);
-    let notes = use_state(|| None::<String>);
 
-    let is_leave_request_loaded_clone = is_leave_request_loaded.clone();
-    let is_employee_loaded_clone = is_employee_loaded.clone();
-    let is_leave_type_loaded_clone = is_leave_type_loaded.clone();
-    let leave_request_clone = leave_request.clone();
-    let employee_clone = employee.clone();
-    let leave_type_clone = leave_type.clone();
-    let date_from_clone = date_from.clone();
-    let date_to_clone = date_to.clone();
-    let half_day_opt_clone = half_day_opt.clone();
-    let notes_clone = notes.clone();
     let id = props.id;
+    let leave_request_clone = leave_request.clone();
     use_effect(move || {
-        if !*is_leave_request_loaded_clone
-            && !*is_employee_loaded_clone
-            && !*is_leave_type_loaded_clone
-        {
+        if leave_request_clone.is_none() {
             wasm_bindgen_futures::spawn_local(async move {
                 match get_leave_request(&id).await {
                     Ok(res) => {
                         log!(JsValue::from("Got leave request!"));
-                        is_leave_request_loaded_clone.set(true);
-                        let res_clone = res.clone();
-                        leave_request_clone.set(res_clone.clone());
-                        date_from_clone.set(res_clone.date_from);
-                        date_to_clone.set(res_clone.date_to);
-                        notes_clone.set(res_clone.notes);
-                        half_day_opt_clone.set(HalfDayOptions::from_bools(
-                            res.first_day_half,
-                            res.last_day_half,
-                        ));
-
-                        wasm_bindgen_futures::spawn_local(async move {
-                            if !*is_leave_type_loaded_clone {
-                                match get_leave_type(&res.leave_type_id).await {
-                                    Ok(res) => {
-                                        log!(JsValue::from("Got leave type!"));
-                                        is_leave_type_loaded_clone.set(true);
-                                        leave_type_clone.set(res);
-                                    }
-                                    Err(error) => {
-                                        log!(JsValue::from(error.to_string()));
-                                    }
-                                }
-                            }
-                            if !*is_employee_loaded_clone {
-                                match get_employee(&res.employee_id).await {
-                                    Ok(res) => {
-                                        log!(JsValue::from("Got employee!"));
-                                        is_employee_loaded_clone.set(true);
-                                        employee_clone.set(res)
-                                    }
-                                    Err(error) => {
-                                        log!(JsValue::from(error.to_string()));
-                                    }
-                                }
-                            }
-                        })
+                        leave_request_clone.set(Some(res));
                     }
                     Err(error) => {
                         log!(JsValue::from(error.to_string()));
@@ -119,93 +58,79 @@ pub fn component(props: &Props) -> Html {
         || {}
     });
 
-    let date_from_clone = date_from.clone();
-    let is_form_valid_clone = is_form_valid.clone();
     let date_from_onchange = {
+        let is_form_valid_clone = is_form_valid.clone();
+        let leave_request = leave_request.clone();
         Callback::from(move |(new_date, valid): (NaiveDate, bool)| {
-            date_from_clone.set(new_date);
-            is_form_valid_clone.set(valid);
+            if valid {
+                if let Some(mut lr) = (*leave_request).as_ref().cloned() {
+                    lr.set_date_from(new_date);
+                    leave_request.set(Some(lr));
+                }
+            } else {
+                is_form_valid_clone.set(valid);
+            }
         })
     };
 
-    let date_to_clone = date_to.clone();
-    let is_form_valid_clone = is_form_valid.clone();
     let date_to_onchange = {
+        let is_form_valid_clone = is_form_valid.clone();
+        let leave_request = leave_request.clone();
         Callback::from(move |(new_date, valid): (NaiveDate, bool)| {
-            date_to_clone.set(new_date);
-            is_form_valid_clone.set(valid);
+            if valid {
+                if let Some(mut lr) = (*leave_request).as_ref().cloned() {
+                    lr.set_date_to(new_date);
+                    leave_request.set(Some(lr.clone()));
+                }
+            } else {
+                is_form_valid_clone.set(valid);
+            }
         })
     };
 
     let half_day_opt_onchange = {
-        let half_day_opt = half_day_opt.clone();
+        let leave_request = leave_request.clone();
         Callback::from(move |half_day_op: HalfDayOptions| {
-            half_day_opt.set(half_day_op);
+            if let Some(mut lr) = (*leave_request).as_ref().cloned() {
+                let (first_day_half, last_day_half) = HalfDayOptions::to_bools(&half_day_op);
+                lr.set_first_last_day_half((first_day_half, last_day_half));
+                leave_request.set(Some(lr.clone()));
+            }
         })
     };
 
     let notes_onchange = {
-        let notes = notes.clone();
+        let leave_request = leave_request.clone();
         Callback::from(move |new_notes: Option<String>| {
-            notes.set(new_notes);
+            if let Some(mut lr) = (*leave_request).as_ref().cloned() {
+                lr.notes = new_notes;
+                leave_request.set(Some(lr.clone()));
+            }
         })
     };
 
-    let leave_request_id = leave_request.id;
-    let employee_id = employee.id;
-    let leave_type_id = leave_type.id;
-    let leave_status = leave_request.leave_status;
-    let date_from_clone = date_from.clone();
-    let date_to_clone = date_to.clone();
-    let date_requested = leave_request.date_requested;
-    let date_finalised = leave_request.date_finalised;
-    let notes_clone = notes.clone();
-
     let onsubmit = {
-        let half_day_opt = half_day_opt.clone();
-        let total_duration =
-            calculate_requested_days(&date_from_clone, &date_to_clone, &half_day_opt);
         let history = use_navigator().unwrap();
-
-        let (first_day_half, last_day_half) = half_day_opt.deref().to_bools();
-
+        let leave_request = leave_request.clone();
         Callback::from(move |event: SubmitEvent| {
-            let note_clone = notes_clone.deref().clone();
-            let employee_id = employee_id.unwrap();
-            let leave_type_id = leave_type_id.unwrap();
-
-            let updated_leave_request = LeaveRequest {
-                id: leave_request_id,
-                employee_id,
-                leave_type_id,
-                leave_status,
-                date_from: *date_from_clone,
-                date_to: *date_to_clone,
-                first_day_half,
-                last_day_half,
-                total_duration,
-                date_requested,
-                date_finalised,
-                notes: note_clone,
-            };
-
             event.prevent_default();
-            let updated_leave_request = updated_leave_request.clone();
-            let history = history.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                match update_leave_request(&updated_leave_request).await {
-                    Ok(_) => {
-                        history.push(&Route::MyLeave);
+            if let Some(updated_leave_request) = (*leave_request).as_ref().cloned() {
+                let history = history.clone();
+                wasm_bindgen_futures::spawn_local(async move {
+                    match update_leave_request(&updated_leave_request).await {
+                        Ok(_) => {
+                            history.push(&Route::MyLeave);
+                        }
+                        Err(ApiError::NotAuthenticated) => {
+                            history.push(&Route::Home);
+                        }
+                        Err(error) => {
+                            gloo::console::error!(error.to_string());
+                            panic!();
+                        }
                     }
-                    Err(ApiError::NotAuthenticated) => {
-                        history.push(&Route::Home);
-                    }
-                    Err(error) => {
-                        gloo::console::error!(error.to_string());
-                        panic!();
-                    }
-                }
-            })
+                })
+            }
         })
     };
 
@@ -233,103 +158,87 @@ pub fn component(props: &Props) -> Html {
         })
     };
 
-    let notes_clone = notes.clone();
-    let id = leave_request.id;
     let accepted_onclick = {
         let history = use_navigator().unwrap();
+        let leave_request = leave_request.clone();
         Callback::from(move |event: MouseEvent| {
             event.prevent_default();
-            let note_clone_str = notes_clone.deref().clone();
-            let req = LeaveRequestStatusUpdate {
-                leave_status: LeaveStatus::Accepted,
-                notes: note_clone_str,
-            };
-            let history = history.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                match update_leave_request_status(&id.unwrap(), req).await {
-                    Ok(_) => {
-                        history.push(&Route::MyLeave);
+            if let Some(lr) = (*leave_request).as_ref().cloned() {
+                let req = LeaveRequestStatusUpdate {
+                    leave_status: LeaveStatus::Accepted,
+                    notes: lr.notes,
+                };
+                let history = history.clone();
+                wasm_bindgen_futures::spawn_local(async move {
+                    match update_leave_request_status(&lr.id.unwrap(), req).await {
+                        Ok(_) => {
+                            history.push(&Route::MyLeave);
+                        }
+                        Err(ApiError::NotAuthenticated) => {
+                            history.push(&Route::Home);
+                        }
+                        Err(error) => {
+                            gloo::console::error!(error.to_string());
+                            panic!();
+                        }
                     }
-                    Err(ApiError::NotAuthenticated) => {
-                        history.push(&Route::Home);
-                    }
-                    Err(error) => {
-                        gloo::console::error!(error.to_string());
-                        panic!();
-                    }
-                }
-            })
+                })
+            }
         })
     };
-
-    let leave_type_name = leave_type.name.clone();
-
-    let calculated_leave_duration =
-        calculate_requested_days(date_from.deref(), date_to.deref(), &half_day_opt);
-    let duration_gt_one = calculated_leave_duration > 1.0;
-
-    let half_day_opt_clone = half_day_opt.deref().clone();
-
-    let notes_clone = notes.clone();
-    let notes_string = notes_clone.deref().clone().unwrap_or(String::new());
-
-    let date_from_clone = *date_from.deref();
-    let date_to_clone = *date_to.deref();
 
     html! {
         <main class="container">
             <Navbar />
             <h1>{ "Leave Request Details" }</h1>
-            if *is_leave_request_loaded.deref() && *is_employee_loaded.deref() && *is_leave_type_loaded.deref() {
+            if let Some(leave_request) = (*leave_request).as_ref().cloned() {
                 <section id="form">
                     <form onsubmit = {onsubmit}>
-                        <DDSTextInput
+                        <DDSTextInputForSelectable<Employee>
                             id="employeeName"
                             label="Employee"
-                            readonly=true
-                            value={format!("{} {}", employee.first_name, employee.last_name)}
-                            on_change={None::<Callback<Option<String>>>}
+                            selected_id={leave_request.employee_id}
                         />
-                        <DDSTextInput
+                        <DDSTextInputForSelectable<LeaveType>
                             id="leaveTypeName"
                             label="Leave Type"
-                            readonly=true
-                            value={leave_type_name}
-                            on_change={None::<Callback<Option<String>>>}
+                            selected_id={leave_request.leave_type_id}
                         />
 
                         <p class="grid">
                             <DDSDateInput id="dateFrom"
                                 name="dateFrom"
                                 label="Date From"
-                                value={date_from_clone}
+                                value={leave_request.get_date_from()}
                                 date_type={DateType::DateFrom}
-                                other_date={date_to_clone}
+                                other_date={leave_request.get_date_to()}
                                 min={now}
                                 max={now}
                                 on_change={date_from_onchange}/>
                             <DDSDateInput id="dateTo"
                                 name="dateTo"
                                 label="Date To"
-                                value={date_to_clone}
+                                value={leave_request.get_date_to()}
                                 date_type={DateType::DateTo}
-                                other_date={date_from_clone}
+                                other_date={leave_request.get_date_from()}
                                 min={now}
                                 max={now}
                                 on_change={date_to_onchange}/>
                         </p>
 
                         <HalfDayOpRadioGroup
-                            duration_gt_one={!duration_gt_one}
-                            selected={half_day_opt_clone}
-                            on_change={half_day_opt_onchange}
+                                duration_gt_one={
+                                    leave_request.get_total_duration().partial_cmp(&1.0) != Some(Ordering::Greater)
+                                }
+                                selected={HalfDayOptions::from_bools(leave_request.get_first_last_day_half())}
+                                on_change={half_day_opt_onchange}
                         />
 
                         <DDSTextArea
                             name="daysRequestNotes"
                             placeholder="Notes..."
                             label="Notes"
-                            value={notes_string}
+                            value={leave_request.notes.unwrap_or_default()}
                             small={Some("Optional".to_owned())}
                             on_change={notes_onchange}
                         />

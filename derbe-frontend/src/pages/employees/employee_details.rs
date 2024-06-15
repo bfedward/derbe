@@ -9,14 +9,7 @@ use crate::components::atoms::dds_text_input::DDSTextInput;
 use crate::components::organisms::navbar::Navbar;
 use crate::model::division::Division;
 use crate::model::location::Location;
-use crate::{
-    api::{
-        divisions::get_divisions,
-        employees::{get_employee, get_employees},
-        locations::get_locations,
-    },
-    model::employee::Employee,
-};
+use crate::{api::employees::get_employee, model::employee::Employee};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -26,64 +19,18 @@ pub struct Props {
 #[function_component(EmployeeDetails)]
 pub fn employee_details(props: &Props) -> Html {
     let is_employee_loaded = use_state(|| false);
-
     let employee = use_state(Employee::default);
-    let managers = use_state(|| None::<Vec<Employee>>);
-    let divisions = use_state(|| None::<Vec<Division>>);
-    let locations = use_state(|| None::<Vec<Location>>);
 
     let is_employee_loaded_clone = is_employee_loaded.clone();
-
     let employee_clone = employee.clone();
-    let managers_clone = managers.clone();
-    let divisions_clone = divisions.clone();
-    let locations_clone = locations.clone();
-
     let id = props.id;
     use_effect(move || {
-        if !*is_employee_loaded_clone
-            && !managers_clone.is_some()
-            && !divisions_clone.is_some()
-            && !locations_clone.is_some()
-        {
+        if !*is_employee_loaded_clone {
             wasm_bindgen_futures::spawn_local(async move {
                 match get_employee(&id).await {
                     Ok(res) => {
                         is_employee_loaded_clone.set(true);
                         employee_clone.set(res);
-
-                        wasm_bindgen_futures::spawn_local(async move {
-                            if !managers_clone.is_some() {
-                                match get_employees().await {
-                                    Ok(res) => {
-                                        managers_clone.set(Some(res));
-                                    }
-                                    Err(error) => {
-                                        log!(JsValue::from(error.to_string()));
-                                    }
-                                }
-                            }
-                            if !divisions_clone.is_some() {
-                                match get_divisions().await {
-                                    Ok(res) => {
-                                        divisions_clone.set(Some(res));
-                                    }
-                                    Err(error) => {
-                                        log!(JsValue::from(error.to_string()));
-                                    }
-                                }
-                            }
-                            if !locations_clone.is_some() {
-                                match get_locations().await {
-                                    Ok(res) => {
-                                        locations_clone.set(Some(res));
-                                    }
-                                    Err(error) => {
-                                        log!(JsValue::from(error.to_string()));
-                                    }
-                                }
-                            }
-                        })
                     }
                     Err(error) => {
                         log!(JsValue::from(error.to_string()));
@@ -128,25 +75,29 @@ pub fn employee_details(props: &Props) -> Html {
 
     let manager_on_change = {
         let employee = employee.clone();
-        Callback::from(move |manager_id: i32| {
+        Callback::from(move |manager_id: Option<i32>| {
             let mut emp = (*employee).clone();
-            emp.manager_id = Some(manager_id);
+            emp.manager_id = manager_id;
         })
     };
 
     let division_on_change = {
         let employee = employee.clone();
-        Callback::from(move |division_id: i32| {
-            let mut emp = (*employee).clone();
-            emp.division_id = division_id;
+        Callback::from(move |division_id: Option<i32>| {
+            if let Some(id) = division_id {
+                let mut emp = (*employee).clone();
+                emp.division_id = id;
+            }
         })
     };
 
     let location_on_change = {
         let employee = employee.clone();
-        Callback::from(move |location_id: i32| {
-            let mut emp = (*employee).clone();
-            emp.location_id = location_id;
+        Callback::from(move |location_id: Option<i32>| {
+            if let Some(id) = location_id {
+                let mut emp = (*employee).clone();
+                emp.location_id = id;
+            }
         })
     };
 
@@ -170,16 +121,11 @@ pub fn employee_details(props: &Props) -> Html {
         })
     };
 
-
     html! {
         <main class="container">
             <Navbar />
             <h1>{ "Employee Details" }</h1>
-            if *is_employee_loaded.deref()
-                && managers.is_some()
-                && divisions.is_some()
-                && locations.is_some(){
-
+            if *is_employee_loaded.deref() {
                     <DDSTextInput
                         id="firstName"
                         label="First Name"
@@ -204,44 +150,35 @@ pub fn employee_details(props: &Props) -> Html {
                         on_change={job_title_on_change}
                     />
 
-                    if let Some(managers_vec) = &*managers {
-                        <DDSSelect<Employee>
-                            id="managerSelect"
-                            name="managerSelect"
-                            label="Manager"
-                            selected_id={employee.manager_id}
-                            excluded_id={employee.id}
-                            is_optional_field=true
-                            options={managers_vec.clone()}
-                            onchange={manager_on_change}
-                        />
-                    }
+                    <DDSSelect<Employee>
+                        id="managerSelect"
+                        name="managerSelect"
+                        label="Manager"
+                        selected_id={employee.manager_id}
+                        excluded_id={employee.id}
+                        is_optional_field=true
+                        onchange={manager_on_change}
+                    />
 
-                    if let Some(divisions_vec) = &*divisions {
-                        <DDSSelect<Division>
-                            id="divisionSelect"
-                            name="divisionSelect"
-                            label="Division"
-                            selected_id={employee.division_id}
-                            excluded_id={None}
-                            is_optional_field=false
-                            options={divisions_vec.clone()}
-                            onchange={division_on_change}
-                        />
-                    }
+                    <DDSSelect<Division>
+                        id="divisionSelect"
+                        name="divisionSelect"
+                        label="Division"
+                        selected_id={employee.division_id}
+                        excluded_id={None}
+                        is_optional_field=false
+                        onchange={division_on_change}
+                    />
 
-                    if let Some(locations_vec) = &*locations {
-                        <DDSSelect<Location>
-                            id="locationSelect"
-                            name="locationSelect"
-                            label="Location"
-                            selected_id={employee.location_id}
-                            excluded_id={None}
-                            is_optional_field=false
-                            options={locations_vec.clone()}
-                            onchange={location_on_change}
-                        />
-                    }
+                    <DDSSelect<Location>
+                        id="locationSelect"
+                        name="locationSelect"
+                        label="Location"
+                        selected_id={employee.location_id}
+                        excluded_id={None}
+                        is_optional_field=false
+                        onchange={location_on_change}
+                    />
 
                     <DDSTextInput
                         id="email"

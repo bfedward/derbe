@@ -1,6 +1,9 @@
-use wasm_bindgen::JsCast;
+use gloo::console::log;
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
+
+use crate::model::Selectable;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -40,6 +43,44 @@ pub fn dds_text_input(props: &Props) -> Html {
                 value={props.value.clone()}
                 onchange={on_change}
             />
+        </>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct PropsForSelectable {
+    pub id: String,
+    pub label: String,
+    pub selected_id: i32,
+}
+
+#[function_component(DDSTextInputForSelectable)]
+pub fn dds_text_input_for_selectable<S: Selectable + 'static>(props: &PropsForSelectable) -> Html {
+    let select_option = use_state(|| None::<S>);
+    let props_selected_id = props.selected_id;
+
+    let select_option_clone = select_option.clone();
+    use_effect(move || {
+        wasm_bindgen_futures::spawn_local(async move {
+            match S::get_entity(&props_selected_id).await {
+                Ok(res) => {
+                    select_option_clone.set(Some(res));
+                }
+                Err(error) => {
+                    log!(JsValue::from(error.to_string()));
+                }
+            }
+        });
+
+        || ()
+    });
+
+    html! {
+        <>
+        if let Some(option) = &*select_option {
+            <label for={props.id.clone()}>{ props.label.clone() }</label>
+            { Selectable::to_readonly_text_input(option) }
+        }
         </>
     }
 }

@@ -1,27 +1,50 @@
 use gloo::console::log;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::HtmlSelectElement;
 use yew::prelude::*;
 
 use crate::model::Selectable;
 
 #[derive(Properties, PartialEq)]
-pub struct Props<T: Selectable + PartialEq + 'static> {
+pub struct Props {
     pub id: String,
     pub name: String,
     pub label: String,
     pub selected_id: Option<i32>,
     pub excluded_id: Option<i32>,
     pub is_optional_field: bool,
-    pub options: Vec<T>,
-    pub onchange: Callback<i32>,
+    pub onchange: Callback<Option<i32>>,
 }
 
 #[function_component(DDSSelect)]
-pub fn dds_select<T: Selectable + PartialEq + 'static>(props: &Props<T>) -> Html {
+pub fn dds_select<S: Selectable + 'static>(props: &Props) -> Html {
+    let select_options = use_state(|| None::<Vec<S>>);
+    let select_options_clone = select_options.clone();
+
+    let props_onchange = props.onchange.clone();
+    use_effect(move || {
+        if select_options_clone.is_none() {
+            wasm_bindgen_futures::spawn_local(async move {
+                match S::get_entities().await {
+                    Ok(res) => {
+                        // Emit onchange event with the first i32 value
+                        if let Some(first_value) = res.first().map(|item| item.get_id()) {
+                            props_onchange.emit(Some(first_value));
+                        } else {
+                            log!("No items fetched or no first value found");
+                        }
+                        select_options_clone.set(Some(res));
+                    }
+                    Err(error) => {
+                        log!(JsValue::from(error.to_string()));
+                    }
+                }
+            });
+        }
+    });
+
     let on_change = {
         let props_onchange = props.onchange.clone();
-        let props_options_ids: Vec<i32> = props.options.iter().map(|opt| opt.get_id()).collect();
         Callback::from(move |event: Event| {
             if let Some(select_element) = event
                 .target()
@@ -31,11 +54,7 @@ pub fn dds_select<T: Selectable + PartialEq + 'static>(props: &Props<T>) -> Html
                 log!(&value);
 
                 if let Ok(value) = value.parse::<i32>() {
-                    if props_options_ids.iter().find(|id| **id == value).is_some() {
-                        props_onchange.emit(value);
-                    } else {
-                        log!("Can't select an unknown option");
-                    }
+                    props_onchange.emit(Some(value));
                 } else {
                     log!("Error parsing value as i32");
                 }
@@ -47,21 +66,23 @@ pub fn dds_select<T: Selectable + PartialEq + 'static>(props: &Props<T>) -> Html
 
     html! {
         <>
-            <label for={props.id.clone()}>{ &props.label }</label>
-            <select id={props.id.clone()} name={props.name.clone()} required=true onchange={on_change}>
-                { if props.selected_id.is_none() && props.is_optional_field { 
-                    html! {
-                        <option value={""} selected=true>{""}</option>
-                    }
-                } else if props.selected_id.is_some() && props.is_optional_field { 
-                    html! {
-                        <option value={""}>{""}</option>
-                    }
-                } else {
-                    html! {}
-                }}
-                { for T::to_select_options_html(&props.options, props.selected_id, props.excluded_id) }
-            </select>
+        if let Some(select_options_vec) = &*select_options {
+                <label for={props.id.clone()}>{ &props.label }</label>
+                <select id={props.id.clone()} name={props.name.clone()} required=true onchange={on_change}>
+                    { if props.selected_id.is_none() && props.is_optional_field {
+                        html! {
+                            <option value={""} selected=true>{""}</option>
+                        }
+                    } else if props.selected_id.is_some() && props.is_optional_field {
+                        html! {
+                            <option value={""}>{""}</option>
+                        }
+                    } else {
+                        html! {}
+                    }}
+                    { for S::to_select_options_html(select_options_vec, props.selected_id, props.excluded_id) }
+                </select>
+            }
         </>
     }
 }
