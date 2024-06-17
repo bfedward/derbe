@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, State},
-    routing::get,
+    routing::{get, put},
     Json, Router,
 };
 
@@ -13,6 +13,7 @@ pub fn router() -> Router<AppContext> {
         .route("/employees", get(get_employees))
         .route("/employees/:id", get(get_employee))
         .route("/employees/detailsTable", get(get_employee_details_table))
+        .route("/employees/:id", put(update_employee))
 }
 
 async fn get_employees(State(ctx): State<AppContext>) -> Result<Json<Vec<Employee>>, AppError> {
@@ -36,6 +37,17 @@ async fn get_employee(
     State(ctx): State<AppContext>,
 ) -> Result<Json<Employee>, AppError> {
     match EmployeeService::get_entity_by_id(id, &ctx).await {
+        Ok(employee) => Ok(Json(employee)),
+        Err(e) => Err(e),
+    }
+}
+
+async fn update_employee(
+    State(ctx): State<AppContext>,
+    Path(id): Path<i32>,
+    Json(employee): Json<Employee>,
+) -> Result<Json<Employee>, AppError> {
+    match EmployeeService::update_entity(id, employee, &ctx).await {
         Ok(employee) => Ok(Json(employee)),
         Err(e) => Err(e),
     }

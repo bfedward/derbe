@@ -44,11 +44,11 @@ impl DerbeService<Employee, EmployeeRepository> for EmployeeService {
                 ));
             }
         }
-        todo!()
+        Ok(())
     }
 
     fn pre_create_and_pre_update_validation(_entity: &Employee) -> Result<(), AppError> {
-        todo!()
+        Ok(())
     }
 }
 

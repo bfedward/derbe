@@ -45,6 +45,7 @@ pub fn dds_select<S: Selectable + 'static>(props: &Props) -> Html {
 
     let on_change = {
         let props_onchange = props.onchange.clone();
+        let props_is_optional = props.is_optional_field;
         Callback::from(move |event: Event| {
             if let Some(select_element) = event
                 .target()
@@ -56,7 +57,11 @@ pub fn dds_select<S: Selectable + 'static>(props: &Props) -> Html {
                 if let Ok(value) = value.parse::<i32>() {
                     props_onchange.emit(Some(value));
                 } else {
-                    log!("Error parsing value as i32");
+                    if props_is_optional {
+                        props_onchange.emit(None);
+                    } else {
+                        log!("Error parsing value as i32");
+                    }
                 }
             } else {
                 log!("Error getting select element");
@@ -68,7 +73,7 @@ pub fn dds_select<S: Selectable + 'static>(props: &Props) -> Html {
         <>
         if let Some(select_options_vec) = &*select_options {
                 <label for={props.id.clone()}>{ &props.label }</label>
-                <select id={props.id.clone()} name={props.name.clone()} required=true onchange={on_change}>
+                <select id={props.id.clone()} name={props.name.clone()} required={!props.is_optional_field} onchange={on_change}>
                     { if props.selected_id.is_none() && props.is_optional_field {
                         html! {
                             <option value={""} selected=true>{""}</option>
