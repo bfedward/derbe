@@ -4,7 +4,7 @@ CREATE TABLE employees (
     last_name VARCHAR NOT NULL,
     job_title VARCHAR NOT NULL,
     division_id INTEGER NOT NULL REFERENCES divisions(id),
-    employment_type VARCHAR NOT NULL CHECK (employment_type IN ('PERMANENT', 'CONTRACT')),
+    employment_type VALID_EMPLOYMENT_TYPES NOT NULL,
     location_id INTEGER NOT NULL REFERENCES locations(id),
     manager_id INTEGER REFERENCES employees(id),
     email VARCHAR NOT NULL,

@@ -1,6 +1,9 @@
+use crate::model;
 use crate::{
-    dto::response::employee::EmployeeDetailsResponse, error::AppError, http::AppContext,
-    model::employee::Employee,
+    dto::response::employee::EmployeeDetailsResponse,
+    error::AppError,
+    http::AppContext,
+    model::employee::{Employee, EmploymentType},
 };
 
 use super::DerbeRepository;
@@ -12,8 +15,16 @@ impl DerbeRepository<Employee> for EmployeeRepository {
         match sqlx::query_as!(
             Employee,
             r#"
-            SELECT id, first_name, last_name, job_title, division_id, employment_type, 
-                location_id, manager_id, email, phone
+            SELECT id, 
+                    first_name, 
+                    last_name, 
+                    job_title, 
+                    division_id, 
+                    employment_type AS "employment_type!: model::employee::EmploymentType", 
+                    location_id, 
+                    manager_id, 
+                    email,
+                    phone
             FROM employees
             WHERE id = $1
             "#,
@@ -32,8 +43,16 @@ impl DerbeRepository<Employee> for EmployeeRepository {
         match sqlx::query_as!(
             Employee,
             r#"
-            SELECT id, first_name, last_name, job_title, division_id, employment_type, 
-                location_id, manager_id, email, phone
+            SELECT id, 
+                    first_name, 
+                    last_name, 
+                    job_title, 
+                    division_id, 
+                    employment_type AS "employment_type!: model::employee::EmploymentType", 
+                    location_id, 
+                    manager_id, 
+                    email, 
+                    phone
             FROM employees
             "#
         )
@@ -49,17 +68,32 @@ impl DerbeRepository<Employee> for EmployeeRepository {
         match sqlx::query_as!(
             Employee,
             r#"
-            INSERT INTO employees (first_name, last_name, job_title, division_id, employment_type, 
-                location_id, manager_id, email, phone)
+            INSERT INTO employees (first_name, 
+                                    last_name, 
+                                    job_title, 
+                                    division_id, 
+                                    employment_type, 
+                                    location_id, 
+                                    manager_id, 
+                                    email, 
+                                    phone)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, first_name, last_name, job_title, division_id, employment_type, 
-                location_id, manager_id, email, phone
+            RETURNING id, 
+                        first_name, 
+                        last_name, 
+                        job_title, 
+                        division_id, 
+                        employment_type AS "employment_type!: model::employee::EmploymentType", 
+                        location_id, 
+                        manager_id, 
+                        email, 
+                        phone
             "#,
             new_entity.first_name,
             new_entity.last_name,
             new_entity.job_title,
             new_entity.division_id,
-            new_entity.employment_type,
+            new_entity.employment_type as EmploymentType,
             new_entity.location_id,
             new_entity.manager_id,
             new_entity.email,
@@ -83,23 +117,31 @@ impl DerbeRepository<Employee> for EmployeeRepository {
             r#"
             UPDATE employees
             SET first_name = $1,
-            last_name = $2,
-            job_title = $3,
-            division_id = $4,
-            employment_type = $5,
-            location_id = $6,
-            manager_id = $7,
-            email = $8,
-            phone = $9
+                last_name = $2,
+                job_title = $3,
+                division_id = $4,
+                employment_type = $5,
+                location_id = $6,
+                manager_id = $7,
+                email = $8,
+                phone = $9
             WHERE id = $10
-            RETURNING id, first_name, last_name, job_title, division_id, employment_type, 
-                location_id, manager_id, email, phone
+            RETURNING id, 
+                first_name, 
+                last_name, 
+                job_title, 
+                division_id, 
+                employment_type AS "employment_type!: model::employee::EmploymentType", 
+                location_id, 
+                manager_id, 
+                email, 
+                phone
             "#,
             entity_update.first_name,
             entity_update.last_name,
             entity_update.job_title,
             entity_update.division_id,
-            entity_update.employment_type,
+            entity_update.employment_type as EmploymentType,
             entity_update.location_id,
             entity_update.manager_id,
             entity_update.email,

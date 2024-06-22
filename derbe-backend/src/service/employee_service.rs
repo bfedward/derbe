@@ -28,7 +28,7 @@ impl DerbeService<Employee, EmployeeRepository> for EmployeeService {
 
     async fn pre_create_validation(entity: &Employee, _ctx: &AppContext) -> Result<(), AppError> {
         Self::pre_create_and_pre_update_validation(entity)?;
-        todo!()
+        Ok(())
     }
 
     async fn pre_update_validation(

@@ -5,6 +5,7 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 use yew_router::components::Link;
+use yew_router::hooks::use_navigator;
 
 use crate::api::employees::get_employee_details_table;
 use crate::components::organisms::navbar::Navbar;
@@ -37,10 +38,21 @@ pub fn organisation() -> Html {
         || {}
     });
 
+    let request_onclick = {
+        let navigator = use_navigator().unwrap();
+        Callback::from(move |_: MouseEvent| {
+            let navigator = navigator.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                navigator.push(&Route::EmployeeCreate);
+            })
+        })
+    };
+
     html! {
         <main class="container">
             <Navbar />
             <h1>{ "Organisation" }</h1>
+            <button onclick={ request_onclick }>{ "Create Employee"}</button>
             if *is_loaded.deref() {
                 <table>
                     <thead>

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use gloo::console::log;
 use wasm_bindgen::JsValue;
 use yew::prelude::*;
@@ -171,7 +169,7 @@ pub fn employee_details(props: &Props) -> Html {
         <main class="container">
             <Navbar />
             <h1>{ "Employee Details" }</h1>
-            if let Some(employee) = (*employee).as_ref().clone() {
+            if let Some(employee) = (*employee).as_ref() {
                 <section id="form">
                     <form onsubmit = {onsubmit}>
                         <DDSTextInput

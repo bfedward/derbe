@@ -1,0 +1,1 @@
+CREATE TYPE valid_employment_types AS ENUM ('Permanent', 'Contract');

@@ -1,6 +1,32 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
+use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
 
 use super::{deserialization::deserialize_non_empty_string, DerbeModel};
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "valid_employment_types")]
+pub enum EmploymentType {
+    #[default]
+    Permanent,
+    Contract,
+}
+
+impl PgHasArrayType for EmploymentType {
+    fn array_type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("_valid_employment_types")
+    }
+}
+
+impl Display for EmploymentType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EmploymentType::Permanent => write!(f, "Permanent"),
+            EmploymentType::Contract => write!(f, "Contract"),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct Employee {
@@ -12,8 +38,7 @@ pub struct Employee {
     #[serde(deserialize_with = "deserialize_non_empty_string")]
     pub job_title: String,
     pub division_id: i32,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
-    pub employment_type: String,
+    pub employment_type: EmploymentType,
     pub location_id: i32,
     pub manager_id: Option<i32>,
     pub email: String,

@@ -44,17 +44,28 @@ pub async fn get_employee(id: &i32) -> Result<Employee, ApiError> {
     }
 }
 
+pub async fn create_employee(employee: &Employee) -> Result<Employee, ApiError> {
+    let request = Request::post(&format!("{}/employees", BASE_URL))
+        .header("content-type", "application/json")
+        .body(serde_json::to_string(employee).unwrap())
+        .send()
+        .await
+        .unwrap();
+
+    if request.ok() {
+        Ok(request.json::<Employee>().await.unwrap())
+    } else {
+        Err(handle_errors(request.status()))
+    }
+}
+
 pub async fn update_employee(employee: &Employee) -> Result<Employee, ApiError> {
-    let request = Request::put(&format!(
-        "{}/employees/{}",
-        BASE_URL,
-        employee.id.unwrap()
-    ))
-    .header("content-type", "application/json")
-    .body(serde_json::to_string(employee).unwrap())
-    .send()
-    .await
-    .unwrap();
+    let request = Request::put(&format!("{}/employees/{}", BASE_URL, employee.id.unwrap()))
+        .header("content-type", "application/json")
+        .body(serde_json::to_string(employee).unwrap())
+        .send()
+        .await
+        .unwrap();
 
     if request.ok() {
         Ok(request.json::<Employee>().await.unwrap())

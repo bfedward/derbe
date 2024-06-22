@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 use yew::prelude::*;
 
@@ -8,14 +10,30 @@ use crate::api::{
 
 use super::Selectable;
 
-#[derive(Serialize, Deserialize, Clone, Default, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum EmploymentType {
+    #[default]
+    Permanent,
+    Contract,
+}
+
+impl Display for EmploymentType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EmploymentType::Permanent => write!(f, "Permanent"),
+            EmploymentType::Contract => write!(f, "Contract"),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct Employee {
     pub id: Option<i32>,
     pub first_name: String,
     pub last_name: String,
     pub job_title: String,
     pub division_id: i32,
-    pub employment_type: String,
+    pub employment_type: EmploymentType,
     pub location_id: i32,
     pub manager_id: Option<i32>,
     pub email: String,

@@ -22,16 +22,26 @@ pub fn dds_select<S: Selectable + 'static>(props: &Props) -> Html {
     let select_options_clone = select_options.clone();
 
     let props_onchange = props.onchange.clone();
+    let props_is_optional_field = props.is_optional_field;
+    let props_selected_id = props.selected_id;
     use_effect(move || {
         if select_options_clone.is_none() {
             wasm_bindgen_futures::spawn_local(async move {
                 match S::get_entities().await {
                     Ok(res) => {
-                        // Emit onchange event with the first i32 value
-                        if let Some(first_value) = res.first().map(|item| item.get_id()) {
-                            props_onchange.emit(Some(first_value));
+                        if props_is_optional_field {
+                            if let Some(id) = props_selected_id {
+                                props_onchange.emit(Some(id));
+                            } else {
+                                props_onchange.emit(None);
+                            }
                         } else {
-                            log!("No items fetched or no first value found");
+                            // Emit onchange event with the first i32 value
+                            if let Some(first_value) = res.first().map(|item| item.get_id()) {
+                                props_onchange.emit(Some(first_value));
+                            } else {
+                                log!("No items fetched or no first value found");
+                            }
                         }
                         select_options_clone.set(Some(res));
                     }
@@ -56,12 +66,10 @@ pub fn dds_select<S: Selectable + 'static>(props: &Props) -> Html {
 
                 if let Ok(value) = value.parse::<i32>() {
                     props_onchange.emit(Some(value));
+                } else if props_is_optional {
+                    props_onchange.emit(None);
                 } else {
-                    if props_is_optional {
-                        props_onchange.emit(None);
-                    } else {
-                        log!("Error parsing value as i32");
-                    }
+                    log!("Error parsing value as i32");
                 }
             } else {
                 log!("Error getting select element");

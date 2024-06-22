@@ -52,7 +52,7 @@ pub fn component() -> Html {
         <main class="container">
             <Navbar />
             <h1>{ "My Leave" }</h1>
-            <button onclick={ request_onclick }>{ "Request Days Off "}</button>
+            <button onclick={ request_onclick }>{ "Request Days Off"}</button>
             if *is_loaded.deref() {
                 <table>
                     <thead>
