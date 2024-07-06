@@ -10,26 +10,21 @@ use crate::model::leave_type::LeaveType;
 
 #[function_component(LeaveTypes)]
 pub fn component() -> Html {
-    let is_loaded = use_state(|| false);
-    let leave_types = use_state(Vec::new);
+    let leave_types = use_state(|| None::<Vec<LeaveType>>);
 
-    let is_loaded_clone = is_loaded.clone();
     let leave_types_clone = leave_types.clone();
-
     use_effect(move || {
-        if !*is_loaded_clone {
+        if leave_types_clone.is_none() {
             wasm_bindgen_futures::spawn_local(async move {
                 match get_leave_types().await {
                     Ok(res) => {
-                        let leave_types_clone = leave_types_clone.clone();
                         log!(JsValue::from("Got leave types!"));
-                        leave_types_clone.set(res);
+                        leave_types_clone.set(Some(res));
                     }
                     Err(error) => {
                         log!(JsValue::from(error.to_string()));
                     }
                 }
-                is_loaded_clone.set(true);
             });
         }
         || {}
@@ -39,12 +34,13 @@ pub fn component() -> Html {
         <main class="container">
             <Navbar />
             <h1>{ "Leave Types" }</h1>
-            if *is_loaded.deref() {
+            if let Some(leave_types) = leave_types.deref() {
                 <table>
                     <thead>
                         <tr>
                             <th scope="col">{ "Leave Type" }</th>
                             <th scope="col">{ "Default Quota" }</th>
+                            <th scope="col">{ "Colour" }</th>
                             <th scope="col">{ "Can book in future?" }</th>
                             <th scope="col">{ "Show in \"Others Days\"?" }</th>
                             <th scope="col">{ "Default in \"Others Days\"?" }</th>
@@ -53,7 +49,7 @@ pub fn component() -> Html {
                         </tr>
                     </thead>
                     <tbody>
-                    { for leave_type_html(&leave_types.deref().clone()) }
+                    { for leave_type_html(&leave_types.deref()) }
                     </tbody>
                 </table>
             }
@@ -71,6 +67,12 @@ fn leave_type_html(leave_types: &[LeaveType]) -> Vec<Html> {
                 } else {
                     <td>{ "N/A"}</td>
                 }
+                <td><input
+                    type="color"
+                    value={ leave_type.colour.clone() }
+                    disabled={ true }
+                />
+                </td>
                 <td>
                     <input type="checkbox" id={ "future_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
                         checked={ leave_type.can_book_in_future } disabled=true />

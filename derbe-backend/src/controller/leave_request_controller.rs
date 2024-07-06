@@ -8,8 +8,8 @@ use axum::{
 
 use crate::{
     dto::{
-        request::leave_request::{LeaveRequestStatusUpdate, MyLeaveRequest},
-        response::leave_request::MyLeaveResponse,
+        request::leave_request::{AllLeaveRequest, LeaveRequestStatusUpdate, MyLeaveRequest},
+        response::leave_request::{AllLeaveResponse, MyLeaveResponse},
     },
     error::AppError,
     http::AppContext,
@@ -22,6 +22,7 @@ pub fn router() -> Router<AppContext> {
         .route("/leaveRequests/:id", get(get_leave_request))
         .route("/leaveRequests", post(create_leave_request))
         .route("/myLeave", post(get_my_leave))
+        .route("/allLeave", post(get_all_leave_table_data))
         .route("/leaveRequests/:id", put(update_leave_request))
         .route(
             "/leaveRequests/:id/status",
@@ -35,6 +36,16 @@ async fn get_my_leave(
 ) -> Result<Json<Vec<MyLeaveResponse>>, AppError> {
     match LeaveRequestService::get_my_leave(my_leave_request, &ctx).await {
         Ok(leave_requests) => Ok(Json(leave_requests)),
+        Err(e) => Err(e),
+    }
+}
+
+async fn get_all_leave_table_data(
+    State(ctx): State<AppContext>,
+    Json(all_leave_request): Json<AllLeaveRequest>,
+) -> Result<Json<Vec<AllLeaveResponse>>, AppError> {
+    match LeaveRequestService::get_all_leave_table_data(all_leave_request, &ctx).await {
+        Ok(all_leave) => Ok(Json(all_leave)),
         Err(e) => Err(e),
     }
 }

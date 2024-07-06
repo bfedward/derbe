@@ -4,8 +4,8 @@ use LeaveStatus::*;
 
 use crate::{
     dto::{
-        request::leave_request::{LeaveRequestStatusUpdate, MyLeaveRequest},
-        response::leave_request::MyLeaveResponse,
+        request::leave_request::{AllLeaveRequest, LeaveRequestStatusUpdate, MyLeaveRequest},
+        response::leave_request::{AllLeaveResponse, MyLeaveResponse},
     },
     error::AppError,
     http::AppContext,
@@ -125,6 +125,13 @@ impl LeaveRequestService {
         ctx: &AppContext,
     ) -> Result<Vec<MyLeaveResponse>, AppError> {
         LeaveRequestRepository::get_my_leave(my_leave_request, ctx).await
+    }
+
+    pub async fn get_all_leave_table_data(
+        all_leave_request: AllLeaveRequest,
+        ctx: &AppContext,
+    ) -> Result<Vec<AllLeaveResponse>, AppError> {
+        LeaveRequestRepository::get_all_leave_table_data(all_leave_request, ctx).await
     }
 
     pub async fn update_leave_request_status(

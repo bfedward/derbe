@@ -14,20 +14,16 @@ use crate::router::Route;
 
 #[function_component(Organisation)]
 pub fn organisation() -> Html {
-    let is_loaded = use_state(|| false);
-    let employees = use_state(Vec::new);
+    let employees = use_state(|| None::<Vec<EmployeeDetailsResponse>>);
 
     let employees_clone = employees.clone();
-    let is_loaded_clone = is_loaded.clone();
-
     use_effect(move || {
-        if !*is_loaded_clone {
+        if employees_clone.is_none() {
             spawn_local(async move {
                 match get_employee_details_table().await {
                     Ok(res) => {
                         log!(JsValue::from("Got employees!"));
-                        employees_clone.set(res);
-                        is_loaded_clone.set(true);
+                        employees_clone.set(Some(res));
                     }
                     Err(error) => {
                         log!(JsValue::from(error.to_string()));
@@ -53,7 +49,7 @@ pub fn organisation() -> Html {
             <Navbar />
             <h1>{ "Organisation" }</h1>
             <button onclick={ request_onclick }>{ "Create Employee"}</button>
-            if *is_loaded.deref() {
+            if let Some(employees) = employees.deref() {
                 <table>
                     <thead>
                         <tr>
@@ -68,7 +64,7 @@ pub fn organisation() -> Html {
                         </tr>
                     </thead>
                     <tbody>
-                    { for table_row_html(employees.deref()) }
+                    { for table_row_html(&employees.deref()) }
                     </tbody>
                 </table>
             }

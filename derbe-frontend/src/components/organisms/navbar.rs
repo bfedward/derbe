@@ -19,7 +19,7 @@ pub fn component() -> Html {
                             </summary>
                             <ul dir="rtl">
                                 <li><Link<Route> to={Route::MyLeave}>{ "My Leave" }</Link<Route>></li>
-                                <li><a href="#">{"All Leave"}</a></li>
+                                    <li><Link<Route> to={Route::AllLeave}>{ "All Leave" }</Link<Route>></li>
                             </ul>
                         </details>
                     </li>

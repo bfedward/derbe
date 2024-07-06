@@ -37,3 +37,20 @@ pub fn format_my_leave_date(naive_date: &NaiveDate) -> String {
         naive_date.format(" of %B, %Y")
     )
 }
+
+pub fn get_first_and_last_date(year: i32, month: u32) -> (NaiveDate, NaiveDate) {
+    // First date of the month
+    let first_date = NaiveDate::from_ymd_opt(year, month, 1).expect("Invalid year/month");
+
+    // Last date of the month
+    let last_date = {
+        let next_month = if month == 12 { 1 } else { month + 1 };
+        let next_year = if month == 12 { year + 1 } else { year };
+        NaiveDate::from_ymd_opt(next_year, next_month, 1)
+            .expect("Invalid next year/month")
+            .pred_opt()
+            .expect("Invalid previous day")
+    };
+
+    (first_date, last_date)
+}

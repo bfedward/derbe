@@ -4,8 +4,8 @@ use yew_router::prelude::*;
 use crate::pages::{
     configuration::leave_types::LeaveTypes,
     days::{
-        leave_request_create::LeaveRequestCreate, leave_request_details::LeaveRequestDetails,
-        my_leave::MyLeave,
+        all_leave::AllLeave, leave_request_create::LeaveRequestCreate,
+        leave_request_details::LeaveRequestDetails, my_leave::MyLeave,
     },
     employees::{
         employee_create::EmployeeCreate, employee_details::EmployeeDetails,
@@ -22,6 +22,8 @@ pub enum Route {
     LeaveTypes,
     #[at("/my-leave")]
     MyLeave,
+    #[at("/all-leave")]
+    AllLeave,
     #[at("/leave-request")]
     LeaveRequestCreate,
     #[at("/leave-request/:id")]
@@ -39,6 +41,7 @@ pub fn switch(route: Route) -> Html {
         Route::Home => html! { <Home /> },
         Route::LeaveTypes => html! { <LeaveTypes />},
         Route::MyLeave => html! { <MyLeave />},
+        Route::AllLeave => html! { <AllLeave />},
         Route::LeaveRequestCreate => html! { <LeaveRequestCreate />},
         Route::LeaveRequestDetails { id } => html! { <LeaveRequestDetails id={id} /> },
         Route::Organisation => html! { <Organisation />},

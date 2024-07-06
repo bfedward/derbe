@@ -1,5 +1,9 @@
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 
+use crate::dto::request::leave_request::AllLeaveRequest;
+use crate::dto::response::leave_request::{AllLeaveInnerResponse, AllLeaveResponse};
 use crate::model;
 use crate::{
     dto::{request::leave_request::MyLeaveRequest, response::leave_request::MyLeaveResponse},
@@ -286,5 +290,59 @@ impl LeaveRequestRepository {
                 "Employee has an Accepted leave request within this date range".to_owned(),
             ))
         }
+    }
+
+    pub async fn get_all_leave_table_data(
+        all_leave_request: AllLeaveRequest,
+        ctx: &AppContext,
+    ) -> Result<Vec<AllLeaveResponse>, AppError> {
+        let leave_requests = sqlx::query!(
+            r#"
+            SELECT 
+                CONCAT(e.first_name, ' ', e.last_name) AS employee_name, 
+                lr.date_from, 
+                lr.date_to, 
+                lr.first_day_half, 
+                lr.last_day_half,
+                lt.colour
+            FROM leave_requests lr
+            JOIN employees e ON lr.employee_id = e.id
+            JOIN leave_types lt ON lr.leave_type_id = lt.id
+            WHERE lr.leave_status = 'Accepted'
+            AND lr.date_from >= $1
+            AND lr.date_to <= $2
+            ORDER BY e.last_name, e.first_name, lr.date_from DESC
+            "#,
+            all_leave_request.date_from,
+            all_leave_request.date_to
+        )
+        .fetch_all(&ctx.db)
+        .await
+        .map_err(AppError::DatabaseQueryError)?;
+
+        let mut employee_map: HashMap<String, Vec<AllLeaveInnerResponse>> = HashMap::new();
+
+        for row in leave_requests {
+            if let Some(employee_name) = row.employee_name {
+                let entry = employee_map.entry(employee_name).or_default();
+                entry.push(AllLeaveInnerResponse {
+                    date_from: row.date_from,
+                    date_to: row.date_to,
+                    first_day_half: row.first_day_half,
+                    last_day_half: row.last_day_half,
+                    colour: row.colour,
+                });
+            }
+        }
+
+        let all_leave_responses: Vec<AllLeaveResponse> = employee_map
+            .into_iter()
+            .map(|(employee_name, leaves)| AllLeaveResponse {
+                employee_name,
+                leaves,
+            })
+            .collect();
+
+        Ok(all_leave_responses)
     }
 }

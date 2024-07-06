@@ -13,26 +13,21 @@ use crate::{components::organisms::navbar::Navbar, router::Route};
 
 #[function_component(MyLeave)]
 pub fn component() -> Html {
-    let is_loaded = use_state(|| false);
-    let my_leaves = use_state(Vec::new);
+    let my_leaves = use_state(|| None::<Vec<MyLeaveResponse>>);
 
-    let is_loaded_clone = is_loaded.clone();
     let my_leaves_clone = my_leaves.clone();
-
     use_effect(move || {
-        if !*is_loaded_clone {
+        if my_leaves_clone.is_none() {
             wasm_bindgen_futures::spawn_local(async move {
                 match get_my_leave().await {
                     Ok(res) => {
-                        let my_leaves_clone = my_leaves_clone.clone();
                         log!(JsValue::from("Got my leave!"));
-                        my_leaves_clone.set(res);
+                        my_leaves_clone.set(Some(res));
                     }
                     Err(error) => {
                         log!(JsValue::from(error.to_string()));
                     }
                 }
-                is_loaded_clone.set(true);
             });
         }
         || {}
@@ -53,7 +48,7 @@ pub fn component() -> Html {
             <Navbar />
             <h1>{ "My Leave" }</h1>
             <button onclick={ request_onclick }>{ "Request Days Off"}</button>
-            if *is_loaded.deref() {
+            if let Some(my_leaves) = my_leaves.deref() {
                 <table>
                     <thead>
                         <tr>
@@ -66,7 +61,7 @@ pub fn component() -> Html {
                         </tr>
                     </thead>
                     <tbody>
-                    { for my_leave_html(&my_leaves.deref().clone()) }
+                    { for my_leave_html(&my_leaves.deref()) }
                     </tbody>
                 </table>
             }

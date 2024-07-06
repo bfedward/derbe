@@ -11,4 +11,5 @@ CREATE TABLE leave_requests (
     date_requested TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     date_finalised TIMESTAMPTZ,
     notes TEXT
+    CONSTRAINT date_check CHECK (date_to >= date_from)
 );

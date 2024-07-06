@@ -9,7 +9,7 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
         match sqlx::query_as!(
             LeaveType,
             r#"
-            SELECT id, name, default_quota, can_book_in_future, 
+            SELECT id, name, default_quota, colour, can_book_in_future, 
                 show_in_others_days, default_in_others_days, default_in_leave_request, show_in_approve_days
             FROM leave_types
             WHERE id = $1
@@ -29,7 +29,7 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
         match sqlx::query_as!(
             LeaveType,
             r#"
-            SELECT id, name, default_quota, can_book_in_future, 
+            SELECT id, name, default_quota, colour, can_book_in_future, 
                 show_in_others_days, default_in_others_days, default_in_leave_request, show_in_approve_days
             FROM leave_types
             "#,
@@ -48,15 +48,17 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
             r#"
             INSERT INTO leave_types (name, 
                                     default_quota, 
+                                    colour,
                                     can_book_in_future, 
                                     show_in_others_days, 
                                     default_in_others_days, 
                                     default_in_leave_request, 
                                     show_in_approve_days)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id, 
                         name, 
-                        default_quota, 
+                        default_quota,
+                        colour,
                         can_book_in_future, 
                         show_in_others_days, 
                         default_in_others_days, 
@@ -65,6 +67,7 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
             "#,
             new_entity.name,
             new_entity.default_quota,
+            new_entity.colour,
             new_entity.can_book_in_future,
             new_entity.show_in_others_days,
             new_entity.default_in_others_days,
@@ -90,15 +93,17 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
             UPDATE leave_types
             SET name = $1,
                 default_quota = $2,
-                can_book_in_future = $3,
-                show_in_others_days = $4,
-                default_in_others_days = $5,
-                default_in_leave_request = $6,
-                show_in_approve_days = $7
-            WHERE id = $8
+                colour = $3,
+                can_book_in_future = $4,
+                show_in_others_days = $5,
+                default_in_others_days = $6,
+                default_in_leave_request = $7,
+                show_in_approve_days = $8
+            WHERE id = $9
             RETURNING id, 
                 name, 
                 default_quota, 
+                colour,
                 can_book_in_future, 
                 show_in_others_days, 
                 default_in_others_days, 
@@ -107,6 +112,7 @@ impl DerbeRepository<LeaveType> for LeaveTypesRepository {
             "#,
             entity_update.name,
             entity_update.default_quota,
+            entity_update.colour,
             entity_update.can_book_in_future,
             entity_update.show_in_others_days,
             entity_update.default_in_others_days,
