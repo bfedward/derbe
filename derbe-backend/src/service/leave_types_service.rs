@@ -16,7 +16,7 @@ impl DerbeService<LeaveType, LeaveTypesRepository> for LeaveTypesService {
     }
 
     async fn pre_create_validation(_entity: &LeaveType, _ctx: &AppContext) -> Result<(), AppError> {
-        todo!()
+        Ok(())
     }
 
     async fn pre_update_validation(
@@ -24,10 +24,10 @@ impl DerbeService<LeaveType, LeaveTypesRepository> for LeaveTypesService {
         _entity: &LeaveType,
         _ctx: &AppContext,
     ) -> Result<(), AppError> {
-        todo!()
+        Ok(())
     }
 
     fn pre_create_and_pre_update_validation(_entity: &LeaveType) -> Result<(), AppError> {
-        todo!()
+        Ok(())
     }
 }

@@ -2,7 +2,7 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use crate::pages::{
-    configuration::leave_types::LeaveTypes,
+    configuration::{leave_type_create::LeaveTypeCreate, leave_types::LeaveTypes},
     days::{
         all_leave::AllLeave, leave_request_create::LeaveRequestCreate,
         leave_request_details::LeaveRequestDetails, my_leave::MyLeave,
@@ -20,6 +20,8 @@ pub enum Route {
     Home,
     #[at("/leave-types")]
     LeaveTypes,
+    #[at("/leave-types/new")]
+    LeaveTypeCreate,
     #[at("/my-leave")]
     MyLeave,
     #[at("/all-leave")]
@@ -40,6 +42,7 @@ pub fn switch(route: Route) -> Html {
     match route {
         Route::Home => html! { <Home /> },
         Route::LeaveTypes => html! { <LeaveTypes />},
+        Route::LeaveTypeCreate => html! { <LeaveTypeCreate /> },
         Route::MyLeave => html! { <MyLeave />},
         Route::AllLeave => html! { <AllLeave />},
         Route::LeaveRequestCreate => html! { <LeaveRequestCreate />},

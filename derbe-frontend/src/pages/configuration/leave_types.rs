@@ -3,10 +3,12 @@ use std::ops::Deref;
 use gloo::console::log;
 use wasm_bindgen_futures::wasm_bindgen::JsValue;
 use yew::prelude::*;
+use yew_router::hooks::use_navigator;
 
 use crate::api::leave_types::get_leave_types;
 use crate::components::organisms::navbar::Navbar;
 use crate::model::leave_type::LeaveType;
+use crate::router::Route;
 
 #[function_component(LeaveTypes)]
 pub fn component() -> Html {
@@ -30,10 +32,21 @@ pub fn component() -> Html {
         || {}
     });
 
+    let request_onclick = {
+        let navigator = use_navigator().unwrap();
+        Callback::from(move |_: MouseEvent| {
+            let navigator = navigator.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                navigator.push(&Route::LeaveTypeCreate);
+            })
+        })
+    };
+
     html! {
         <main class="container">
             <Navbar />
             <h1>{ "Leave Types" }</h1>
+            <button onclick={ request_onclick }>{ "Create Leave Type"}</button>
             if let Some(leave_types) = leave_types.deref() {
                 <table>
                     <thead>

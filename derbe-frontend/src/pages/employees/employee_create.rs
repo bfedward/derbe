@@ -20,7 +20,6 @@ pub fn employee_create() -> Html {
         let employee_clone = employee.clone();
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
-            let employee_clone = employee_clone.clone();
             if let Some(updated_employee) = (*employee_clone).as_ref().cloned() {
                 let history = history.clone();
                 wasm_bindgen_futures::spawn_local(async move {
