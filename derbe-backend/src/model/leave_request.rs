@@ -2,7 +2,6 @@ use std::fmt::Display;
 
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
 use sqlx::types::chrono::{DateTime, Utc};
 
 use super::{deserialization::deserialize_non_negative_f64, DerbeModel};
@@ -15,12 +14,6 @@ pub enum LeaveStatus {
     Cancelled,
     Rejected,
     Accepted,
-}
-
-impl PgHasArrayType for LeaveStatus {
-    fn array_type_info() -> PgTypeInfo {
-        PgTypeInfo::with_name("_valid_leave_statuses")
-    }
 }
 
 impl Display for LeaveStatus {

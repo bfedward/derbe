@@ -1,8 +1,6 @@
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
-
 use super::{deserialization::deserialize_non_empty_string, DerbeModel};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
@@ -13,11 +11,6 @@ pub enum EmploymentType {
     Contract,
 }
 
-impl PgHasArrayType for EmploymentType {
-    fn array_type_info() -> PgTypeInfo {
-        PgTypeInfo::with_name("_valid_employment_types")
-    }
-}
 
 impl Display for EmploymentType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
