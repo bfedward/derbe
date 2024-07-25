@@ -5,9 +5,9 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use derbe_shared::dto::response::employee::EmployeeDetailsResponse;
 
 use crate::{
-    dto::response::employee::EmployeeDetailsResponse,
     error::AppError,
     http::AppContext,
     model::employee::Employee,

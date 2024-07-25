@@ -1,6 +1,7 @@
+use derbe_shared::dto::response::employee::EmployeeDetailsResponse;
+
 use crate::model;
 use crate::{
-    dto::response::employee::EmployeeDetailsResponse,
     error::AppError,
     http::AppContext,
     model::employee::{Employee, EmploymentType},

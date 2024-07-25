@@ -1,8 +1,8 @@
+use derbe_shared::dto::response::employee::EmployeeDetailsResponse;
 use reqwasm::http::Request;
 
 use crate::api::api_errors::{handle_errors, ApiError};
 use crate::api::BASE_URL;
-use crate::dto::employee::EmployeeDetailsResponse;
 use crate::model::employee::Employee;
 
 pub async fn get_employees() -> Result<Vec<Employee>, ApiError> {

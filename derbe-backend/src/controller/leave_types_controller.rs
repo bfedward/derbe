@@ -7,7 +7,6 @@ use axum::{
 };
 
 use crate::{
-    dto::response,
     error::AppError,
     http::AppContext,
     model::leave_type::LeaveType,

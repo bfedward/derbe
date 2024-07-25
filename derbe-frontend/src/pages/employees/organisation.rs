@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use derbe_shared::dto::response::employee::EmployeeDetailsResponse;
 use gloo::console::log;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::spawn_local;
@@ -9,7 +10,7 @@ use yew_router::hooks::use_navigator;
 
 use crate::api::employees::get_employee_details_table;
 use crate::components::organisms::navbar::Navbar;
-use crate::dto::employee::EmployeeDetailsResponse;
+
 use crate::router::Route;
 
 #[function_component(Organisation)]
