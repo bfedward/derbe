@@ -1,10 +1,12 @@
 use chrono::{Datelike, NaiveDate, Utc};
+use derbe_shared::dto::request::leave_request::AllLeaveRequest;
+use derbe_shared::dto::response::leave_request::AllLeaveResponse;
 use reqwasm::http::Request;
 
 use crate::api::api_errors::{handle_errors, ApiError};
 use crate::api::BASE_URL;
 use crate::dto::leave_request::{
-    AllLeaveRequest, AllLeaveResponse, LeaveRequestStatusUpdate, MyLeaveRequest, MyLeaveResponse,
+    LeaveRequestStatusUpdate, MyLeaveRequest, MyLeaveResponse
 };
 use crate::model::leave_request::{LeaveRequest, LeaveStatus};
 use crate::utils::date_utils::get_first_and_last_date;

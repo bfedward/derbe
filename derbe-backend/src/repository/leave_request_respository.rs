@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use chrono::NaiveDate;
+use derbe_shared::dto::request::leave_request::AllLeaveRequest;
+use derbe_shared::dto::response::leave_request::{AllLeaveInnerResponse, AllLeaveResponse};
 
-use crate::dto::request::leave_request::AllLeaveRequest;
-use crate::dto::response::leave_request::{AllLeaveInnerResponse, AllLeaveResponse};
 use crate::model;
 use crate::{
     dto::{request::leave_request::MyLeaveRequest, response::leave_request::MyLeaveResponse},

@@ -5,11 +5,12 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use derbe_shared::dto::{request::leave_request::AllLeaveRequest, response::leave_request::AllLeaveResponse};
 
 use crate::{
     dto::{
-        request::leave_request::{AllLeaveRequest, LeaveRequestStatusUpdate, MyLeaveRequest},
-        response::leave_request::{AllLeaveResponse, MyLeaveResponse},
+        request::leave_request::{LeaveRequestStatusUpdate, MyLeaveRequest},
+        response::leave_request::MyLeaveResponse,
     },
     error::AppError,
     http::AppContext,
