@@ -1,3 +1,5 @@
+use derbe_shared::dto::response::division::DivisionResponse;
+use derbe_shared::dto::response::location::LocationResponse;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
@@ -6,9 +8,7 @@ use crate::api::employees::create_employee;
 use crate::components::atoms::dds_select::DDSSelect;
 use crate::components::atoms::dds_text_input::DDSTextInput;
 use crate::components::organisms::navbar::Navbar;
-use crate::model::division::Division;
 use crate::model::employee::Employee;
-use crate::model::location::Location;
 use crate::router::Route;
 
 #[function_component(EmployeeCreate)]
@@ -181,7 +181,7 @@ pub fn employee_create() -> Html {
                             onchange={manager_on_change}
                         />
 
-                        <DDSSelect<Division>
+                        <DDSSelect<DivisionResponse>
                             id="divisionSelect"
                             name="divisionSelect"
                             label="Division"
@@ -191,7 +191,7 @@ pub fn employee_create() -> Html {
                             onchange={division_on_change}
                         />
 
-                        <DDSSelect<Location>
+                        <DDSSelect<LocationResponse>
                             id="locationSelect"
                             name="locationSelect"
                             label="Location"

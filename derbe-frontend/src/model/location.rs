@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use derbe_shared::dto::response::location::LocationResponse;
 
 use crate::api::{
     api_errors::ApiError,
@@ -7,15 +7,9 @@ use crate::api::{
 
 use super::Selectable;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq)]
-pub struct Location {
-    pub id: Option<i32>,
-    pub name: String,
-}
-
-impl Selectable for Location {
+impl Selectable for LocationResponse {
     fn get_id(&self) -> i32 {
-        self.id.unwrap_or(0)
+        self.id
     }
 
     fn get_name(&self) -> &str {

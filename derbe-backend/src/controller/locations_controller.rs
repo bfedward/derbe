@@ -3,11 +3,11 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use derbe_shared::dto::response::location::LocationResponse;
 
 use crate::{
     error::AppError,
     http::AppContext,
-    model::location::Location,
     service::{location_service::LocationService, DerbeService},
 };
 
@@ -17,9 +17,12 @@ pub fn router() -> Router<AppContext> {
         .route("/locations/:id", get(get_location))
 }
 
-async fn get_locations(State(ctx): State<AppContext>) -> Result<Json<Vec<Location>>, AppError> {
+async fn get_locations(State(ctx): State<AppContext>) -> Result<Json<Vec<LocationResponse>>, AppError> {
     match LocationService::get_entities(&ctx).await {
-        Ok(leave_types) => Ok(Json(leave_types)),
+        Ok(locations) => {
+            let resps = locations.into_iter().map(LocationResponse::from).collect();
+            Ok(Json(resps))
+        },
         Err(e) => Err(e),
     }
 }
@@ -27,9 +30,12 @@ async fn get_locations(State(ctx): State<AppContext>) -> Result<Json<Vec<Locatio
 async fn get_location(
     Path(id): Path<i32>,
     State(ctx): State<AppContext>,
-) -> Result<Json<Location>, AppError> {
+) -> Result<Json<LocationResponse>, AppError> {
     match LocationService::get_entity_by_id(id, &ctx).await {
-        Ok(leave_type) => Ok(Json(leave_type)),
+        Ok(location) => {
+            let resp = location.into();
+            Ok(Json(resp))
+        },
         Err(e) => Err(e),
     }
 }

@@ -3,11 +3,11 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use derbe_shared::dto::response::division::DivisionResponse;
 
 use crate::{
     error::AppError,
     http::AppContext,
-    model::division::Division,
     service::{division_service::DivisionService, DerbeService},
 };
 
@@ -17,9 +17,12 @@ pub fn router() -> Router<AppContext> {
         .route("/divisions/:id", get(get_division))
 }
 
-async fn get_divisions(State(ctx): State<AppContext>) -> Result<Json<Vec<Division>>, AppError> {
+async fn get_divisions(State(ctx): State<AppContext>) -> Result<Json<Vec<DivisionResponse>>, AppError> {
     match DivisionService::get_entities(&ctx).await {
-        Ok(leave_types) => Ok(Json(leave_types)),
+        Ok(divisions) => {
+            let resps = divisions.into_iter().map(DivisionResponse::from).collect();
+            Ok(Json(resps))
+        },
         Err(e) => Err(e),
     }
 }
@@ -27,9 +30,12 @@ async fn get_divisions(State(ctx): State<AppContext>) -> Result<Json<Vec<Divisio
 async fn get_division(
     Path(id): Path<i32>,
     State(ctx): State<AppContext>,
-) -> Result<Json<Division>, AppError> {
+) -> Result<Json<DivisionResponse>, AppError> {
     match DivisionService::get_entity_by_id(id, &ctx).await {
-        Ok(leave_type) => Ok(Json(leave_type)),
+        Ok(division) => {
+            let resp = division.into();
+            Ok(Json(resp))
+        },
         Err(e) => Err(e),
     }
 }

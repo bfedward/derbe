@@ -4,17 +4,11 @@ use crate::api::{
 };
 
 use super::Selectable;
-use serde::{Deserialize, Serialize};
+use derbe_shared::dto::response::division::DivisionResponse;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq)]
-pub struct Division {
-    pub id: Option<i32>,
-    pub name: String,
-}
-
-impl Selectable for Division {
+impl Selectable for DivisionResponse {
     fn get_id(&self) -> i32 {
-        self.id.unwrap_or(0)
+        self.id
     }
 
     fn get_name(&self) -> &str {
