@@ -5,14 +5,12 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use derbe_shared::dto::response::employee::EmployeeDetailsResponse;
-
-use crate::{
-    error::AppError,
-    http::AppContext,
-    model::employee::Employee,
-    service::{employee_service::EmployeeService, DerbeService},
+use derbe_shared::dto::{
+    request::employee::{EmployeeCreate, EmployeeUpdate},
+    response::employee::{EmployeeDetailsResponse, EmployeeResponse},
 };
+
+use crate::{error::AppError, http::AppContext, service::employee_service};
 
 pub fn router() -> Router<AppContext> {
     Router::new()
@@ -23,9 +21,14 @@ pub fn router() -> Router<AppContext> {
         .route("/employees/:id", put(update_employee))
 }
 
-async fn get_employees(State(ctx): State<AppContext>) -> Result<Json<Vec<Employee>>, AppError> {
-    match EmployeeService::get_entities(&ctx).await {
-        Ok(employees) => Ok(Json(employees)),
+async fn get_employees(
+    State(ctx): State<AppContext>,
+) -> Result<Json<Vec<EmployeeResponse>>, AppError> {
+    match employee_service::get_entities(&ctx).await {
+        Ok(employees) => {
+            let resps = employees.into_iter().map(EmployeeResponse::from).collect();
+            Ok(Json(resps))
+        }
         Err(e) => Err(e),
     }
 }
@@ -33,7 +36,7 @@ async fn get_employees(State(ctx): State<AppContext>) -> Result<Json<Vec<Employe
 async fn get_employee_details_table(
     State(ctx): State<AppContext>,
 ) -> Result<Json<Vec<EmployeeDetailsResponse>>, AppError> {
-    match EmployeeService::get_employee_details_table(&ctx).await {
+    match employee_service::get_employee_details_table(&ctx).await {
         Ok(employees) => Ok(Json(employees)),
         Err(e) => Err(e),
     }
@@ -42,20 +45,24 @@ async fn get_employee_details_table(
 async fn get_employee(
     Path(id): Path<i32>,
     State(ctx): State<AppContext>,
-) -> Result<Json<Employee>, AppError> {
-    match EmployeeService::get_entity_by_id(id, &ctx).await {
-        Ok(employee) => Ok(Json(employee)),
+) -> Result<Json<EmployeeResponse>, AppError> {
+    match employee_service::get_entity_by_id(id, &ctx).await {
+        Ok(employee) => {
+            let resp = employee.into();
+            Ok(Json(resp))
+        }
         Err(e) => Err(e),
     }
 }
 
 async fn create_employee(
     State(ctx): State<AppContext>,
-    Json(leave_request): Json<Employee>,
+    Json(employee): Json<EmployeeCreate>,
 ) -> Result<Response, AppError> {
-    match EmployeeService::create_entity(leave_request, &ctx).await {
-        Ok(leave_request) => {
-            let response = (StatusCode::CREATED, Json(leave_request)).into_response();
+    match employee_service::create_entity(employee, &ctx).await {
+        Ok(employee) => {
+            let employee: EmployeeResponse = employee.into();
+            let response = (StatusCode::CREATED, Json(employee)).into_response();
             Ok(response)
         }
         Err(e) => Err(e),
@@ -65,10 +72,10 @@ async fn create_employee(
 async fn update_employee(
     State(ctx): State<AppContext>,
     Path(id): Path<i32>,
-    Json(employee): Json<Employee>,
-) -> Result<Json<Employee>, AppError> {
-    match EmployeeService::update_entity(id, employee, &ctx).await {
-        Ok(employee) => Ok(Json(employee)),
+    Json(employee): Json<EmployeeUpdate>,
+) -> Result<Json<EmployeeResponse>, AppError> {
+    match employee_service::update_entity(id, employee, &ctx).await {
+        Ok(employee) => Ok(Json(employee.into())),
         Err(e) => Err(e),
     }
 }

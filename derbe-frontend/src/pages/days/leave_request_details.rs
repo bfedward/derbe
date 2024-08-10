@@ -14,15 +14,16 @@ use crate::{
         molecules::half_day_op_radio_group::HalfDayOpRadioGroup,
         organisms::navbar::Navbar,
     },
-    dto::leave_request::LeaveRequestStatusUpdate,
-    model::{
-        employee::Employee,
-        leave_request::{HalfDayOptions, LeaveRequest, LeaveStatus},
-        leave_type::LeaveType,
-    },
     router::Route,
 };
 use chrono::{NaiveDate, Utc};
+use derbe_shared::{
+    dto::{
+        request::leave_request::{LeaveRequestStatusUpdate, LeaveRequestUpdate},
+        response::{employee::EmployeeResponse, leave_type::LeaveTypeResponse},
+    },
+    enums::{HalfDayOptions, LeaveStatus},
+};
 use gloo::console::log;
 use wasm_bindgen::JsValue;
 use yew::prelude::*;
@@ -35,7 +36,7 @@ pub struct Props {
 
 #[function_component(LeaveRequestDetails)]
 pub fn component(props: &Props) -> Html {
-    let leave_request = use_state(|| None::<LeaveRequest>);
+    let leave_request = use_state(|| None::<LeaveRequestUpdate>);
     let is_form_valid = use_state(|| true);
     let now = Utc::now().date_naive();
 
@@ -47,7 +48,7 @@ pub fn component(props: &Props) -> Html {
                 match get_leave_request(&id).await {
                     Ok(res) => {
                         log!(JsValue::from("Got leave request!"));
-                        leave_request_clone.set(Some(res));
+                        leave_request_clone.set(Some(res.into()));
                     }
                     Err(error) => {
                         log!(JsValue::from(error.to_string()));
@@ -64,7 +65,7 @@ pub fn component(props: &Props) -> Html {
         Callback::from(move |(new_date, valid): (NaiveDate, bool)| {
             if valid {
                 if let Some(mut lr) = (*leave_request).as_ref().cloned() {
-                    lr.set_date_from(new_date);
+                    lr.values.set_date_from(new_date);
                     leave_request.set(Some(lr));
                 }
             } else {
@@ -79,7 +80,7 @@ pub fn component(props: &Props) -> Html {
         Callback::from(move |(new_date, valid): (NaiveDate, bool)| {
             if valid {
                 if let Some(mut lr) = (*leave_request).as_ref().cloned() {
-                    lr.set_date_to(new_date);
+                    lr.values.set_date_to(new_date);
                     leave_request.set(Some(lr.clone()));
                 }
             } else {
@@ -93,7 +94,8 @@ pub fn component(props: &Props) -> Html {
         Callback::from(move |half_day_op: HalfDayOptions| {
             if let Some(mut lr) = (*leave_request).as_ref().cloned() {
                 let (first_day_half, last_day_half) = HalfDayOptions::to_bools(&half_day_op);
-                lr.set_first_last_day_half((first_day_half, last_day_half));
+                lr.values
+                    .set_first_last_day_half((first_day_half, last_day_half));
                 leave_request.set(Some(lr.clone()));
             }
         })
@@ -112,12 +114,13 @@ pub fn component(props: &Props) -> Html {
     let onsubmit = {
         let history = use_navigator().unwrap();
         let leave_request = leave_request.clone();
+        let id = props.id.clone();
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             if let Some(updated_leave_request) = (*leave_request).as_ref().cloned() {
                 let history = history.clone();
                 wasm_bindgen_futures::spawn_local(async move {
-                    match update_leave_request(&updated_leave_request).await {
+                    match update_leave_request(&id, &updated_leave_request).await {
                         Ok(_) => {
                             history.push(&Route::MyLeave);
                         }
@@ -161,6 +164,7 @@ pub fn component(props: &Props) -> Html {
     let accepted_onclick = {
         let history = use_navigator().unwrap();
         let leave_request = leave_request.clone();
+        let id = props.id.clone();
         Callback::from(move |event: MouseEvent| {
             event.prevent_default();
             if let Some(lr) = (*leave_request).as_ref().cloned() {
@@ -170,7 +174,7 @@ pub fn component(props: &Props) -> Html {
                 };
                 let history = history.clone();
                 wasm_bindgen_futures::spawn_local(async move {
-                    match update_leave_request_status(&lr.id.unwrap(), req).await {
+                    match update_leave_request_status(&id, req).await {
                         Ok(_) => {
                             history.push(&Route::MyLeave);
                         }
@@ -194,12 +198,12 @@ pub fn component(props: &Props) -> Html {
             if let Some(leave_request) = (*leave_request).as_ref().cloned() {
                 <section id="form">
                     <form onsubmit = {onsubmit}>
-                        <DDSTextInputForSelectable<Employee>
+                        <DDSTextInputForSelectable<EmployeeResponse>
                             id="employeeName"
                             label="Employee"
                             selected_id={leave_request.employee_id}
                         />
-                        <DDSTextInputForSelectable<LeaveType>
+                        <DDSTextInputForSelectable<LeaveTypeResponse>
                             id="leaveTypeName"
                             label="Leave Type"
                             selected_id={leave_request.leave_type_id}
@@ -209,18 +213,18 @@ pub fn component(props: &Props) -> Html {
                             <DDSDateInput id="dateFrom"
                                 name="dateFrom"
                                 label="Date From"
-                                value={leave_request.get_date_from()}
+                                value={leave_request.values.get_date_from()}
                                 date_type={DateType::DateFrom}
-                                other_date={leave_request.get_date_to()}
+                                other_date={leave_request.values.get_date_to()}
                                 min={now}
                                 max={now}
                                 on_change={date_from_onchange}/>
                             <DDSDateInput id="dateTo"
                                 name="dateTo"
                                 label="Date To"
-                                value={leave_request.get_date_to()}
+                                value={leave_request.values.get_date_to()}
                                 date_type={DateType::DateTo}
-                                other_date={leave_request.get_date_from()}
+                                other_date={leave_request.values.get_date_from()}
                                 min={now}
                                 max={now}
                                 on_change={date_to_onchange}/>
@@ -228,9 +232,9 @@ pub fn component(props: &Props) -> Html {
 
                         <HalfDayOpRadioGroup
                                 duration_gt_one={
-                                    leave_request.get_total_duration().partial_cmp(&1.0) != Some(Ordering::Greater)
+                                    leave_request.values.get_total_duration().partial_cmp(&1.0) != Some(Ordering::Greater)
                                 }
-                                selected={HalfDayOptions::from_bools(leave_request.get_first_last_day_half())}
+                                selected={HalfDayOptions::from_bools(leave_request.values.get_first_last_day_half())}
                                 on_change={half_day_opt_onchange}
                         />
 

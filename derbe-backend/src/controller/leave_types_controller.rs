@@ -5,13 +5,11 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-
-use crate::{
-    error::AppError,
-    http::AppContext,
-    model::leave_type::LeaveType,
-    service::{leave_types_service::LeaveTypesService, DerbeService},
+use derbe_shared::dto::{
+    request::leave_type::LeaveTypeCreate, response::leave_type::LeaveTypeResponse,
 };
+
+use crate::{error::AppError, http::AppContext, service::leave_types_service};
 
 pub fn router() -> Router<AppContext> {
     Router::new()
@@ -20,9 +18,17 @@ pub fn router() -> Router<AppContext> {
         .route("/leaveTypes", post(create_leave_type))
 }
 
-async fn get_leave_types(State(ctx): State<AppContext>) -> Result<Json<Vec<LeaveType>>, AppError> {
-    match LeaveTypesService::get_entities(&ctx).await {
-        Ok(leave_types) => Ok(Json(leave_types)),
+async fn get_leave_types(
+    State(ctx): State<AppContext>,
+) -> Result<Json<Vec<LeaveTypeResponse>>, AppError> {
+    match leave_types_service::get_entities(&ctx).await {
+        Ok(leave_types) => {
+            let reps = leave_types
+                .into_iter()
+                .map(LeaveTypeResponse::from)
+                .collect();
+            Ok(Json(reps))
+        }
         Err(e) => Err(e),
     }
 }
@@ -30,19 +36,23 @@ async fn get_leave_types(State(ctx): State<AppContext>) -> Result<Json<Vec<Leave
 async fn get_leave_type(
     Path(id): Path<i32>,
     State(ctx): State<AppContext>,
-) -> Result<Json<LeaveType>, AppError> {
-    match LeaveTypesService::get_entity_by_id(id, &ctx).await {
-        Ok(leave_type) => Ok(Json(leave_type)),
+) -> Result<Json<LeaveTypeResponse>, AppError> {
+    match leave_types_service::get_entity_by_id(id, &ctx).await {
+        Ok(leave_type) => {
+            let res = leave_type.into();
+            Ok(Json(res))
+        }
         Err(e) => Err(e),
     }
 }
 
 async fn create_leave_type(
     State(ctx): State<AppContext>,
-    Json(leave_type): Json<LeaveType>,
+    Json(leave_type): Json<LeaveTypeCreate>,
 ) -> Result<Response, AppError> {
-    match LeaveTypesService::create_entity(leave_type, &ctx).await {
+    match leave_types_service::create_entity(leave_type, &ctx).await {
         Ok(leave_type) => {
+            let leave_type: LeaveTypeResponse = leave_type.into();
             let response = (StatusCode::CREATED, Json(leave_type)).into_response();
             Ok(response)
         }

@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 
 use crate::api::leave_requests::create_leave_request;
 use crate::components::atoms::dds_date_input::DateType;
-use crate::model::leave_request::LeaveRequest;
 use crate::{
     api::api_errors::ApiError,
     components::{
@@ -10,17 +9,20 @@ use crate::{
         molecules::half_day_op_radio_group::HalfDayOpRadioGroup,
         organisms::navbar::Navbar,
     },
-    model::{employee::Employee, leave_request::HalfDayOptions, leave_type::LeaveType},
     router::Route,
 };
 use chrono::{NaiveDate, Utc};
+use derbe_shared::dto::request::leave_request::LeaveRequestCreate;
+use derbe_shared::dto::response::employee::EmployeeResponse;
+use derbe_shared::dto::response::leave_type::LeaveTypeResponse;
+use derbe_shared::enums::HalfDayOptions;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
-#[function_component(LeaveRequestCreate)]
+#[function_component(LeaveRequestDetailsCreate)]
 pub fn component() -> Html {
     let now = Utc::now().date_naive();
-    let leave_request = use_state(LeaveRequest::default);
+    let leave_request = use_state(LeaveRequestCreate::default);
     let is_form_valid = use_state(|| true);
 
     let employee_onchange = {
@@ -50,7 +52,7 @@ pub fn component() -> Html {
         let leave_request = leave_request.clone();
         Callback::from(move |(new_date, valid): (NaiveDate, bool)| {
             let mut lr = (*leave_request).clone();
-            lr.set_date_from(new_date);
+            lr.values.set_date_from(new_date);
             leave_request.set(lr.clone());
             is_form_valid_clone.set(valid);
         })
@@ -61,7 +63,7 @@ pub fn component() -> Html {
         let leave_request = leave_request.clone();
         Callback::from(move |(new_date, valid): (NaiveDate, bool)| {
             let mut lr = (*leave_request).clone();
-            lr.set_date_to(new_date);
+            lr.values.set_date_to(new_date);
             leave_request.set(lr.clone());
             is_form_valid_clone.set(valid);
         })
@@ -72,7 +74,8 @@ pub fn component() -> Html {
         Callback::from(move |half_day_op: HalfDayOptions| {
             let (first_day_half, last_day_half) = HalfDayOptions::to_bools(&half_day_op);
             let mut lr = (*leave_request).clone();
-            lr.set_first_last_day_half((first_day_half, last_day_half));
+            lr.values
+                .set_first_last_day_half((first_day_half, last_day_half));
             leave_request.set(lr.clone());
         })
     };
@@ -129,7 +132,7 @@ pub fn component() -> Html {
                         <h1>{ "Leave Request" }</h1>
                         <div class="grid">
                         <div>
-                            <DDSSelect<Employee>
+                            <DDSSelect<EmployeeResponse>
                                     id="employeeSelect"
                                     name="employeeSelect"
                                     label="Employee"
@@ -138,7 +141,7 @@ pub fn component() -> Html {
                                     is_optional_field=false
                                     onchange={employee_onchange}/>
 
-                            <DDSSelect<LeaveType>
+                            <DDSSelect<LeaveTypeResponse>
                                     id="leaveTypeSelect"
                                     name="leaveTypeSelect"
                                     label="Leave Type"
@@ -151,18 +154,18 @@ pub fn component() -> Html {
                                 <DDSDateInput id="dateFrom"
                                     name="dateFrom"
                                     label="Date From"
-                                    value={leave_request.get_date_from()}
+                                    value={leave_request.values.get_date_from()}
                                     date_type={DateType::DateFrom}
-                                    other_date={leave_request.get_date_to()}
+                                    other_date={leave_request.values.get_date_to()}
                                     min={now}
                                     max={now}
                                     on_change={date_from_onchange}/>
                                 <DDSDateInput id="dateTo"
                                     name="dateTo"
                                     label="Date To"
-                                    value={leave_request.get_date_to()}
+                                    value={leave_request.values.get_date_to()}
                                     date_type={DateType::DateTo}
-                                    other_date={leave_request.get_date_from()}
+                                    other_date={leave_request.values.get_date_from()}
                                     min={now}
                                     max={now}
                                     on_change={date_to_onchange}/>
@@ -170,9 +173,9 @@ pub fn component() -> Html {
 
                             <HalfDayOpRadioGroup
                                 duration_gt_one={
-                                    leave_request.get_total_duration().partial_cmp(&1.0) != Some(Ordering::Greater)
+                                    leave_request.values.get_total_duration().partial_cmp(&1.0) != Some(Ordering::Greater)
                                 }
-                                selected={HalfDayOptions::from_bools(leave_request.get_first_last_day_half())}
+                                selected={HalfDayOptions::from_bools(leave_request.values.get_first_last_day_half())}
                                 on_change={half_day_opt_onchange}
                             />
 

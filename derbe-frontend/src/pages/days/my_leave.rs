@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use derbe_shared::dto::response::leave_request::MyLeaveResponse;
 use gloo::console::log;
 use wasm_bindgen::JsValue;
 use yew::prelude::*;
@@ -7,7 +8,6 @@ use yew_router::components::Link;
 use yew_router::hooks::use_navigator;
 
 use crate::api::leave_requests::get_my_leave;
-use crate::dto::leave_request::MyLeaveResponse;
 use crate::utils::date_utils::format_my_leave_date;
 use crate::{components::organisms::navbar::Navbar, router::Route};
 

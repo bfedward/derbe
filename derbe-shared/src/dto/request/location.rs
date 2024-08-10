@@ -1,12 +1,15 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+
+use crate::deserialization::deserialize_non_empty_string;
 
 #[derive(Deserialize)]
 pub struct LocationCreate {
-    name: String
+    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    pub name: String,
 }
 
 #[derive(Deserialize)]
 pub struct LocationUpdate {
-    id: i32,
-    name: String
+    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    pub name: String,
 }

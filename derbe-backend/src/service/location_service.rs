@@ -1,33 +1,18 @@
 use crate::{
-    error::AppError, http::AppContext, model::location::Location,
-    repository::location_repository::LocationRepository,
+    error::AppError,
+    http::AppContext,
+    model::location::Location,
+    repository::location_repository::{self},
 };
 
-use super::DerbeService;
+pub async fn get_entity_by_id(id: i32, ctx: &AppContext) -> Result<Location, AppError> {
+    location_repository::get_entity_by_id(id, ctx).await
+}
 
-pub struct LocationService {}
+pub async fn get_entities(ctx: &AppContext) -> Result<Vec<Location>, AppError> {
+    location_repository::get_entities(ctx).await
+}
 
-impl DerbeService<Location, LocationRepository> for LocationService {
-    async fn check_related_entities_exist(
-        _entity: &Location,
-        _ctx: &AppContext,
-    ) -> Result<(), AppError> {
-        Ok(())
-    }
-
-    async fn pre_create_validation(_entity: &Location, _ctx: &AppContext) -> Result<(), AppError> {
-        todo!()
-    }
-
-    async fn pre_update_validation(
-        _id: i32,
-        _entity: &Location,
-        _ctx: &AppContext,
-    ) -> Result<(), AppError> {
-        todo!()
-    }
-
-    fn pre_create_and_pre_update_validation(_entity: &Location) -> Result<(), AppError> {
-        todo!()
-    }
+pub async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError> {
+    location_repository::check_entity_exists(id, ctx).await
 }

@@ -1,34 +1,9 @@
-use std::fmt::Display;
+use derbe_shared::{dto::response::employee::EmployeeResponse, enums::EmploymentType};
 
-use serde::{Deserialize, Serialize};
-use super::{deserialization::deserialize_non_empty_string, DerbeModel};
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "valid_employment_types")]
-pub enum EmploymentType {
-    #[default]
-    Permanent,
-    Contract,
-}
-
-
-impl Display for EmploymentType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            EmploymentType::Permanent => write!(f, "Permanent"),
-            EmploymentType::Contract => write!(f, "Contract"),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct Employee {
-    pub id: Option<i32>,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    pub id: i32,
     pub first_name: String,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
     pub last_name: String,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
     pub job_title: String,
     pub division_id: i32,
     pub employment_type: EmploymentType,
@@ -38,4 +13,19 @@ pub struct Employee {
     pub phone: Option<String>,
 }
 
-impl DerbeModel for Employee {}
+impl From<Employee> for EmployeeResponse {
+    fn from(value: Employee) -> Self {
+        Self {
+            id: value.id,
+            first_name: value.first_name,
+            last_name: value.last_name,
+            job_title: value.job_title,
+            division_id: value.division_id,
+            employment_type: value.employment_type,
+            location_id: value.location_id,
+            manager_id: value.manager_id,
+            email: value.email,
+            phone: value.phone,
+        }
+    }
+}

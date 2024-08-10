@@ -1,6 +1,5 @@
-use crate::{
-    components::atoms::dds_radio_input::DDSRadioInput, model::leave_request::HalfDayOptions,
-};
+use crate::components::atoms::dds_radio_input::DDSRadioInput;
+use derbe_shared::enums::HalfDayOptions;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]

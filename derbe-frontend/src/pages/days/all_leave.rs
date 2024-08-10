@@ -8,8 +8,7 @@ use wasm_bindgen::JsValue;
 use yew::prelude::*;
 
 use crate::{
-    api::leave_requests::get_all_leave,
-    components::organisms::navbar::Navbar,
+    api::leave_requests::get_all_leave, components::organisms::navbar::Navbar,
     utils::date_utils::get_first_and_last_date,
 };
 

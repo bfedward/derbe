@@ -1,18 +1,17 @@
 use std::ops::Deref;
 
+use crate::api::leave_types::get_leave_types;
+use crate::components::organisms::navbar::Navbar;
+use crate::router::Route;
+use derbe_shared::dto::response::leave_type::LeaveTypeResponse;
 use gloo::console::log;
 use wasm_bindgen_futures::wasm_bindgen::JsValue;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
-use crate::api::leave_types::get_leave_types;
-use crate::components::organisms::navbar::Navbar;
-use crate::model::leave_type::LeaveType;
-use crate::router::Route;
-
 #[function_component(LeaveTypes)]
 pub fn component() -> Html {
-    let leave_types = use_state(|| None::<Vec<LeaveType>>);
+    let leave_types = use_state(|| None::<Vec<LeaveTypeResponse>>);
 
     let leave_types_clone = leave_types.clone();
     use_effect(move || {
@@ -37,7 +36,7 @@ pub fn component() -> Html {
         Callback::from(move |_: MouseEvent| {
             let navigator = navigator.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                navigator.push(&Route::LeaveTypeCreate);
+                navigator.push(&Route::LeaveTypeDetailsCreate);
             })
         })
     };
@@ -70,7 +69,7 @@ pub fn component() -> Html {
     }
 }
 
-fn leave_type_html(leave_types: &[LeaveType]) -> Vec<Html> {
+fn leave_type_html(leave_types: &[LeaveTypeResponse]) -> Vec<Html> {
     leave_types.iter().map(|leave_type| {
         html! {
             <tr>
@@ -87,23 +86,23 @@ fn leave_type_html(leave_types: &[LeaveType]) -> Vec<Html> {
                 />
                 </td>
                 <td>
-                    <input type="checkbox" id={ "future_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
+                    <input type="checkbox" id={ "future_cb_".to_owned() + &leave_type.id.to_string()}
                         checked={ leave_type.can_book_in_future } disabled=true />
                 </td>
                 <td>
-                    <input type="checkbox" id={ "show_in_others_days_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
+                    <input type="checkbox" id={ "show_in_others_days_cb_".to_owned() + &leave_type.id.to_string()}
                         checked={ leave_type.show_in_others_days } disabled=true />
                 </td>
                 <td>
-                    <input type="checkbox" id={ "default_in_others_days_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
+                    <input type="checkbox" id={ "default_in_others_days_cb_".to_owned() + &leave_type.id.to_string()}
                         checked={ leave_type.default_in_others_days } disabled=true />
                 </td>
                 <td>
-                    <input type="checkbox" id={ "default_in_days_request_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
+                    <input type="checkbox" id={ "default_in_days_request_cb_".to_owned() + &leave_type.id.to_string()}
                         checked={ leave_type.default_in_leave_request } disabled=true />
                 </td>
                 <td>
-                    <input type="checkbox" id={ "show_in_approve_days_cb_".to_owned() + &leave_type.id.unwrap().to_string()}
+                    <input type="checkbox" id={ "show_in_approve_days_cb_".to_owned() + &leave_type.id.to_string()}
                         checked={ leave_type.show_in_approve_days } disabled=true />
                 </td>
 

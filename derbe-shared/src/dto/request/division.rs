@@ -1,12 +1,15 @@
 use serde::{Deserialize, Serialize};
 
+use crate::deserialization::deserialize_non_empty_string;
+
 #[derive(Serialize, Deserialize)]
 pub struct DivisionCreate {
-    name: String
+    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct DivisionUpdate {
-    id: i32,
-    name: String
+    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    pub name: String,
 }

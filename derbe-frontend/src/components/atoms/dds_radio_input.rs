@@ -1,8 +1,7 @@
+use derbe_shared::enums::HalfDayOptions;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-
-use crate::model::leave_request::HalfDayOptions;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {

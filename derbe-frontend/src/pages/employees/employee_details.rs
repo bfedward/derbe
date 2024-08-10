@@ -1,4 +1,6 @@
+use derbe_shared::dto::request::employee::EmployeeUpdate;
 use derbe_shared::dto::response::division::DivisionResponse;
+use derbe_shared::dto::response::employee::EmployeeResponse;
 use derbe_shared::dto::response::location::LocationResponse;
 use gloo::console::log;
 use wasm_bindgen::JsValue;
@@ -6,12 +8,12 @@ use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
 use crate::api::api_errors::ApiError;
+use crate::api::employees::get_employee;
 use crate::api::employees::update_employee;
 use crate::components::atoms::dds_select::DDSSelect;
 use crate::components::atoms::dds_text_input::DDSTextInput;
 use crate::components::organisms::navbar::Navbar;
 use crate::router::Route;
-use crate::{api::employees::get_employee, model::employee::Employee};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -20,7 +22,7 @@ pub struct Props {
 
 #[function_component(EmployeeDetails)]
 pub fn employee_details(props: &Props) -> Html {
-    let employee = use_state(|| None::<Employee>);
+    let employee = use_state(|| None::<EmployeeUpdate>);
 
     let employee_clone = employee.clone();
     let id = props.id;
@@ -29,7 +31,7 @@ pub fn employee_details(props: &Props) -> Html {
             wasm_bindgen_futures::spawn_local(async move {
                 match get_employee(&id).await {
                     Ok(res) => {
-                        employee_clone.set(Some(res));
+                        employee_clone.set(Some(res.into()));
                     }
                     Err(error) => {
                         log!(JsValue::from(error.to_string()));
@@ -42,13 +44,14 @@ pub fn employee_details(props: &Props) -> Html {
     let onsubmit = {
         let history = use_navigator().unwrap();
         let employee_clone = employee.clone();
+        let id = props.id.clone();
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             let employee_clone = employee_clone.clone();
             if let Some(updated_employee) = (*employee_clone).as_ref().cloned() {
                 let history = history.clone();
                 wasm_bindgen_futures::spawn_local(async move {
-                    match update_employee(&updated_employee).await {
+                    match update_employee(&id, &updated_employee).await {
                         Ok(_) => {
                             history.push(&Route::Organisation);
                         }
@@ -196,12 +199,12 @@ pub fn employee_details(props: &Props) -> Html {
                             on_change={job_title_on_change}
                         />
 
-                        <DDSSelect<Employee>
+                        <DDSSelect<EmployeeResponse>
                             id="managerSelect"
                             name="managerSelect"
                             label="Manager"
                             selected_id={employee.manager_id}
-                            excluded_id={employee.id}
+                            excluded_id={props.id}
                             is_optional_field=true
                             onchange={manager_on_change}
                         />

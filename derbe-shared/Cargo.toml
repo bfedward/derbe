@@ -3,6 +3,10 @@ name = "derbe-shared"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+with_sqlx = ["sqlx"]
+
 [dependencies]
 serde = { version = "1.0.203", features = ["derive"]}
 chrono = { version = "0.4.38", features = ["serde", "alloc"] }
+sqlx = { version = "0.8.0", features = [ "runtime-tokio-rustls", "migrate", "postgres", "chrono", "bigdecimal" ], optional = true}

@@ -1,4 +1,6 @@
+use derbe_shared::dto::request::employee::EmployeeCreate;
 use derbe_shared::dto::response::division::DivisionResponse;
+use derbe_shared::dto::response::employee::EmployeeResponse;
 use derbe_shared::dto::response::location::LocationResponse;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
@@ -8,12 +10,11 @@ use crate::api::employees::create_employee;
 use crate::components::atoms::dds_select::DDSSelect;
 use crate::components::atoms::dds_text_input::DDSTextInput;
 use crate::components::organisms::navbar::Navbar;
-use crate::model::employee::Employee;
 use crate::router::Route;
 
-#[function_component(EmployeeCreate)]
+#[function_component(EmployeeDetailsCreate)]
 pub fn employee_create() -> Html {
-    let employee = use_state(|| Some(Employee::default()));
+    let employee = use_state(|| Some(EmployeeCreate::default()));
 
     let onsubmit = {
         let history = use_navigator().unwrap();
@@ -171,7 +172,7 @@ pub fn employee_create() -> Html {
                             on_change={job_title_on_change}
                         />
 
-                        <DDSSelect<Employee>
+                        <DDSSelect<EmployeeResponse>
                             id="managerSelect"
                             name="managerSelect"
                             label="Manager"

@@ -1,16 +1,8 @@
-use serde::{Deserialize, Serialize};
+use derbe_shared::dto::response::leave_type::LeaveTypeResponse;
 
-use super::{
-    deserialization::{deserialize_non_empty_string, deserialize_non_negative_option_f64},
-    DerbeModel,
-};
-
-#[derive(Serialize, Deserialize)]
 pub struct LeaveType {
-    pub id: Option<i32>,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    pub id: i32,
     pub name: String,
-    #[serde(deserialize_with = "deserialize_non_negative_option_f64")]
     pub default_quota: Option<f64>,
     pub colour: String,
     pub can_book_in_future: bool,
@@ -20,4 +12,18 @@ pub struct LeaveType {
     pub show_in_approve_days: bool,
 }
 
-impl DerbeModel for LeaveType {}
+impl From<LeaveType> for LeaveTypeResponse {
+    fn from(value: LeaveType) -> Self {
+        Self {
+            id: value.id,
+            name: value.name,
+            default_quota: value.default_quota,
+            colour: value.colour,
+            can_book_in_future: value.can_book_in_future,
+            show_in_others_days: value.show_in_others_days,
+            default_in_others_days: value.default_in_others_days,
+            default_in_leave_request: value.default_in_leave_request,
+            show_in_approve_days: value.show_in_approve_days,
+        }
+    }
+}

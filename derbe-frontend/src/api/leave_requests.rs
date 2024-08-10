@@ -1,24 +1,26 @@
 use chrono::{Datelike, NaiveDate, Utc};
-use derbe_shared::dto::request::leave_request::AllLeaveRequest;
-use derbe_shared::dto::response::leave_request::AllLeaveResponse;
+use derbe_shared::dto::request::leave_request::{
+    AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
+    MyLeaveRequest,
+};
+use derbe_shared::dto::response::leave_request::{
+    AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse,
+};
+use derbe_shared::enums::LeaveStatus;
 use reqwasm::http::Request;
 
 use crate::api::api_errors::{handle_errors, ApiError};
 use crate::api::BASE_URL;
-use crate::dto::leave_request::{
-    LeaveRequestStatusUpdate, MyLeaveRequest, MyLeaveResponse
-};
-use crate::model::leave_request::{LeaveRequest, LeaveStatus};
 use crate::utils::date_utils::get_first_and_last_date;
 
-pub async fn get_leave_request(id: &i32) -> Result<LeaveRequest, ApiError> {
+pub async fn get_leave_request(id: &i32) -> Result<LeaveRequestResponse, ApiError> {
     let request = Request::get(&format!("{}/leaveRequests/{}", BASE_URL, id))
         .send()
         .await
         .unwrap();
 
     if request.ok() {
-        Ok(request.json::<LeaveRequest>().await.unwrap())
+        Ok(request.json::<LeaveRequestResponse>().await.unwrap())
     } else {
         Err(handle_errors(request.status()))
     }
@@ -71,7 +73,9 @@ pub async fn get_all_leave() -> Result<Vec<AllLeaveResponse>, ApiError> {
     }
 }
 
-pub async fn create_leave_request(leave_request: &LeaveRequest) -> Result<LeaveRequest, ApiError> {
+pub async fn create_leave_request(
+    leave_request: &LeaveRequestCreate,
+) -> Result<LeaveRequestResponse, ApiError> {
     let request = Request::post(&format!("{}/leaveRequests", BASE_URL))
         .header("content-type", "application/json")
         .body(serde_json::to_string(&leave_request).unwrap())
@@ -80,26 +84,25 @@ pub async fn create_leave_request(leave_request: &LeaveRequest) -> Result<LeaveR
         .unwrap();
 
     if request.ok() {
-        Ok(request.json::<LeaveRequest>().await.unwrap())
+        Ok(request.json::<LeaveRequestResponse>().await.unwrap())
     } else {
         Err(handle_errors(request.status()))
     }
 }
 
-pub async fn update_leave_request(leave_request: &LeaveRequest) -> Result<LeaveRequest, ApiError> {
-    let request = Request::put(&format!(
-        "{}/leaveRequests/{}",
-        BASE_URL,
-        leave_request.id.unwrap()
-    ))
-    .header("content-type", "application/json")
-    .body(serde_json::to_string(leave_request).unwrap())
-    .send()
-    .await
-    .unwrap();
+pub async fn update_leave_request(
+    id: &i32,
+    leave_request: &LeaveRequestUpdate,
+) -> Result<LeaveRequestResponse, ApiError> {
+    let request = Request::put(&format!("{}/leaveRequests/{}", BASE_URL, id))
+        .header("content-type", "application/json")
+        .body(serde_json::to_string(leave_request).unwrap())
+        .send()
+        .await
+        .unwrap();
 
     if request.ok() {
-        Ok(request.json::<LeaveRequest>().await.unwrap())
+        Ok(request.json::<LeaveRequestResponse>().await.unwrap())
     } else {
         Err(handle_errors(request.status()))
     }
@@ -108,7 +111,7 @@ pub async fn update_leave_request(leave_request: &LeaveRequest) -> Result<LeaveR
 pub async fn update_leave_request_status(
     id: &i32,
     status_update: LeaveRequestStatusUpdate,
-) -> Result<LeaveRequest, ApiError> {
+) -> Result<LeaveRequestResponse, ApiError> {
     let request = Request::put(&format!("{}/leaveRequests/{}/status", BASE_URL, id))
         .header("content-type", "application/json")
         .body(serde_json::to_string(&status_update).unwrap())
@@ -117,7 +120,7 @@ pub async fn update_leave_request_status(
         .unwrap();
 
     if request.ok() {
-        Ok(request.json::<LeaveRequest>().await.unwrap())
+        Ok(request.json::<LeaveRequestResponse>().await.unwrap())
     } else {
         Err(handle_errors(request.status()))
     }

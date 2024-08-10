@@ -1,37 +1,17 @@
-use std::fmt::Display;
-
 use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
+use derbe_shared::{
+    dto::{
+        request::leave_request::{LeaveRequestUpdate, LeaveRequestValues},
+        response::leave_request::LeaveRequestResponse,
+    },
+    enums::LeaveStatus,
+};
 use sqlx::types::chrono::{DateTime, Utc};
 
-use super::{deserialization::deserialize_non_negative_f64, DerbeModel};
-
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "valid_leave_statuses")]
-pub enum LeaveStatus {
-    Pending,
-    MoreInfoReq,
-    Cancelled,
-    Rejected,
-    Accepted,
-}
-
-impl Display for LeaveStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LeaveStatus::Pending => write!(f, "Pending"),
-            LeaveStatus::MoreInfoReq => write!(f, "MoreInfoReq"),
-            LeaveStatus::Cancelled => write!(f, "Cancelled"),
-            LeaveStatus::Rejected => write!(f, "Rejected"),
-            LeaveStatus::Accepted => write!(f, "Accepted"),
-        }
-    }
-}
-
 #[serde_with::serde_as]
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow)]
 pub struct LeaveRequest {
-    pub id: Option<i32>,
+    pub id: i32,
     pub employee_id: i32,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
@@ -39,11 +19,47 @@ pub struct LeaveRequest {
     pub date_to: NaiveDate,
     pub first_day_half: bool,
     pub last_day_half: bool,
-    #[serde(deserialize_with = "deserialize_non_negative_f64")]
     pub total_duration: f64,
     pub date_requested: DateTime<Utc>,
     pub date_finalised: Option<DateTime<Utc>>,
     pub notes: Option<String>,
 }
 
-impl DerbeModel for LeaveRequest {}
+impl From<LeaveRequest> for LeaveRequestUpdate {
+    fn from(value: LeaveRequest) -> Self {
+        Self {
+            employee_id: value.employee_id,
+            leave_type_id: value.leave_type_id,
+            leave_status: value.leave_status,
+            values: LeaveRequestValues {
+                date_from: value.date_from,
+                date_to: value.date_to,
+                first_day_half: value.first_day_half,
+                last_day_half: value.last_day_half,
+                total_duration: value.total_duration,
+            },
+            date_requested: value.date_requested,
+            date_finalised: value.date_finalised,
+            notes: value.notes,
+        }
+    }
+}
+
+impl From<LeaveRequest> for LeaveRequestResponse {
+    fn from(value: LeaveRequest) -> Self {
+        Self {
+            id: value.id,
+            employee_id: value.employee_id,
+            leave_type_id: value.leave_type_id,
+            leave_status: value.leave_status,
+            date_from: value.date_from,
+            date_to: value.date_to,
+            first_day_half: value.first_day_half,
+            last_day_half: value.last_day_half,
+            total_duration: value.total_duration,
+            date_requested: value.date_requested,
+            date_finalised: value.date_finalised,
+            notes: value.notes,
+        }
+    }
+}

@@ -1,3 +1,4 @@
+use derbe_shared::dto::request::leave_type::LeaveTypeCreate;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
@@ -8,12 +9,11 @@ use crate::components::atoms::{
     dds_number_input::DDSNumberInput, dds_text_input::DDSTextInput,
 };
 use crate::components::organisms::navbar::Navbar;
-use crate::model::leave_type::LeaveType;
 use crate::router::Route;
 
-#[function_component(LeaveTypeCreate)]
+#[function_component(LeaveTypeDetailsCreate)]
 pub fn component() -> Html {
-    let leave_type = use_state(|| Some(LeaveType::default()));
+    let leave_type = use_state(|| Some(LeaveTypeCreate::default()));
 
     let on_submit = {
         let history = use_navigator().unwrap();

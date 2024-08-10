@@ -40,7 +40,7 @@ pub fn organisation() -> Html {
         Callback::from(move |_: MouseEvent| {
             let navigator = navigator.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                navigator.push(&Route::EmployeeCreate);
+                navigator.push(&Route::EmployeeDetailsCreate);
             })
         })
     };

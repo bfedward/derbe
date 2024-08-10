@@ -1,6 +1,4 @@
-use std::fmt::Display;
-
-use serde::{Deserialize, Serialize};
+use derbe_shared::dto::response::employee::EmployeeResponse;
 use yew::prelude::*;
 
 use crate::api::{
@@ -10,39 +8,9 @@ use crate::api::{
 
 use super::Selectable;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum EmploymentType {
-    #[default]
-    Permanent,
-    Contract,
-}
-
-impl Display for EmploymentType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            EmploymentType::Permanent => write!(f, "Permanent"),
-            EmploymentType::Contract => write!(f, "Contract"),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, PartialEq, Default)]
-pub struct Employee {
-    pub id: Option<i32>,
-    pub first_name: String,
-    pub last_name: String,
-    pub job_title: String,
-    pub division_id: i32,
-    pub employment_type: EmploymentType,
-    pub location_id: i32,
-    pub manager_id: Option<i32>,
-    pub email: String,
-    pub phone: Option<String>,
-}
-
-impl Selectable for Employee {
+impl Selectable for EmployeeResponse {
     fn get_id(&self) -> i32 {
-        self.id.unwrap_or(0)
+        self.id
     }
 
     fn get_name(&self) -> &str {
@@ -100,11 +68,5 @@ impl Selectable for Employee {
                 value={self.get_full_name().to_string()}
             />
         }
-    }
-}
-
-impl Employee {
-    fn get_full_name(&self) -> String {
-        format!("{} {}", self.first_name, self.last_name)
     }
 }
