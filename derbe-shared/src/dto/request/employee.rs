@@ -7,7 +7,6 @@ use crate::{
 
 #[derive(Serialize, Clone, Deserialize, Default)]
 pub struct EmployeeCreate {
-    pub id: Option<i32>,
     #[serde(deserialize_with = "deserialize_non_empty_string")]
     pub first_name: String,
     #[serde(deserialize_with = "deserialize_non_empty_string")]

@@ -1,9 +1,11 @@
 use axum::{
     extract::{Path, State},
-    routing::get,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::{get, post},
     Json, Router,
 };
-use derbe_shared::dto::response::location::LocationResponse;
+use derbe_shared::dto::{request::location::LocationCreate, response::location::LocationResponse};
 
 use crate::{error::AppError, http::AppContext, service::location_service};
 
@@ -11,6 +13,7 @@ pub fn router() -> Router<AppContext> {
     Router::new()
         .route("/locations", get(get_locations))
         .route("/locations/:id", get(get_location))
+        .route("/locations", post(create_location))
 }
 
 async fn get_locations(
@@ -33,6 +36,20 @@ async fn get_location(
         Ok(location) => {
             let resp = location.into();
             Ok(Json(resp))
+        }
+        Err(e) => Err(e),
+    }
+}
+
+async fn create_location(
+    State(ctx): State<AppContext>,
+    Json(location): Json<LocationCreate>,
+) -> Result<Response, AppError> {
+    match location_service::create_entity(location, &ctx).await {
+        Ok(location) => {
+            let location: LocationResponse = location.into();
+            let response = (StatusCode::CREATED, Json(location)).into_response();
+            Ok(response)
         }
         Err(e) => Err(e),
     }

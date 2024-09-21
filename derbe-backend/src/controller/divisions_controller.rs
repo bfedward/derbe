@@ -1,9 +1,11 @@
 use axum::{
     extract::{Path, State},
-    routing::get,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::{get, post},
     Json, Router,
 };
-use derbe_shared::dto::response::division::DivisionResponse;
+use derbe_shared::dto::{request::division::DivisionCreate, response::division::DivisionResponse};
 
 use crate::{error::AppError, http::AppContext, service::division_service};
 
@@ -11,6 +13,7 @@ pub fn router() -> Router<AppContext> {
     Router::new()
         .route("/divisions", get(get_divisions))
         .route("/divisions/:id", get(get_division))
+        .route("/divisions", post(create_division))
 }
 
 async fn get_divisions(
@@ -33,6 +36,20 @@ async fn get_division(
         Ok(division) => {
             let resp = division.into();
             Ok(Json(resp))
+        }
+        Err(e) => Err(e),
+    }
+}
+
+async fn create_division(
+    State(ctx): State<AppContext>,
+    Json(division): Json<DivisionCreate>,
+) -> Result<Response, AppError> {
+    match division_service::create_entity(division, &ctx).await {
+        Ok(division) => {
+            let division: DivisionResponse = division.into();
+            let response = (StatusCode::CREATED, Json(division)).into_response();
+            Ok(response)
         }
         Err(e) => Err(e),
     }

@@ -1,3 +1,5 @@
+use derbe_shared::dto::request::division::DivisionCreate;
+
 use crate::{
     error::AppError, http::AppContext, model::division::Division, repository::division_repository,
 };
@@ -12,4 +14,13 @@ pub async fn get_entities(ctx: &AppContext) -> Result<Vec<Division>, AppError> {
 
 pub async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppError> {
     division_repository::check_entity_exists(id, ctx).await
+}
+
+pub async fn create_entity(dto: DivisionCreate, ctx: &AppContext) -> Result<Division, AppError> {
+    pre_create(&dto, ctx).await?;
+    division_repository::create_entity(dto, ctx).await
+}
+
+pub async fn pre_create(dto: &DivisionCreate, ctx: &AppContext) -> Result<(), AppError> {
+    division_repository::check_if_entity_exists_by_name(&dto.name, ctx).await
 }

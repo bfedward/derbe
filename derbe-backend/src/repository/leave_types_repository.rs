@@ -79,6 +79,25 @@ pub async fn create_entity(dto: LeaveTypeCreate, ctx: &AppContext) -> Result<Lea
     }
 }
 
+pub async fn check_if_entity_exists_by_name(name: &str, ctx: &AppContext) -> Result<(), AppError> {
+    let count = sqlx::query_scalar!(
+        "
+            SELECT COUNT(*) FROM leave_types WHERE UPPER(name) = $1
+        ",
+        name.to_uppercase()
+    )
+    .fetch_one(&ctx.db)
+    .await
+    .map_err(AppError::DatabaseQueryError)?
+    .unwrap_or(0);
+
+    if count > 0 {
+        Err(AppError::DuplicateNamedEntity("Leave Type".to_owned()))
+    } else {
+        Ok(())
+    }
+}
+
 pub async fn update_entity(
     id: i32,
     dto: LeaveTypeUpdate,

@@ -129,3 +129,22 @@ pub async fn check_if_entity_is_referenced(id: i32, ctx: &AppContext) -> Result<
         Ok(())
     }
 }
+
+pub async fn check_if_entity_exists_by_name(name: &str, ctx: &AppContext) -> Result<(), AppError> {
+    let count = sqlx::query_scalar!(
+        "
+            SELECT COUNT(*) FROM locations WHERE UPPER(name) = $1
+        ",
+        name.to_uppercase()
+    )
+    .fetch_one(&ctx.db)
+    .await
+    .map_err(AppError::DatabaseQueryError)?
+    .unwrap_or(0);
+
+    if count > 0 {
+        Err(AppError::DuplicateNamedEntity("Location".to_owned()))
+    } else {
+        Ok(())
+    }
+}

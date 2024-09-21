@@ -18,5 +18,10 @@ pub async fn check_entity_exists(id: i32, ctx: &AppContext) -> Result<(), AppErr
 }
 
 pub async fn create_entity(dto: LeaveTypeCreate, ctx: &AppContext) -> Result<LeaveType, AppError> {
+    pre_create(&dto, ctx).await?;
     leave_types_repository::create_entity(dto, ctx).await
+}
+
+pub async fn pre_create(dto: &LeaveTypeCreate, ctx: &AppContext) -> Result<(), AppError> {
+    leave_types_repository::check_if_entity_exists_by_name(&dto.name, ctx).await
 }

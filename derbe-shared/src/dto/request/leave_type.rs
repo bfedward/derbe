@@ -8,6 +8,7 @@ pub struct LeaveTypeCreate {
     pub name: String,
     #[serde(deserialize_with = "deserialize_non_negative_option_f64")]
     pub default_quota: Option<f64>,
+    #[serde(deserialize_with = "deserialize_non_empty_string")]
     pub colour: String,
     pub can_book_in_future: bool,
     pub show_in_others_days: bool,

@@ -12,6 +12,7 @@ pub enum AppError {
     ConstraintError(String),
     InvalidStructArgs(String),
     ValidationFailed(String),
+    DuplicateNamedEntity(String),
 }
 
 impl IntoResponse for AppError {
@@ -38,7 +39,13 @@ impl IntoResponse for AppError {
                 format!("Invalid struct args: {error}"),
             ),
             Self::ValidationFailed(message) => (StatusCode::BAD_REQUEST, message),
+            Self::DuplicateNamedEntity(error) => (
+                StatusCode::CONFLICT,
+                format!("{error} with this name already exists!"),
+            ),
         };
+
+        println!("{}", &message);
 
         // Return a JSON response
         let body = Json(json!({ "error": message }));
