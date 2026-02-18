@@ -177,7 +177,7 @@ pub fn employee_create() -> Html {
                             name="managerSelect"
                             label="Manager"
                             selected_id={employee.manager_id}
-                            excluded_id={employee.id}
+                            excluded_id={None}
                             is_optional_field=true
                             onchange={manager_on_change}
                         />

@@ -61,16 +61,18 @@ pub fn dds_text_input_for_selectable<S: Selectable + 'static>(props: &PropsForSe
 
     let select_option_clone = select_option.clone();
     use_effect(move || {
-        wasm_bindgen_futures::spawn_local(async move {
-            match S::get_entity(&props_selected_id).await {
-                Ok(res) => {
-                    select_option_clone.set(Some(res));
+        if select_option_clone.is_none() {
+            wasm_bindgen_futures::spawn_local(async move {
+                match S::get_entity(&props_selected_id).await {
+                    Ok(res) => {
+                        select_option_clone.set(Some(res));
+                    }
+                    Err(error) => {
+                        log!(JsValue::from(error.to_string()));
+                    }
                 }
-                Err(error) => {
-                    log!(JsValue::from(error.to_string()));
-                }
-            }
-        });
+            });
+        }
 
         || ()
     });

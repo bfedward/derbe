@@ -8,6 +8,8 @@ use derbe_shared::dto::response::leave_request::{
 };
 use derbe_shared::enums::LeaveStatus;
 use reqwasm::http::Request;
+use gloo::console::log;
+use wasm_bindgen::JsValue;
 
 use crate::api::api_errors::{handle_errors, ApiError};
 use crate::api::BASE_URL;
@@ -104,6 +106,7 @@ pub async fn update_leave_request(
     if request.ok() {
         Ok(request.json::<LeaveRequestResponse>().await.unwrap())
     } else {
+        dbg!(&request);
         Err(handle_errors(request.status()))
     }
 }

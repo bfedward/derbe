@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+
 use crate::{
     api::{
         api_errors::ApiError,
@@ -10,6 +11,7 @@ use crate::{
             dds_date_input::{DDSDateInput, DateType},
             dds_text_area::DDSTextArea,
             dds_text_input::DDSTextInputForSelectable,
+            dds_modal::DDSModal
         },
         molecules::half_day_op_radio_group::HalfDayOpRadioGroup,
         organisms::navbar::Navbar,
@@ -38,6 +40,7 @@ pub struct Props {
 pub fn component(props: &Props) -> Html {
     let leave_request = use_state(|| None::<LeaveRequestUpdate>);
     let is_form_valid = use_state(|| true);
+    let is_show_modal = use_state(|| None::<String>);
     let now = Utc::now().date_naive();
 
     let id = props.id;
@@ -165,6 +168,7 @@ pub fn component(props: &Props) -> Html {
         let history = use_navigator().unwrap();
         let leave_request = leave_request.clone();
         let id = props.id.clone();
+        let is_show_modal = is_show_modal.clone();
         Callback::from(move |event: MouseEvent| {
             event.prevent_default();
             if let Some(lr) = (*leave_request).as_ref().cloned() {
@@ -173,6 +177,7 @@ pub fn component(props: &Props) -> Html {
                     notes: lr.notes,
                 };
                 let history = history.clone();
+                let is_show_modal = is_show_modal.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     match update_leave_request_status(&id, req).await {
                         Ok(_) => {
@@ -182,6 +187,7 @@ pub fn component(props: &Props) -> Html {
                             history.push(&Route::Home);
                         }
                         Err(error) => {
+                            is_show_modal.set(Some(error.to_string()));
                             gloo::console::error!(error.to_string());
                             panic!();
                         }
@@ -261,6 +267,11 @@ pub fn component(props: &Props) -> Html {
                     </form>
                 </section>
             }
+            <DDSModal
+                id="errorModal"
+                header="Error"
+                message={(*is_show_modal).clone()}
+            />
         </main>
     }
 }

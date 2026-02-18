@@ -1,4 +1,10 @@
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+#[derive(Serialize, Deserialize)]
+pub struct ApiErrorResponse {
+    error: String
+}
 
 #[derive(Debug, Error)]
 pub enum ApiError {
