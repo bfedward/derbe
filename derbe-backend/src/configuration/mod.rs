@@ -1,5 +1,5 @@
 use config::{Config, ConfigError, File, FileFormat};
-use secrecy::{ExposeSecret, SecretBox, SecretString};
+use secrecy::{ExposeSecret, SecretBox};
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
