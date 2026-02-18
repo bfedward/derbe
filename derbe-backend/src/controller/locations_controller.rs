@@ -12,7 +12,7 @@ use crate::{error::AppError, http::AppContext, service::location_service};
 pub fn router() -> Router<AppContext> {
     Router::new()
         .route("/locations", get(get_locations))
-        .route("/locations/:id", get(get_location))
+        .route("/locations/{id}", get(get_location))
         .route("/locations", post(create_location))
 }
 

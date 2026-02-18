@@ -14,7 +14,7 @@ use crate::{error::AppError, http::AppContext, service::leave_types_service};
 pub fn router() -> Router<AppContext> {
     Router::new()
         .route("/leaveTypes", get(get_leave_types))
-        .route("/leaveTypes/:id", get(get_leave_type))
+        .route("/leaveTypes/{id}", get(get_leave_type))
         .route("/leaveTypes", post(create_leave_type))
 }
 

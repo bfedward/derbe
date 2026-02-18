@@ -15,10 +15,10 @@ use crate::{error::AppError, http::AppContext, service::employee_service};
 pub fn router() -> Router<AppContext> {
     Router::new()
         .route("/employees", get(get_employees))
-        .route("/employees/:id", get(get_employee))
+        .route("/employees/{id}", get(get_employee))
         .route("/employees/detailsTable", get(get_employee_details_table))
         .route("/employees", post(create_employee))
-        .route("/employees/:id", put(update_employee))
+        .route("/employees/{id}", put(update_employee))
 }
 
 async fn get_employees(

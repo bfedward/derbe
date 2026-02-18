@@ -17,13 +17,13 @@ use crate::{error::AppError, http::AppContext, service::leave_request_service};
 
 pub fn router() -> Router<AppContext> {
     Router::new()
-        .route("/leaveRequests/:id", get(get_leave_request))
+        .route("/leaveRequests/{id}", get(get_leave_request))
         .route("/leaveRequests", post(create_leave_request))
         .route("/myLeave", post(get_my_leave))
         .route("/allLeave", post(get_all_leave_table_data))
-        .route("/leaveRequests/:id", put(update_leave_request))
+        .route("/leaveRequests/{id}", put(update_leave_request))
         .route(
-            "/leaveRequests/:id/status",
+            "/leaveRequests/{id}/status",
             put(update_leave_request_status),
         )
 }

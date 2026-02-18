@@ -12,7 +12,7 @@ use crate::{error::AppError, http::AppContext, service::division_service};
 pub fn router() -> Router<AppContext> {
     Router::new()
         .route("/divisions", get(get_divisions))
-        .route("/divisions/:id", get(get_division))
+        .route("/divisions/{id}", get(get_division))
         .route("/divisions", post(create_division))
 }
 
