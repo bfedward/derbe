@@ -48,7 +48,7 @@ impl Selectable for LeaveTypeResponse {
             .map(|leave_type| {
                 html! {
                     <option value={ leave_type.id.to_string() }
-                        selected={ leave_type.default_in_others_days }>{ &leave_type.get_name() }
+                        selected={ leave_type.default_in_others_days }>{ leave_type.get_name() }
                     </option>
                 }
             })

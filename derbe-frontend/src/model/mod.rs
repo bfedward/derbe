@@ -36,7 +36,7 @@ pub trait Selectable {
                 let selected = Some(item.get_id()) == selected_id;
                 html! {
                     <option value={ item.get_id().to_string() } {selected} >
-                        { &item.get_name() }
+                        { item.get_name() }
                     </option>
                 }
             })

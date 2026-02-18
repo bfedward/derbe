@@ -65,7 +65,7 @@ pub fn organisation() -> Html {
                         </tr>
                     </thead>
                     <tbody>
-                    { for table_row_html(&employees.deref()) }
+                    { for table_row_html(employees.deref()) }
                     </tbody>
                 </table>
             }
@@ -87,9 +87,9 @@ fn table_row_html(employees: &[EmployeeDetailsResponse]) -> Vec<Html> {
                     <td>{ &row.employment_type }</td>
                     <td>{ &row.division }</td>
                     <td>{ &row.location }</td>
-                    <td>{ &row.manager }</td>
+                    <td>{ row.manager.as_ref().map(|m| html!{{m}}) }</td>
                     <td>{ &row.email }</td>
-                    <td>{ &row.phone }</td>
+                    <td>{ row.phone.as_ref().map(|m| html!{{m}}) }</td>
                 </tr>
             }
         })

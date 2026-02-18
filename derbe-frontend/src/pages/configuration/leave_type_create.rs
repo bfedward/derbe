@@ -151,7 +151,7 @@ pub fn component() -> Html {
                             label="Default Quota"
                             readonly=false
                             min=0.0
-                            value={leave_type.default_quota.clone()}
+                            value={leave_type.default_quota}
                             on_change={default_quota_change}
                         />
                         <DDSColourInput

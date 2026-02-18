@@ -18,7 +18,9 @@ pub fn dds_modal(props: &Props) -> Html {
             <article>
                 <h2>{header}</h2>
                 <p>
-                {message}
+                {
+                    { message.map(|m| html! { { m } }) }
+                }
                 </p>
                 <footer>
                 <button>{"Confirm"}</button>
@@ -27,12 +29,3 @@ pub fn dds_modal(props: &Props) -> Html {
         </dialog>
     }
 }
-
-
-
-
-
-
-
-
-

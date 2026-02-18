@@ -44,7 +44,7 @@ pub fn employee_details(props: &Props) -> Html {
     let onsubmit = {
         let history = use_navigator().unwrap();
         let employee_clone = employee.clone();
-        let id = props.id.clone();
+        let id = props.id;
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             let employee_clone = employee_clone.clone();

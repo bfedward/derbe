@@ -7,17 +7,20 @@ edition = "2021"
 
 [dependencies]
 derbe-shared = { path = "../derbe-shared" }
-yew = { version = "0.21.0", features = ["csr"]}
-yew-router = "0.18.0"
+yew = { version = "0.22.0", features = ["csr"] }
+yew-router = "0.19.0"
 gloo = "0.11.0"
-serde = { version = "1.0.204", features = ["derive"]}
+serde = { version = "1.0.204", features = ["derive"] }
 wasm-bindgen = "0.2.92"
-web-sys = { version = "0.3.69", features = ["HtmlInputElement", "HtmlSelectElement" ] }
-wasm-bindgen-futures = "0.4.42"
-yewdux = "0.10.0"
-thiserror = "1.0.63"
+web-sys = { version = "0.3.69", features = [
+    "HtmlInputElement",
+    "HtmlSelectElement",
+] }
+wasm-bindgen-futures = "0.4.58"
+yewdux = "0.11.0"
+thiserror = "2.0.18"
 reqwasm = "0.5.0"
-serde_json = "1.0.120"
-stylist = { version = "0.13.0", features = ["yew"] }
+serde_json = "1.0.149"
+stylist = { version = "0.14.0", features = ["yew"] }
 chrono = { version = "0.4.38", features = ["serde", "alloc"] }
-serde_with = { version = "3.9.0", features = ["time_0_3"] }
+serde_with = { version = "3.16.1", features = ["time_0_3"] }

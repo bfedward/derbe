@@ -61,7 +61,7 @@ pub fn component() -> Html {
                         </tr>
                     </thead>
                     <tbody>
-                    { for my_leave_html(&my_leaves.deref()) }
+                    { for my_leave_html(my_leaves.deref()) }
                     </tbody>
                 </table>
             }
@@ -86,7 +86,7 @@ fn my_leave_html(my_leaves: &[MyLeaveResponse]) -> Vec<Html> {
                         { format_my_leave_date(&my_leave.date_to) }
                     </td>
                     <td>
-                        { &my_leave.total_duration }
+                        { my_leave.total_duration }
                     </td>
                     <td>
                         <Link<Route> to={Route::LeaveRequestDetails { id: my_leave.leave_request_id }}>

@@ -61,7 +61,7 @@ pub fn component() -> Html {
                         </tr>
                     </thead>
                     <tbody>
-                    { for leave_type_html(&leave_types.deref()) }
+                    { for leave_type_html(leave_types.deref()) }
                     </tbody>
                 </table>
             }

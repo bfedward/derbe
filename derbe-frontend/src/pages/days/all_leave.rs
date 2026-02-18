@@ -53,7 +53,7 @@ pub fn component() -> Html {
                             </tr>
                         </thead>
                         <tbody>
-                        { for table_row_html(&all_leaves.deref()) }
+                        { for table_row_html(all_leaves.deref()) }
                         </tbody>
                     </table>
                 </div>

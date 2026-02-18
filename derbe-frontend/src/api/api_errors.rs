@@ -3,7 +3,7 @@ use thiserror::Error;
 
 #[derive(Serialize, Deserialize)]
 pub struct ApiErrorResponse {
-    error: String
+    error: String,
 }
 
 #[derive(Debug, Error)]

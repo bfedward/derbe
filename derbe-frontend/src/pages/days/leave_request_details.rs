@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 
-
 use crate::{
     api::{
         api_errors::ApiError,
@@ -9,9 +8,9 @@ use crate::{
     components::{
         atoms::{
             dds_date_input::{DDSDateInput, DateType},
+            dds_modal::DDSModal,
             dds_text_area::DDSTextArea,
             dds_text_input::DDSTextInputForSelectable,
-            dds_modal::DDSModal
         },
         molecules::half_day_op_radio_group::HalfDayOpRadioGroup,
         organisms::navbar::Navbar,
@@ -117,7 +116,7 @@ pub fn component(props: &Props) -> Html {
     let onsubmit = {
         let history = use_navigator().unwrap();
         let leave_request = leave_request.clone();
-        let id = props.id.clone();
+        let id = props.id;
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             if let Some(updated_leave_request) = (*leave_request).as_ref().cloned() {
@@ -167,7 +166,7 @@ pub fn component(props: &Props) -> Html {
     let accepted_onclick = {
         let history = use_navigator().unwrap();
         let leave_request = leave_request.clone();
-        let id = props.id.clone();
+        let id = props.id;
         let is_show_modal = is_show_modal.clone();
         Callback::from(move |event: MouseEvent| {
             event.prevent_default();
