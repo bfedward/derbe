@@ -1,4 +1,4 @@
-use derbe_shared::dto::response::leave_type::LeaveTypeResponse;
+use crate::dto::response::leave_type::LeaveTypeResponse;
 
 pub struct LeaveType {
     pub id: i32,

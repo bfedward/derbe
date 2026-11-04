@@ -1,47 +1,69 @@
-# derbe
-derbe is a HR tool that allows employees to manage their leave.
-derbe is made with Yew, Axum and PostgreSQL.
+# Derbe
 
-# Local Developer Setup
+Derbe is an employee leave management tool. The backend uses Rust, Axum, and PostgreSQL. The frontend uses React, TypeScript, Vite, TanStack Query, and shadcn/ui.
 
-## Backend
+## Requirements
 
-Rust needs to be installed. See [this page](https://www.rust-lang.org/learn/get-started) for instructions to install Rust using rustup for your OS.
+- Rust stable and `cargo-watch`
+- Node.js and pnpm 12
+- Docker with Compose
+- SQLx CLI
 
-derbe needs a connection to a PostgreSQL database to store data. This connection is needed during development as sqlx is used to verify database queries.
-Run this command in a terminal to create a Docker container using the offical PostgreSQL image:
+## Local setup
 
-`docker run -d \
-  --name postgres-container \
+Start a PostgreSQL database for Derbe. For a local Docker instance:
+
+```sh
+docker run -d --name derbe-postgres \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=password \
   -e POSTGRES_DB=derbe \
-  -p 5432:5432 \
-  postgres
-`
+  -p 5432:5432 postgres
+```
 
-To run all the database migrations and create new migrations, the [sqlx cli](https://crates.io/crates/sqlx-cli) is needed. 
-In a terminal window, run this command:
-`cargo install sqlx-cli`
+Apply database migrations:
 
-This will install the sqlx cli with all its dependencies. It does not need to be re-installed for every new Rust project.
+```sh
+cd derbe-backend
+cargo install sqlx-cli
+sqlx migrate run
+cd ..
+```
 
-Now run `sqlx migrate run`. The command output will show all database migrations being run in the order they appear in derbe-backend/migrations.
+Install JavaScript dependencies and start the full stack:
 
-The backend can now be run by entering `cargo run`. Cargo will download all dependencies, compile everything into an executable and run it.
+```sh
+pnpm install
+pnpm dev
+```
 
-## Frontend
+Frontend runs at <http://localhost:4200>. API listens at <http://127.0.0.1:8001>.
+Set `DERBE_APPLICATION__APPLICATION_PORT` to override the API port, or
+`VITE_API_BASE_URL` to point the frontend at another API address.
 
-The derbe frontend is made using Yew, which has a couple of [setup steps](https://yew.rs/docs/getting-started/introduction).
+Run frontend commands from the repository root:
 
-Yew needs the compilation target for browser-based WebAssembly (WASM). 
-To add the compilation target, run this:
-`rustup target add wasm32-unknown-unknown`
+```sh
+pnpm typecheck
+pnpm lint
+pnpm knip
+pnpm build
+```
 
-To build and run a WASM project, trunk needs to be installed:
-`cargo install trunk`
+Export Rust API types after changing DTOs or enums:
 
-After trunk has finished installing, the frontend can be run:
-`trunk serve`
+```sh
+cd derbe-backend
+cargo run --bin export_bindings
+```
 
-derbe will then be running on [localhost:4200](localhost:4200)
+Generated TypeScript declarations live in `derbe-frontend/src/bindings`. Do not edit these files manually.
+
+## Architecture
+
+```text
+React pages -> TanStack Query -> TypeScript API client -> Axum API -> PostgreSQL
+                                      ^
+                                      |
+                            generated ts-rs bindings
+```

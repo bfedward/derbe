@@ -1,4 +1,4 @@
-use derbe_shared::{dto::response::employee::EmployeeResponse, enums::EmploymentType};
+use crate::{dto::response::employee::EmployeeResponse, enums::EmploymentType};
 
 pub struct Employee {
     pub id: i32,

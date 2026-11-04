@@ -1,4 +1,4 @@
-use derbe_shared::dto::request::division::{DivisionCreate, DivisionUpdate};
+use crate::dto::request::division::{DivisionCreate, DivisionUpdate};
 
 use crate::{error::AppError, http::AppContext, model::division::Division};
 

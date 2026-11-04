@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use derbe_shared::{
+use crate::{
     dto::{
         request::leave_request::{LeaveRequestUpdate, LeaveRequestValues},
         response::leave_request::LeaveRequestResponse,

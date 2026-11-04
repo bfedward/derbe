@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use chrono::NaiveDate;
-use derbe_shared::dto::request::leave_request::{
+use crate::dto::request::leave_request::{
     AllLeaveRequest, LeaveRequestCreate, LeaveRequestUpdate, MyLeaveRequest,
 };
-use derbe_shared::dto::response::leave_request::{
+use crate::dto::response::leave_request::{
     AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse,
 };
-use derbe_shared::enums::LeaveStatus;
+use crate::enums::LeaveStatus;
 
 use crate::{error::AppError, http::AppContext, model::leave_request::LeaveRequest};
 

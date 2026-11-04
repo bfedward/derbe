@@ -1,4 +1,4 @@
-use derbe_shared::dto::{
+use crate::dto::{
     request::employee::{EmployeeCreate, EmployeeUpdate},
     response::employee::EmployeeDetailsResponse,
 };

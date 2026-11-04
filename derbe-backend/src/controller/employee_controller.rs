@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use derbe_shared::dto::{
+use crate::dto::{
     request::employee::{EmployeeCreate, EmployeeUpdate},
     response::employee::{EmployeeDetailsResponse, EmployeeResponse},
 };
