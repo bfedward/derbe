@@ -1,4 +1,4 @@
-use derbe_shared::dto::request::location::LocationCreate;
+use crate::dto::request::location::LocationCreate;
 
 use crate::{
     error::AppError,

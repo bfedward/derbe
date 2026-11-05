@@ -1,6 +1,6 @@
 application:
   application_host: "127.0.0.1"
-  application_port: 8000
+  application_port: 8001
 database:
   host: "127.0.0.1"
   port: 5432

@@ -1,5 +1,8 @@
 pub mod configuration;
 pub mod controller;
+pub mod deserialization;
+pub mod dto;
+pub mod enums;
 pub mod error;
 pub mod http;
 pub mod model;

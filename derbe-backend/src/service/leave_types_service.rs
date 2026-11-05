@@ -1,4 +1,4 @@
-use derbe_shared::dto::request::leave_type::LeaveTypeCreate;
+use crate::dto::request::leave_type::LeaveTypeCreate;
 
 use crate::{
     error::AppError, http::AppContext, model::leave_type::LeaveType,

@@ -1,0 +1,40 @@
+packages:
+  - derbe-frontend
+
+minimumReleaseAge: 10080
+minimumReleaseAgeStrict: false
+minimumReleaseAgeIgnoreMissingTime: false
+minimumReleaseAgeExclude:
+  - baseline-browser-mapping
+  - caniuse-lite
+  - electron-to-chromium
+  - joi
+  - node-releases
+  - rollup
+  - semver
+  - tslib
+  - "@tanstack/*"
+  - "@tailwindcss/*"
+  - "@types/*"
+  - "@vitejs/*"
+  - "@babel/*"
+  - "@rollup/*"
+  - "@babel/*"
+  - "@rollup/*"
+  - concurrently
+  - react
+  - react-dom
+  - react-router-dom
+  - radix-ui
+  - vite
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  - undici-types
+trustLockfile: false
+blockExoticSubdeps: true
+strictDepBuilds: true
+dangerouslyAllowAllBuilds: false
+allowBuilds:
+  esbuild: true
+audit:
+  level: high

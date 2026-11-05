@@ -1,4 +1,4 @@
-use derbe_shared::dto::request::location::{LocationCreate, LocationUpdate};
+use crate::dto::request::location::{LocationCreate, LocationUpdate};
 
 use crate::{error::AppError, http::AppContext, model::location::Location};
 

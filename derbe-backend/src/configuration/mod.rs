@@ -1,4 +1,4 @@
-use config::{Config, ConfigError, File, FileFormat};
+use config::{Config, ConfigError, Environment, File, FileFormat};
 use secrecy::{ExposeSecret, SecretBox};
 
 #[derive(serde::Deserialize)]
@@ -49,6 +49,12 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
     // init
     let settings = Config::builder()
         .add_source(File::new("derbe_config.yaml", FileFormat::Yaml))
+        .add_source(
+            Environment::with_prefix("DERBE")
+                .prefix_separator("_")
+                .separator("__")
+                .try_parsing(true),
+        )
         .build()?;
 
     settings.try_deserialize::<Settings>()

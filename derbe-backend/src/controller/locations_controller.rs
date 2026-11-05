@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use derbe_shared::dto::{request::location::LocationCreate, response::location::LocationResponse};
+use crate::dto::{request::location::LocationCreate, response::location::LocationResponse};
 
 use crate::{error::AppError, http::AppContext, service::location_service};
 

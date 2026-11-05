@@ -1,4 +1,4 @@
-use derbe_shared::dto::response::location::LocationResponse;
+use crate::dto::response::location::LocationResponse;
 
 pub struct Location {
     pub id: i32,

@@ -1,4 +1,4 @@
-use derbe_shared::dto::request::division::DivisionCreate;
+use crate::dto::request::division::DivisionCreate;
 
 use crate::{
     error::AppError, http::AppContext, model::division::Division, repository::division_repository,

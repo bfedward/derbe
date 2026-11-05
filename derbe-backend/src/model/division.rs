@@ -1,4 +1,4 @@
-use derbe_shared::dto::response::division::DivisionResponse;
+use crate::dto::response::division::DivisionResponse;
 
 pub struct Division {
     pub id: i32,

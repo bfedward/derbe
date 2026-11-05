@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use derbe_shared::dto::{request::division::DivisionCreate, response::division::DivisionResponse};
+use crate::dto::{request::division::DivisionCreate, response::division::DivisionResponse};
 
 use crate::{error::AppError, http::AppContext, service::division_service};
 

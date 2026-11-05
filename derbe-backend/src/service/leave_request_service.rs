@@ -1,6 +1,6 @@
 use chrono::{DateTime, NaiveDate, Utc};
 
-use derbe_shared::{
+use crate::{
     dto::{
         request::leave_request::{
             AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,

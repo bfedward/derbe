@@ -1,6 +1,6 @@
-use derbe_shared::dto::request::employee::{EmployeeCreate, EmployeeUpdate};
-use derbe_shared::dto::response::employee::EmployeeDetailsResponse;
-use derbe_shared::enums::EmploymentType;
+use crate::dto::request::employee::{EmployeeCreate, EmployeeUpdate};
+use crate::dto::response::employee::EmployeeDetailsResponse;
+use crate::enums::EmploymentType;
 
 use crate::{error::AppError, http::AppContext, model::employee::Employee};
 
