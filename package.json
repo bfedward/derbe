@@ -11,6 +11,7 @@
     "start": "pnpm --dir derbe-frontend start",
     "typecheck": "pnpm --dir derbe-frontend typecheck",
     "lint": "pnpm --dir derbe-frontend lint",
+    "lint:fix": "pnpm --dir derbe-frontend exec biome check --write src",
     "knip": "pnpm --dir derbe-frontend knip",
     "check:quality": "pnpm typecheck && pnpm lint && pnpm knip"
   },
