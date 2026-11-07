@@ -102,8 +102,16 @@ export function getDivisions(signal?: AbortSignal) {
   return request<DivisionResponse[]>(API_PATHS.divisions, { signal });
 }
 
+export function createDivision(input: DivisionCreate) {
+  return postJson<DivisionResponse>(API_PATHS.divisions, input);
+}
+
 export function getLocations(signal?: AbortSignal) {
   return request<LocationResponse[]>(API_PATHS.locations, { signal });
+}
+
+export function createLocation(input: LocationCreate) {
+  return postJson<LocationResponse>(API_PATHS.locations, input);
 }
 
 export function getLeaveTypes(signal?: AbortSignal) {
@@ -150,6 +158,8 @@ export function updateLeaveRequestStatus(id: number, input: LeaveRequestStatusUp
 }
 
 import { queryOptions } from "@tanstack/react-query";
+import type { DivisionCreate } from "./bindings/DivisionCreate";
+import type { LocationCreate } from "./bindings/LocationCreate";
 
 export const employeesQueryOptions = () =>
   queryOptions({

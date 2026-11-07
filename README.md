@@ -257,8 +257,14 @@ Run these commands from the repository root.
 Run the quality checks before submitting frontend changes:
 
 ```sh
+pnpm lint:fix
 pnpm check:quality
 pnpm build
+git status
+git diff
+git add .
+git commit -m "Your commit message"
+git push
 ```
 
 ### Exporting TypeScript bindings

@@ -34,6 +34,10 @@ import {
   NewLeaveTypePage,
   OrganisationPage,
 } from "@/pages";
+import { DivisionsPage } from "./pages/DivisionsPage";
+import { LocationsPage } from "./pages/LocationsPage";
+import { NewDivisionPage } from "./pages/NewDivisionPage";
+import { NewLocationPage } from "./pages/NewLocationPage";
 
 function NavigationMenu({
   title,
@@ -100,7 +104,11 @@ function Layout() {
             <NavigationMenu
               title="Configuration"
               icon={<Settings2 />}
-              items={[{ label: "Leave Types", to: "/leave-types" }]}
+              items={[
+                { label: "Leave Types", to: "/leave-types" },
+                { label: "Locations", to: "/locations" },
+                { label: "Divisions", to: "/divisions" },
+              ]}
             />
             <ThemeToggle />
           </nav>
@@ -144,6 +152,10 @@ function App() {
           <Route path="employee/:id" element={<EmployeeProfilePage />} />
           <Route path="leave-types" element={<LeaveTypesPage />} />
           <Route path="leave-types/new" element={<NewLeaveTypePage />} />
+          <Route path="locations" element={<LocationsPage />} />
+          <Route path="locations/new" element={<NewLocationPage />} />
+          <Route path="divisions" element={<DivisionsPage />} />
+          <Route path="divisions/new" element={<NewDivisionPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
