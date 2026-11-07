@@ -9,6 +9,9 @@
 - Before creating or renaming frontend files, check `__LEARNING/LEARNINGS.md`. Use kebab-case filenames for frontend source files; keep generated `src/bindings` filenames as produced by `ts-rs`. Keep React component names in PascalCase.
 - Match nearby code conventions before introducing new patterns or dependencies.
 - Never add secrets or production credentials to source control.
+- Keep `CHANGELOG_DEV.md` current in the same commit for meaningful code, architecture, dependency, tooling, or agent-guidance changes. Add work under `[Unreleased]`; use concise before/after code blocks when they clarify a refactor.
+- For every version upgrade, update both `derbe-backend/Cargo.toml` and `derbe-frontend/package.json`, move matching `CHANGELOG_DEV.md` entries into a dated version section, then create an annotated Git tag named `vMAJOR.MINOR.PATCH` at that release commit. Keep version, changelog, and tag in sync.
+- Organize backend domain code by feature under `derbe-backend/src/features/<feature>/`; keep each feature's handlers, DTOs, model, repository, and service together. Avoid `pub use` re-export facades.
 
 ## Learning workflow
 
