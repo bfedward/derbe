@@ -6,7 +6,7 @@
 - Read `README.md` for setup and development commands.
 - Keep backend changes within the existing `derbe-backend` structure and frontend changes within `derbe-frontend/src` unless the task requires otherwise.
 - Use pnpm for JavaScript and TypeScript commands.
-- Use kebab-case filenames for frontend source files; keep generated `src/bindings` filenames as produced by `ts-rs`. Keep React component names in PascalCase.
+- Before creating or renaming frontend files, check `__LEARNING/LEARNINGS.md`. Use kebab-case filenames for frontend source files; keep generated `src/bindings` filenames as produced by `ts-rs`. Keep React component names in PascalCase.
 - Match nearby code conventions before introducing new patterns or dependencies.
 - Never add secrets or production credentials to source control.
 
