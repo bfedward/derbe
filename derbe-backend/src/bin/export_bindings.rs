@@ -1,26 +1,32 @@
 use derbe_backend::{
-    dto::{
-        request::{
-            division::{DivisionCreate, DivisionUpdate},
-            employee::{EmployeeCreate, EmployeeUpdate},
-            leave_request::{
-                AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate,
-                LeaveRequestUpdate, LeaveRequestValues, MyLeaveRequest,
-            },
-            leave_type::{LeaveTypeCreate, LeaveTypeUpdate},
-            location::{LocationCreate, LocationUpdate},
+    enums::{EmploymentType, HalfDayOptions, LeaveStatus},
+    features::{
+        divisions::dto::{
+            request::{DivisionCreate, DivisionUpdate},
+            response::DivisionResponse,
         },
-        response::{
-            division::DivisionResponse,
-            employee::{EmployeeDetailsResponse, EmployeeResponse},
-            leave_request::{
+        employees::dto::{
+            request::{EmployeeCreate, EmployeeUpdate},
+            response::{EmployeeDetailsResponse, EmployeeResponse},
+        },
+        leave_requests::dto::{
+            request::{
+                AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
+                LeaveRequestValues, MyLeaveRequest,
+            },
+            response::{
                 AllLeaveInnerResponse, AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse,
             },
-            leave_type::LeaveTypeResponse,
-            location::LocationResponse,
+        },
+        leave_types::dto::{
+            request::{LeaveTypeCreate, LeaveTypeUpdate},
+            response::LeaveTypeResponse,
+        },
+        locations::dto::{
+            request::{LocationCreate, LocationUpdate},
+            response::LocationResponse,
         },
     },
-    enums::{EmploymentType, HalfDayOptions, LeaveStatus},
 };
 use ts_rs::TS;
 

@@ -1,9 +1,10 @@
-use std::fmt::Display;
-
 use serde::{Deserialize, Serialize};
+use strum::{Display, EnumString};
 use ts_rs::TS;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type, TS)]
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, TS, Display,
+)]
 #[sqlx(type_name = "valid_employment_types")]
 #[ts(export)]
 pub enum EmploymentType {
@@ -12,16 +13,9 @@ pub enum EmploymentType {
     Contract,
 }
 
-impl std::fmt::Display for EmploymentType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            EmploymentType::Permanent => write!(f, "Permanent"),
-            EmploymentType::Contract => write!(f, "Contract"),
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type, TS)]
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, TS, Display,
+)]
 #[sqlx(type_name = "valid_leave_statuses")]
 #[ts(export)]
 pub enum LeaveStatus {
@@ -33,62 +27,84 @@ pub enum LeaveStatus {
     Accepted,
 }
 
-impl Display for LeaveStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LeaveStatus::Pending => write!(f, "Pending"),
-            LeaveStatus::MoreInfoReq => write!(f, "MoreInfoReq"),
-            LeaveStatus::Cancelled => write!(f, "Cancelled"),
-            LeaveStatus::Rejected => write!(f, "Rejected"),
-            LeaveStatus::Accepted => write!(f, "Accepted"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, TS, EnumString)]
 #[ts(export)]
 pub enum HalfDayOptions {
     #[default]
+    #[strum(serialize = "allDaysFull")]
     FullDays,
+    #[strum(serialize = "firstDayHalf")]
     FirstDayHalf,
+    #[strum(serialize = "lastDayHalf")]
     LastDayHalf,
+    #[strum(serialize = "firstAndLastHalfs")]
     BothHalfDays,
 }
 
 impl HalfDayOptions {
-    pub fn from_bools(hdo: (bool, bool)) -> HalfDayOptions {
-        match (hdo.0, hdo.1) {
-            (true, true) => HalfDayOptions::BothHalfDays,
-            (true, false) => HalfDayOptions::FirstDayHalf,
-            (false, true) => HalfDayOptions::LastDayHalf,
-            (false, false) => HalfDayOptions::FullDays,
+    pub const fn from_bools(half_days: (bool, bool)) -> Self {
+        match half_days {
+            (true, true) => Self::BothHalfDays,
+            (true, false) => Self::FirstDayHalf,
+            (false, true) => Self::LastDayHalf,
+            (false, false) => Self::FullDays,
         }
     }
 
-    pub fn to_bools(&self) -> (bool, bool) {
+    pub const fn to_bools(&self) -> (bool, bool) {
         match self {
-            HalfDayOptions::FullDays => (false, false),
-            HalfDayOptions::FirstDayHalf => (true, false),
-            HalfDayOptions::LastDayHalf => (false, true),
-            HalfDayOptions::BothHalfDays => (true, true),
+            Self::FullDays => (false, false),
+            Self::FirstDayHalf => (true, false),
+            Self::LastDayHalf => (false, true),
+            Self::BothHalfDays => (true, true),
         }
     }
 
-    pub fn to_f64(&self) -> f64 {
+    pub const fn to_f64(&self) -> f64 {
         match self {
-            HalfDayOptions::FullDays => 0.0,
-            HalfDayOptions::FirstDayHalf | HalfDayOptions::LastDayHalf => 0.5,
-            HalfDayOptions::BothHalfDays => 1.0,
+            Self::FullDays => 0.0,
+            Self::FirstDayHalf | Self::LastDayHalf => 0.5,
+            Self::BothHalfDays => 1.0,
         }
     }
 
-    pub fn from_string(s: &str) -> HalfDayOptions {
-        match s {
-            "firstDayHalf" => HalfDayOptions::FirstDayHalf,
-            "lastDayHalf" => HalfDayOptions::LastDayHalf,
-            "firstAndLastHalfs" => HalfDayOptions::BothHalfDays,
-            "allDaysFull" => HalfDayOptions::FullDays,
-            _ => panic!("Unknown HalfDayOption: {}", s),
-        }
+    pub fn from_string(value: &str) -> Self {
+        Self::try_from_string(value).unwrap_or_else(|_| panic!("Unknown HalfDayOption: {value}"))
+    }
+
+    pub fn try_from_string(value: &str) -> Result<Self, strum::ParseError> {
+        value.parse()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{EmploymentType, HalfDayOptions, LeaveStatus};
+
+    #[test]
+    fn enum_display_keeps_existing_api_labels() {
+        assert_eq!(EmploymentType::Permanent.to_string(), "Permanent");
+        assert_eq!(LeaveStatus::MoreInfoReq.to_string(), "MoreInfoReq");
+    }
+
+    #[test]
+    fn half_day_options_parse_existing_values_without_panicking() {
+        assert_eq!(
+            HalfDayOptions::try_from_string("allDaysFull"),
+            Ok(HalfDayOptions::FullDays)
+        );
+        assert_eq!(
+            HalfDayOptions::try_from_string("firstDayHalf"),
+            Ok(HalfDayOptions::FirstDayHalf)
+        );
+        assert_eq!(
+            HalfDayOptions::try_from_string("lastDayHalf"),
+            Ok(HalfDayOptions::LastDayHalf)
+        );
+        assert_eq!(
+            HalfDayOptions::try_from_string("firstAndLastHalfs"),
+            Ok(HalfDayOptions::BothHalfDays)
+        );
+        assert!(HalfDayOptions::try_from_string("unknown").is_err());
     }
 }
