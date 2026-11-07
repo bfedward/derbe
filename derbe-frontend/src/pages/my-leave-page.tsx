@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { myLeaveQueryOptions } from "@/api";
 import { PageHeading } from "@/components/page-heading";
 import { QueryMessage } from "@/components/query-message";
-import { StatusBadge } from "@/components/status-badge";
+import { LeaveStatusBadge } from "@/components/leave-status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -53,7 +53,7 @@ export function MyLeavePage() {
                 <TableRow key={leave.leave_request_id}>
                   <TableCell className="font-medium">{leave.leave_type}</TableCell>
                   <TableCell>
-                    <StatusBadge status={leave.leave_status} />
+                    <LeaveStatusBadge status={leave.leave_status} />
                   </TableCell>
                   <TableCell>{formatDate(leave.date_from)}</TableCell>
                   <TableCell>{formatDate(leave.date_to)}</TableCell>
