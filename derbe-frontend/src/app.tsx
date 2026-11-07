@@ -24,20 +24,20 @@ import {
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   AllLeavePage,
+  DivisionsPage,
   EmployeeFormPage,
   EmployeeProfilePage,
   HomePage,
   LeaveRequestFormPage,
   LeaveRequestProfilePage,
   LeaveTypesPage,
+  LocationsPage,
   MyLeavePage,
+  NewDivisionPage,
   NewLeaveTypePage,
+  NewLocationPage,
   OrganisationPage,
 } from "@/pages";
-import { DivisionsPage } from "./pages/DivisionsPage";
-import { LocationsPage } from "./pages/LocationsPage";
-import { NewDivisionPage } from "./pages/NewDivisionPage";
-import { NewLocationPage } from "./pages/NewLocationPage";
 
 function NavigationMenu({
   title,

@@ -33,8 +33,8 @@ import {
 } from "@/components/ui/select";
 import { EMPLOYMENT_TYPES, NONE_OPTION } from "@/constants/constants";
 import { derbeKeys } from "@/query-keys";
-import { PageHeading } from "../PageHeading";
-import { ErrorAlert, QueryMessage } from "../QueryMessage";
+import { PageHeading } from "../page-heading";
+import { ErrorAlert, QueryMessage } from "../query-message";
 
 const employeeFormSchema = z.object({
   first_name: z.string().trim().min(1, "First name is required."),

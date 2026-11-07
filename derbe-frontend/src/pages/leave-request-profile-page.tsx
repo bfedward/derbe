@@ -12,8 +12,8 @@ import {
 import type { LeaveRequestStatusUpdate } from "@/bindings/LeaveRequestStatusUpdate";
 import type { LeaveRequestUpdate } from "@/bindings/LeaveRequestUpdate";
 import type { LeaveStatus } from "@/bindings/LeaveStatus";
-import { PageHeading } from "@/components/PageHeading";
-import { ErrorAlert, QueryMessage } from "@/components/QueryMessage";
+import { PageHeading } from "@/components/page-heading";
+import { ErrorAlert, QueryMessage } from "@/components/query-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {

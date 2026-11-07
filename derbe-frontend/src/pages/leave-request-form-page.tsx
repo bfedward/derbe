@@ -11,8 +11,8 @@ import {
   leaveTypesQueryOptions,
 } from "@/api";
 import type { LeaveRequestCreate } from "@/bindings/LeaveRequestCreate";
-import { PageHeading } from "@/components/PageHeading";
-import { ErrorAlert, QueryMessage } from "@/components/QueryMessage";
+import { PageHeading } from "@/components/page-heading";
+import { ErrorAlert, QueryMessage } from "@/components/query-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {

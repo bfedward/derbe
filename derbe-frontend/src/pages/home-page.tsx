@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { PageHeading } from "@/components/PageHeading";
+import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import {
   Card,

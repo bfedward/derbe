@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Pencil, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { myLeaveQueryOptions } from "@/api";
-import { PageHeading } from "@/components/PageHeading";
-import { QueryMessage } from "@/components/QueryMessage";
-import { StatusBadge } from "@/components/StatusBadge";
+import { PageHeading } from "@/components/page-heading";
+import { QueryMessage } from "@/components/query-message";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {

@@ -6,8 +6,8 @@ import {
   employeesQueryOptions,
   locationsQueryOptions,
 } from "@/api";
-import { PageHeading } from "@/components/PageHeading";
-import { QueryMessage } from "@/components/QueryMessage";
+import { PageHeading } from "@/components/page-heading";
+import { QueryMessage } from "@/components/query-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
