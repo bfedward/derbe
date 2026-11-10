@@ -1,8 +1,7 @@
 use std::net::SocketAddr;
 
 use derbe_backend::{
-    configuration::{get_configuration, DatabaseSettings, Settings},
-    http::{app_router, AppContext},
+    configuration::{DatabaseSettings, Settings, get_configuration}, http::{AppState, app_router},
 };
 use reqwest::{Client, Response, StatusCode};
 use secrecy::ExposeSecret;
@@ -16,7 +15,7 @@ use uuid::Uuid;
 
 pub struct TestApp {
     pub address: String,
-    pub ctx: AppContext,
+    pub ctx: AppState,
     shutdown_tx: Option<Sender<()>>,
 }
 
@@ -30,8 +29,8 @@ pub async fn spawn_app() -> (TestApp, Settings) {
 
     let db = configure_database(&configuration.database).await;
 
-    let ctx = AppContext { db };
-    let app = app_router(&ctx);
+    let ctx = AppState { pool: db };
+    let app = app_router(ctx);
 
     // Create a shutdown channel
     let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
@@ -83,7 +82,7 @@ pub async fn cleanup_test_app(config: &DatabaseSettings, test_app: TestApp) {
     }
 
     // Drop the connection pool before dropping the database
-    drop(test_app.ctx.db);
+    drop(test_app.ctx.pool);
 
     // Connect to the Postgres instance without specifying a database
     let mut connection =
