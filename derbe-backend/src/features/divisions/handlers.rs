@@ -3,6 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use validator::Validate;
 
 use crate::{
     error::AppError,
@@ -32,6 +33,9 @@ pub async fn create_division(
     State(state): State<AppState>,
     Json(input): Json<DivisionCreate>,
 ) -> Result<(StatusCode, Json<DivisionResponse>), AppError> {
+    input
+        .validate()
+        .map_err(AppError::RequestValidationFailed)?;
     let division = service::create(input, &state).await?;
     Ok((StatusCode::CREATED, Json(division.into())))
 }

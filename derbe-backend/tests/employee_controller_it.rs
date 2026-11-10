@@ -126,11 +126,11 @@ async fn cannot_create_employee_with_blank_first_name() {
     )
     .await;
 
-    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
     let response_text: String = test_helpers::get_response_body(response).await;
 
-    assert!(response_text.contains("first_name: string cannot be empty"));
+    assert!(response_text.contains("first_name"));
 
     // Clean up the test application
     cleanup_test_app(&config.database, app).await;

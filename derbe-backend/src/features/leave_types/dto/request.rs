@@ -1,16 +1,16 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use ts_rs::TS;
 
-use crate::deserialization::{deserialize_non_empty_string, deserialize_non_negative_option_f64};
+use validator::Validate;
 
-#[derive(Serialize, Deserialize, Default, Clone, TS)]
+#[derive(Deserialize, Validate, Default, Clone, TS)]
 #[ts(export)]
 pub struct LeaveTypeCreate {
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub name: String,
-    #[serde(deserialize_with = "deserialize_non_negative_option_f64")]
+    #[validate(range(min = 1.0))]
     pub default_quota: Option<f64>,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub colour: String,
     pub can_book_in_future: bool,
     pub show_in_others_days: bool,
@@ -19,12 +19,12 @@ pub struct LeaveTypeCreate {
     pub show_in_approve_days: bool,
 }
 
-#[derive(Deserialize, TS)]
+#[derive(Deserialize, Validate, TS)]
 #[ts(export)]
 pub struct LeaveTypeUpdate {
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub name: String,
-    #[serde(deserialize_with = "deserialize_non_negative_option_f64")]
+    #[validate(range(min = 1.0))]
     pub default_quota: Option<f64>,
     pub colour: String,
     pub can_book_in_future: bool,

@@ -3,6 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use validator::Validate;
 
 use crate::{
     error::AppError,
@@ -45,6 +46,9 @@ pub async fn create_leave_request(
     State(state): State<AppState>,
     Json(input): Json<LeaveRequestCreate>,
 ) -> Result<(StatusCode, Json<LeaveRequestResponse>), AppError> {
+    input
+        .validate()
+        .map_err(AppError::RequestValidationFailed)?;
     let leave_request = service::create(input, &state).await?;
     Ok((StatusCode::CREATED, Json(leave_request.into())))
 }
@@ -54,6 +58,9 @@ pub async fn update_leave_request(
     Path(id): Path<i32>,
     Json(input): Json<LeaveRequestUpdate>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
+    input
+        .validate()
+        .map_err(AppError::RequestValidationFailed)?;
     let leave_request = service::update(id, input, &state).await?;
     Ok(Json(leave_request.into()))
 }

@@ -1,8 +1,3 @@
-- Fix compilation error in test_helpers (avoid moving ownership?)
-- Add the validator crate and replace custom deserialisations with validator crate.
-
-
-
 AUTHENTICATION:
 -- Tower for middleware.
 -- Add login endpoint for anybody to call. Endpoint responds with a JSON token with expiry time (30 mins??) and the user's role. 
@@ -32,4 +27,6 @@ AUTHENTICATION:
 
 
 
-- Investigate deeper observability
+- Investigate deeper observability.
+- Improve validation. Some is being done by the validator crate on dtos but there is also some validation being done by repository functions.
+- Upgrade backend deps and fix issues.

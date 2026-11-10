@@ -1,18 +1,17 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use ts_rs::TS;
+use validator::Validate;
 
-use crate::deserialization::deserialize_non_empty_string;
-
-#[derive(Serialize, Deserialize, TS)]
+#[derive(Validate, Deserialize, TS)]
 #[ts(export)]
 pub struct DivisionCreate {
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub name: String,
 }
 
-#[derive(Serialize, Deserialize, TS)]
+#[derive(Validate, Deserialize, TS)]
 #[ts(export)]
 pub struct DivisionUpdate {
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub name: String,
 }

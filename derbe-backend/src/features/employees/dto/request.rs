@@ -1,19 +1,18 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use ts_rs::TS;
 
-use crate::{
-    deserialization::deserialize_non_empty_string, enums::EmploymentType,
-    features::employees::dto::response::EmployeeResponse,
-};
+use crate::{enums::EmploymentType, features::employees::dto::response::EmployeeResponse};
 
-#[derive(Serialize, Clone, Deserialize, Default, TS)]
+use validator::Validate;
+
+#[derive(Validate, Clone, Deserialize, Default, TS)]
 #[ts(export)]
 pub struct EmployeeCreate {
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub first_name: String,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub last_name: String,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub job_title: String,
     pub division_id: i32,
     pub employment_type: EmploymentType,
@@ -23,14 +22,14 @@ pub struct EmployeeCreate {
     pub phone: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, TS)]
+#[derive(Validate, Deserialize, Clone, TS)]
 #[ts(export)]
 pub struct EmployeeUpdate {
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub first_name: String,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub last_name: String,
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub job_title: String,
     pub division_id: i32,
     pub employment_type: EmploymentType,

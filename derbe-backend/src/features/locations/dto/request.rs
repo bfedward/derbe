@@ -1,18 +1,17 @@
 use serde::Deserialize;
 use ts_rs::TS;
+use validator::Validate;
 
-use crate::deserialization::deserialize_non_empty_string;
-
-#[derive(Deserialize, TS)]
+#[derive(Deserialize, Validate, TS)]
 #[ts(export)]
 pub struct LocationCreate {
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub name: String,
 }
 
-#[derive(Deserialize, TS)]
+#[derive(Deserialize, Validate, TS)]
 #[ts(export)]
 pub struct LocationUpdate {
-    #[serde(deserialize_with = "deserialize_non_empty_string")]
+    #[validate(length(min = 1))]
     pub name: String,
 }

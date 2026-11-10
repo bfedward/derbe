@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use serde_json::json;
+use validator::ValidationErrors;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
@@ -25,6 +26,9 @@ pub enum AppError {
     #[error("{0}")]
     ValidationFailed(String),
 
+    #[error("{0}")]
+    RequestValidationFailed(ValidationErrors),
+
     #[error("{0} with this name already exists!")]
     DuplicateNamedEntity(String),
 }
@@ -41,7 +45,9 @@ impl IntoResponse for AppError {
             Self::RelatedEntity(_) | Self::ConstraintError(_) | Self::DuplicateNamedEntity(_) => {
                 StatusCode::CONFLICT
             }
-            Self::InvalidStructArgs(_) | Self::ValidationFailed(_) => StatusCode::BAD_REQUEST,
+            Self::InvalidStructArgs(_)
+            | Self::ValidationFailed(_)
+            | Self::RequestValidationFailed(_) => StatusCode::BAD_REQUEST,
         };
 
         (status, Json(json!({ "error": self.to_string() }))).into_response()

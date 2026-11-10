@@ -87,11 +87,11 @@ async fn cannot_create_leave_types_with_negative_default_quota() {
         .await
         .expect("Failed to create leave type");
 
-    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
     let response_text: String = test_helpers::get_response_body(response).await;
 
-    assert!(response_text.contains("default_quota: value must be non-negative"));
+    assert!(response_text.contains("default_quota"));
 
     // Clean up the test application
     test_helpers::cleanup_test_app(&config.database, app).await;

@@ -11,6 +11,8 @@ use crate::{
     http::AppState,
 };
 
+use validator::Validate;
+
 pub async fn list_leave_types(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<LeaveTypeResponse>>, AppError> {
@@ -35,6 +37,9 @@ pub async fn create_leave_type(
     State(state): State<AppState>,
     Json(input): Json<LeaveTypeCreate>,
 ) -> Result<(StatusCode, Json<LeaveTypeResponse>), AppError> {
+    input
+        .validate()
+        .map_err(AppError::RequestValidationFailed)?;
     let leave_type = service::create(input, &state).await?;
     Ok((StatusCode::CREATED, Json(leave_type.into())))
 }

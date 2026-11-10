@@ -1,7 +1,8 @@
 use std::net::SocketAddr;
 
 use derbe_backend::{
-    configuration::{DatabaseSettings, Settings, get_configuration}, http::{AppState, app_router},
+    configuration::{get_configuration, DatabaseSettings, Settings},
+    http::{app_router, AppState},
 };
 use reqwest::{Client, Response, StatusCode};
 use secrecy::ExposeSecret;
@@ -30,7 +31,7 @@ pub async fn spawn_app() -> (TestApp, Settings) {
     let db = configure_database(&configuration.database).await;
 
     let ctx = AppState { pool: db };
-    let app = app_router(ctx);
+    let app = app_router(ctx.clone());
 
     // Create a shutdown channel
     let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();

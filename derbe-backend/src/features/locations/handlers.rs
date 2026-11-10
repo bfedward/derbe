@@ -3,6 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use validator::Validate;
 
 use crate::{
     error::AppError,
@@ -32,6 +33,9 @@ pub async fn create_location(
     State(state): State<AppState>,
     Json(input): Json<LocationCreate>,
 ) -> Result<(StatusCode, Json<LocationResponse>), AppError> {
+    input
+        .validate()
+        .map_err(AppError::RequestValidationFailed)?;
     let location = service::create(input, &state).await?;
     Ok((StatusCode::CREATED, Json(location.into())))
 }

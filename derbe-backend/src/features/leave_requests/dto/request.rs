@@ -1,19 +1,21 @@
 use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc, Weekday};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use ts_rs::TS;
 
 use crate::{
-    deserialization::deserialize_non_negative_f64,
     enums::{HalfDayOptions, LeaveStatus},
     features::leave_requests::dto::response::LeaveRequestResponse,
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+use validator::Validate;
+
+#[derive(Debug, Validate, Deserialize, Clone, TS)]
 #[ts(export)]
 pub struct LeaveRequestCreate {
     pub employee_id: i32,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
+    #[validate(nested)]
     pub values: LeaveRequestValues,
     pub date_requested: DateTime<Utc>,
     pub date_finalised: Option<DateTime<Utc>>,
@@ -34,14 +36,14 @@ impl Default for LeaveRequestCreate {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[derive(Debug, Validate, Deserialize, Clone, TS)]
 #[ts(export)]
 pub struct LeaveRequestValues {
     pub date_from: NaiveDate,
     pub date_to: NaiveDate,
     pub first_day_half: bool,
     pub last_day_half: bool,
-    #[serde(deserialize_with = "deserialize_non_negative_f64")]
+    #[validate(range(min = 1.0))]
     pub total_duration: f64,
 }
 
@@ -113,12 +115,13 @@ impl LeaveRequestValues {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Validate, Debug, Clone, Deserialize, TS)]
 #[ts(export)]
 pub struct LeaveRequestUpdate {
     pub employee_id: i32,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
+    #[validate(nested)]
     pub values: LeaveRequestValues,
     pub date_requested: DateTime<Utc>,
     pub date_finalised: Option<DateTime<Utc>>,
@@ -145,14 +148,14 @@ impl From<LeaveRequestResponse> for LeaveRequestUpdate {
     }
 }
 
-#[derive(Serialize, Deserialize, TS)]
+#[derive(Deserialize, TS)]
 #[ts(export)]
 pub struct AllLeaveRequest {
     pub date_from: NaiveDate,
     pub date_to: NaiveDate,
 }
 
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Deserialize, TS)]
 #[ts(export)]
 pub struct MyLeaveRequest {
     pub employee_id: i32,
@@ -162,7 +165,7 @@ pub struct MyLeaveRequest {
     pub date_to: NaiveDate,
 }
 
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Deserialize, TS)]
 #[ts(export)]
 pub struct LeaveRequestStatusUpdate {
     pub leave_status: LeaveStatus,

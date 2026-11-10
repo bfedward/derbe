@@ -3,6 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use validator::Validate;
 
 use crate::{
     error::AppError,
@@ -42,6 +43,9 @@ pub async fn create_employee(
     State(state): State<AppState>,
     Json(input): Json<EmployeeCreate>,
 ) -> Result<(StatusCode, Json<EmployeeResponse>), AppError> {
+    input
+        .validate()
+        .map_err(AppError::RequestValidationFailed)?;
     let employee = service::create(input, &state).await?;
     Ok((StatusCode::CREATED, Json(employee.into())))
 }
@@ -51,6 +55,9 @@ pub async fn update_employee(
     Path(id): Path<i32>,
     Json(input): Json<EmployeeUpdate>,
 ) -> Result<Json<EmployeeResponse>, AppError> {
+    input
+        .validate()
+        .map_err(AppError::RequestValidationFailed)?;
     let employee = service::update(id, input, &state).await?;
     Ok(Json(employee.into()))
 }
