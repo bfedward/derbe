@@ -1,9 +1,13 @@
 application:
   application_host: "127.0.0.1"
   application_port: 8001
+  cors_origins: ["http://localhost:4200"]
+  app_env: Development
 database:
   host: "127.0.0.1"
   port: 5432
   username: "postgres"
   password: "password"
   database_name: "derbe"
+auth:
+  jwt_secret: "dev-secret-change-in-production"

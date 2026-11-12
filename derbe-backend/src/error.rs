@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use serde_json::json;
+use uuid::Uuid;
 use validator::ValidationErrors;
 
 #[derive(Debug, thiserror::Error)]
@@ -13,6 +14,9 @@ pub enum AppError {
 
     #[error("{1} with id {0} not found!")]
     EntityNotFound(i32, String),
+
+    #[error("{1} with id {0} not found!")]
+    EntityUnidNotFound(Uuid, String),
 
     #[error("Cannot delete {0} due to related entity!")]
     RelatedEntity(String),
@@ -31,6 +35,12 @@ pub enum AppError {
 
     #[error("{0} with this name already exists!")]
     DuplicateNamedEntity(String),
+
+    #[error("{0} is not a valid UUID")]
+    InvalidUuid(String),
+
+    #[error("Failed to hash")]
+    HashFailure,
 }
 
 impl IntoResponse for AppError {
@@ -40,14 +50,16 @@ impl IntoResponse for AppError {
         }
 
         let status = match &self {
-            Self::DatabaseQueryError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DatabaseQueryError(_) | Self::HashFailure => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::EntityUnidNotFound(_, _) => StatusCode::NOT_FOUND,
             Self::EntityNotFound(_, _) => StatusCode::NOT_FOUND,
             Self::RelatedEntity(_) | Self::ConstraintError(_) | Self::DuplicateNamedEntity(_) => {
                 StatusCode::CONFLICT
             }
             Self::InvalidStructArgs(_)
             | Self::ValidationFailed(_)
-            | Self::RequestValidationFailed(_) => StatusCode::BAD_REQUEST,
+            | Self::RequestValidationFailed(_)
+            | Self::InvalidUuid(_) => StatusCode::BAD_REQUEST,
         };
 
         (status, Json(json!({ "error": self.to_string() }))).into_response()

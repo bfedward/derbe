@@ -12,7 +12,7 @@ use validator::Validate;
 #[derive(Debug, Validate, Deserialize, Clone, TS)]
 #[ts(export)]
 pub struct LeaveRequestCreate {
-    pub employee_id: i32,
+    pub employee_unid: String,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
     #[validate(nested)]
@@ -20,20 +20,6 @@ pub struct LeaveRequestCreate {
     pub date_requested: DateTime<Utc>,
     pub date_finalised: Option<DateTime<Utc>>,
     pub notes: Option<String>,
-}
-
-impl Default for LeaveRequestCreate {
-    fn default() -> Self {
-        LeaveRequestCreate {
-            employee_id: 0,
-            leave_type_id: 0,
-            leave_status: LeaveStatus::default(),
-            values: LeaveRequestValues::default(),
-            date_requested: Utc::now(),
-            date_finalised: None,
-            notes: None,
-        }
-    }
 }
 
 #[derive(Debug, Validate, Deserialize, Clone, TS)]
@@ -118,7 +104,7 @@ impl LeaveRequestValues {
 #[derive(Validate, Debug, Clone, Deserialize, TS)]
 #[ts(export)]
 pub struct LeaveRequestUpdate {
-    pub employee_id: i32,
+    pub employee_unid: String,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
     #[validate(nested)]
@@ -131,7 +117,7 @@ pub struct LeaveRequestUpdate {
 impl From<LeaveRequestResponse> for LeaveRequestUpdate {
     fn from(value: LeaveRequestResponse) -> Self {
         LeaveRequestUpdate {
-            employee_id: value.employee_id,
+            employee_unid: value.employee_unid,
             leave_type_id: value.leave_type_id,
             leave_status: value.leave_status,
             values: LeaveRequestValues {
@@ -158,7 +144,7 @@ pub struct AllLeaveRequest {
 #[derive(Debug, Deserialize, TS)]
 #[ts(export)]
 pub struct MyLeaveRequest {
-    pub employee_id: i32,
+    pub employee_unid: String,
     pub leave_type_ids: Vec<i32>,
     pub leave_statuses: Vec<LeaveStatus>,
     pub date_from: NaiveDate,

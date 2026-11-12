@@ -5,12 +5,21 @@ use secrecy::{ExposeSecret, SecretBox};
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub auth: AuthSettings,
 }
 
 #[derive(serde::Deserialize)]
 pub struct ApplicationSettings {
     pub application_host: String,
     pub application_port: u16,
+    pub cors_origins: Vec<String>,
+    pub app_env: AppEnvironment,
+}
+
+#[derive(serde::Deserialize, Copy, Clone, PartialEq)]
+pub enum AppEnvironment {
+    Production,
+    Development,
 }
 
 #[derive(serde::Deserialize)]
@@ -20,6 +29,11 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct AuthSettings {
+    pub jwt_secret: SecretBox<String>,
 }
 
 impl DatabaseSettings {

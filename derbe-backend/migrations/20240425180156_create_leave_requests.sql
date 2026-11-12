@@ -1,6 +1,6 @@
 CREATE TABLE leave_requests (
     id SERIAL PRIMARY KEY,
-    employee_id INTEGER NOT NULL REFERENCES employees(id),
+    employee_unid UUID NOT NULL REFERENCES employees(unid),
     leave_type_id INTEGER NOT NULL REFERENCES leave_types(id),
     leave_status VALID_LEAVE_STATUSES NOT NULL,
     date_from DATE NOT NULL,

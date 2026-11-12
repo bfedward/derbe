@@ -17,7 +17,7 @@ pub struct EmployeeCreate {
     pub division_id: i32,
     pub employment_type: EmploymentType,
     pub location_id: i32,
-    pub manager_id: Option<i32>,
+    pub manager_unid: Option<String>,
     pub email: String,
     pub phone: Option<String>,
 }
@@ -34,9 +34,8 @@ pub struct EmployeeUpdate {
     pub division_id: i32,
     pub employment_type: EmploymentType,
     pub location_id: i32,
-    pub manager_id: Option<i32>,
+    pub manager_unid: Option<String>,
     pub email: String,
-    pub phone: Option<String>,
 }
 
 impl From<EmployeeResponse> for EmployeeUpdate {
@@ -48,9 +47,8 @@ impl From<EmployeeResponse> for EmployeeUpdate {
             division_id: value.division_id,
             employment_type: value.employment_type,
             location_id: value.location_id,
-            manager_id: value.manager_id,
+            manager_unid: value.manager_unid,
             email: value.email,
-            phone: value.phone,
         }
     }
 }

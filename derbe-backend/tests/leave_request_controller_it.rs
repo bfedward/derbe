@@ -8,7 +8,7 @@ async fn create_leave_request_fails_with_unknown_employee() {
     let client = reqwest::Client::new();
 
     let body = serde_json::json!({
-        "employee_id": 0,
+        "employee_unid": 0,
         "leave_type_id": 1,
         "leave_status": "Pending",
         "values": serde_json::json!({

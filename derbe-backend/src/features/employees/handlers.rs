@@ -1,17 +1,22 @@
+use std::str::FromStr;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     Json,
 };
+use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
     error::AppError,
-    features::employees::dto::{
-        request::{EmployeeCreate, EmployeeUpdate},
-        response::{EmployeeDetailsResponse, EmployeeResponse},
+    features::employees::{
+        dto::{
+            request::{EmployeeCreate, EmployeeUpdate},
+            response::{CreatedEmployeeResponse, EmployeeDetailsResponse, EmployeeResponse},
+        },
+        service,
     },
-    features::employees::service,
     http::AppState,
 };
 
@@ -33,16 +38,17 @@ pub async fn get_employee_details_table(
 
 pub async fn get_employee(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(unid): Path<String>,
 ) -> Result<Json<EmployeeResponse>, AppError> {
-    let employee = service::get_by_id(id, &state).await?;
+    let unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
+    let employee = service::get_by_id(unid, &state).await?;
     Ok(Json(employee.into()))
 }
 
 pub async fn create_employee(
     State(state): State<AppState>,
     Json(input): Json<EmployeeCreate>,
-) -> Result<(StatusCode, Json<EmployeeResponse>), AppError> {
+) -> Result<(StatusCode, Json<CreatedEmployeeResponse>), AppError> {
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
@@ -52,12 +58,13 @@ pub async fn create_employee(
 
 pub async fn update_employee(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(unid): Path<String>,
     Json(input): Json<EmployeeUpdate>,
 ) -> Result<Json<EmployeeResponse>, AppError> {
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
-    let employee = service::update(id, input, &state).await?;
+    let unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
+    let employee = service::update(unid, input, &state).await?;
     Ok(Json(employee.into()))
 }
