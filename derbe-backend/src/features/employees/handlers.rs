@@ -3,12 +3,13 @@ use std::str::FromStr;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    Json,
+    Extension, Json,
 };
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
+    auth::AuthenticatedUser,
     error::AppError,
     features::employees::{
         dto::{
@@ -18,6 +19,7 @@ use crate::{
         service,
     },
     http::AppState,
+    permissions::{AccessController, Permission},
 };
 
 pub async fn list_employees(
@@ -46,13 +48,18 @@ pub async fn get_employee(
 }
 
 pub async fn create_employee(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Json(input): Json<EmployeeCreate>,
 ) -> Result<(StatusCode, Json<CreatedEmployeeResponse>), AppError> {
+    AccessController::authorize(&user.role, Permission::CreateEmployee)?;
+
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
+
     let employee = service::create(input, &state).await?;
+
     Ok((StatusCode::CREATED, Json(employee.into())))
 }
 

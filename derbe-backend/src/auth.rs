@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use axum::{
     extract::{Request, State},
     http::{header, StatusCode},
@@ -16,7 +18,7 @@ use serde_json::json;
 use time::Duration;
 use uuid::Uuid;
 
-use crate::{configuration::AppEnvironment, http::AppState};
+use crate::{configuration::AppEnvironment, enums::EmployeeRole, http::AppState};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -35,7 +37,17 @@ struct LoginRow {
     password: String,
 }
 
-pub async fn require_auth(State(state): State<AppState>, request: Request, next: Next) -> Response {
+#[derive(Debug, Clone)]
+pub struct AuthenticatedUser {
+    pub unid: Uuid,
+    pub role: EmployeeRole,
+}
+
+pub async fn require_auth(
+    State(state): State<AppState>,
+    mut request: Request,
+    next: Next,
+) -> Response {
     let path = request.uri().path().to_owned();
 
     let Some(token) = extract_session_cookie(request.headers()) else {
@@ -47,14 +59,67 @@ pub async fn require_auth(State(state): State<AppState>, request: Request, next:
             .into_response();
     };
 
-    if let Err(e) = verify_token(&token, state.jwt_secret.expose_secret()) {
-        tracing::warn!(path, error = %e, "require_auth: invalid token");
-        return (
-            StatusCode::UNAUTHORIZED,
-            axum::Json(json!({"error": "invalid token"})),
-        )
-            .into_response();
-    }
+    let claims = match verify_token(&token, state.jwt_secret.expose_secret()) {
+        Ok(claims) => claims,
+        Err(e) => {
+            tracing::warn!(path, error = %e, "Invalid session token");
+
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(json!({"error": "invalid token"})),
+            )
+                .into_response();
+        }
+    };
+
+    let role = match sqlx::query_scalar!(
+        r#"
+        SELECT role
+        FROM employees
+        WHERE unid = $1
+          AND deleted_at IS NULL
+        "#,
+        claims.sub
+    )
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(role)) => role,
+        Ok(None) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(json!({"error": "employee not found"})),
+            )
+                .into_response();
+        }
+        Err(e) => {
+            tracing::error!("Failed to retrieve employee role: {e}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": "internal server error"})),
+            )
+                .into_response();
+        }
+    };
+
+    let role = match EmployeeRole::from_str(&role) {
+        Ok(role) => role,
+        Err(e) => {
+            tracing::error!("Invalid employee role in database: {e}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": "invalid employee role"})),
+            )
+                .into_response();
+        }
+    };
+
+    request.extensions_mut().insert(AuthenticatedUser {
+        unid: claims.sub,
+        role,
+    });
 
     next.run(request).await
 }

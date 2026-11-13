@@ -30,3 +30,4 @@ AUTHENTICATION:
 - Investigate deeper observability.
 - Improve validation. Some is being done by the validator crate on dtos but there is also some validation being done by repository functions.
 - Upgrade backend deps and fix issues.
+- Conversion of Strings to UUIDs: centralise this?

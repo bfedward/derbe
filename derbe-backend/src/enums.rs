@@ -13,6 +13,20 @@ pub enum EmploymentType {
     Contract,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, TS, EnumString)]
+#[ts(export)]
+pub enum EmployeeRole {
+    #[strum(serialize = "Admin")]
+    Admin,
+    #[strum(serialize = "Manager")]
+    Manager,
+    #[default]
+    #[strum(serialize = "RegularUser")]
+    RegularUser,
+    #[strum(serialize = "Demo")]
+    Demo,
+}
+
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, TS, Display,
 )]

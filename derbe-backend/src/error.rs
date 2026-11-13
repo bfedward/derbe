@@ -41,6 +41,9 @@ pub enum AppError {
 
     #[error("Failed to hash")]
     HashFailure,
+
+    #[error("Forbidden")]
+    Forbidden,
 }
 
 impl IntoResponse for AppError {
@@ -60,6 +63,7 @@ impl IntoResponse for AppError {
             | Self::ValidationFailed(_)
             | Self::RequestValidationFailed(_)
             | Self::InvalidUuid(_) => StatusCode::BAD_REQUEST,
+            Self::Forbidden => StatusCode::FORBIDDEN,
         };
 
         (status, Json(json!({ "error": self.to_string() }))).into_response()

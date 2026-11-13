@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::{
-    enums::EmploymentType,
+    enums::{EmployeeRole, EmploymentType},
     features::employees::dto::response::{CreatedEmployeeResponse, EmployeeResponse},
 };
 
@@ -41,7 +41,7 @@ pub struct EmployeeRecord {
     pub job_title: String,
     pub email: String,
     pub password: String,
-    pub role: String,
+    pub role: EmployeeRole,
     pub division_id: i32,
     pub employment_type: EmploymentType,
     pub location_id: i32,
