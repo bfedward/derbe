@@ -7,6 +7,7 @@ use validator::Validate;
 
 use crate::{
     auth::AuthenticatedUser,
+    enums::{LeaveStatus::Accepted, LeaveStatus::Pending},
     error::AppError,
     features::{
         employees,
@@ -61,7 +62,7 @@ pub async fn create_leave_request(
     Json(input): Json<LeaveRequestCreate>,
 ) -> Result<(StatusCode, Json<LeaveRequestResponse>), AppError> {
     let target = employees::service::get_access_by_id(input.employee_unid, &state).await?;
-    AccessController::authorize_create_leave(&user, &target)?;
+    AccessController::authorize_create_leave_request(&user, &target)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
@@ -75,7 +76,9 @@ pub async fn update_leave_request(
     Path(id): Path<i32>,
     Json(input): Json<LeaveRequestUpdate>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
-    AccessController::authorize(&user.role, Permission::UpdateLeaveRequest)?;
+    let leave_request = service::get_by_id(id, &state).await?;
+    let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
+    AccessController::authorize_update_leave_request(&user, &target)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
@@ -89,7 +92,15 @@ pub async fn update_leave_request_status(
     Path(id): Path<i32>,
     Json(input): Json<LeaveRequestStatusUpdate>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
-    AccessController::authorize(&user.role, Permission::UpdateLeaveRequest)?;
+    let leave_request = service::get_by_id(id, &state).await?;
+    let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
+
+    match input.leave_status {
+        Pending => AccessController::authorize_update_leave_request(&user, &target)?,
+        Accepted => AccessController::authorize_approve_leave_request(&user, &target)?,
+        _ => AccessController::authorize_reject_leave_request(&user, &target)?,
+    }
+
     let leave_request = service::update_leave_request_status(id, input, &state).await?;
     Ok(Json(leave_request.into()))
 }

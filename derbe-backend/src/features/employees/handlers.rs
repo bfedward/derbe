@@ -47,7 +47,7 @@ pub async fn get_employee(
     State(state): State<AppState>,
     Path(unid): Path<String>,
 ) -> Result<Json<EmployeeResponse>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewEmployees)?;
+    AccessController::authorize(&user.role, Permission::ViewEmployee)?;
     let unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
     let employee = service::get_by_id(unid, &state).await?;
     Ok(Json(employee.into()))
@@ -75,11 +75,12 @@ pub async fn update_employee(
     Path(unid): Path<String>,
     Json(input): Json<EmployeeUpdate>,
 ) -> Result<Json<EmployeeResponse>, AppError> {
-    AccessController::authorize(&user.role, Permission::UpdateEmployee)?;
+    let employee_unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
+    let employee = service::get_access_by_id(employee_unid, &state).await?;
+    AccessController::authorize_update_employee(&user, &employee)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
-    let unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
-    let employee = service::update(unid, input, &state).await?;
+    let employee = service::update(employee_unid, input, &state).await?;
     Ok(Json(employee.into()))
 }

@@ -1,14 +1,14 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
 use crate::enums::LeaveStatus;
 use crate::features::leave_requests::dto::request::{
-    AllLeaveRequest, LeaveRequestCreate, LeaveRequestUpdate, MyLeaveRequest,
+    AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
+    MyLeaveRequest,
 };
 use crate::features::leave_requests::dto::response::{
     AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse,
 };
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc};
 use uuid::Uuid;
 
 use crate::{error::AppError, features::leave_requests::model::LeaveRequest, http::AppState};
@@ -127,16 +127,14 @@ pub async fn update(
             UPDATE leave_requests
             SET employee_unid = $1,
                 leave_type_id = $2,
-                leave_status = $3,
-                date_from = $4,
-                date_to = $5,
-                first_day_half = $6,
-                last_day_half = $7,
-                total_duration = $8,
-                date_requested = $9,
-                date_finalised = $10,
-                notes = $11
-            WHERE id = $12
+                date_from = $3,
+                date_to = $4,
+                first_day_half = $5,
+                last_day_half = $6,
+                total_duration = $7,
+                date_requested = $8,
+                notes = $9
+            WHERE id = $10
             RETURNING id, 
                 employee_unid, 
                 leave_type_id, 
@@ -152,14 +150,53 @@ pub async fn update(
             "#,
         dto.employee_unid,
         dto.leave_type_id,
-        dto.leave_status as LeaveStatus,
         dto.values.date_from,
         dto.values.date_to,
         dto.values.first_day_half,
         dto.values.last_day_half,
         dto.values.total_duration,
         dto.date_requested,
-        dto.date_finalised,
+        dto.notes,
+        id
+    )
+    .fetch_optional(&ctx.pool)
+    .await?
+    .ok_or_else(|| AppError::EntityNotFound(id, "LeaveRequest".to_owned()))
+}
+
+pub async fn update_status(
+    id: i32,
+    dto: LeaveRequestStatusUpdate,
+    ctx: &AppState,
+) -> Result<LeaveRequest, AppError> {
+    let date_finalised = match dto.leave_status {
+        LeaveStatus::Accepted | LeaveStatus::Rejected => Some(Utc::now()),
+        _ => None,
+    };
+
+    sqlx::query_as!(
+        LeaveRequest,
+        r#"
+            UPDATE leave_requests
+            SET leave_status = $1,
+                date_finalised = $2,
+                notes = $3
+            WHERE id = $4
+            RETURNING id, 
+                employee_unid, 
+                leave_type_id, 
+                leave_status AS "leave_status!: LeaveStatus", 
+                date_from, 
+                date_to,
+                first_day_half, 
+                last_day_half, 
+                total_duration,
+                date_requested,
+                date_finalised,
+                notes
+            "#,
+        dto.leave_status as LeaveStatus,
+        date_finalised,
         dto.notes,
         id
     )

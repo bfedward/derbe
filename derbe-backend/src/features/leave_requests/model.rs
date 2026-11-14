@@ -31,7 +31,6 @@ impl From<LeaveRequest> for LeaveRequestUpdate {
         Self {
             employee_unid: value.employee_unid,
             leave_type_id: value.leave_type_id,
-            leave_status: value.leave_status,
             values: LeaveRequestValues {
                 date_from: value.date_from,
                 date_to: value.date_to,
@@ -40,7 +39,6 @@ impl From<LeaveRequest> for LeaveRequestUpdate {
                 total_duration: value.total_duration,
             },
             date_requested: value.date_requested,
-            date_finalised: value.date_finalised,
             notes: value.notes,
         }
     }

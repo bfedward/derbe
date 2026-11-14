@@ -52,6 +52,7 @@ impl Permissions for EmployeeRole {
                     | Permission::ViewLeaveTypes
                     | Permission::CreateLeaveRequest
                     | Permission::ViewLeaveRequest
+                    | Permission::ViewLeaveRequests
                     | Permission::UpdateLeaveRequest
                     | Permission::DeleteLeaveRequest
                     | Permission::CreateEmployee
@@ -68,14 +69,23 @@ impl Permissions for EmployeeRole {
                     | Permission::ViewLocations
                     | Permission::ViewLeaveTypes
                     | Permission::ViewEmployees
-                    | Permission::CreateLeaveType
+                    | Permission::UpdateEmployee
+                    | Permission::CreateLeaveRequest
                     | Permission::ViewLeaveRequest
+                    | Permission::ViewLeaveRequests
                     | Permission::UpdateLeaveRequest
                     | Permission::DeleteLeaveRequest
                     | Permission::RejectLeaveRequest
             ),
 
-            EmployeeRole::Demo => matches!(permission, Permission::ViewEmployees),
+            EmployeeRole::Demo => matches!(
+                permission,
+                Permission::ViewDivisions
+                    | Permission::ViewLocations
+                    | Permission::ViewLeaveTypes
+                    | Permission::ViewLeaveRequests
+                    | Permission::ViewEmployees
+            ),
         }
     }
 }
@@ -94,11 +104,40 @@ impl AccessController {
         }
     }
 
-    pub fn authorize_create_leave(
+    pub fn authorize_get_leave_request(
         actor: &AuthenticatedUser,
         target: &EmployeeAccess,
     ) -> Result<(), AppError> {
-        if !actor.role.has_permission(Permission::CreateLeaveRequest) {
+        Self::authorize_leave_request_core(actor, target, Permission::ViewLeaveRequest)
+    }
+
+    pub fn authorize_get_my_leave_requests(
+        actor: &AuthenticatedUser,
+        target: &EmployeeAccess,
+    ) -> Result<(), AppError> {
+        Self::authorize_leave_request_core(actor, target, Permission::ViewLeaveRequest)
+    }
+
+    pub fn authorize_create_leave_request(
+        actor: &AuthenticatedUser,
+        target: &EmployeeAccess,
+    ) -> Result<(), AppError> {
+        Self::authorize_leave_request_core(actor, target, Permission::CreateLeaveRequest)
+    }
+
+    pub fn authorize_update_leave_request(
+        actor: &AuthenticatedUser,
+        target: &EmployeeAccess,
+    ) -> Result<(), AppError> {
+        Self::authorize_leave_request_core(actor, target, Permission::UpdateLeaveRequest)
+    }
+
+    fn authorize_leave_request_core(
+        actor: &AuthenticatedUser,
+        target: &EmployeeAccess,
+        permission: Permission,
+    ) -> Result<(), AppError> {
+        if !actor.role.has_permission(permission) {
             return Err(AppError::Forbidden);
         }
 
@@ -125,7 +164,7 @@ impl AccessController {
         }
     }
 
-    pub fn authorize_approve_leave(
+    pub fn authorize_approve_leave_request(
         actor: &AuthenticatedUser,
         employee: &EmployeeAccess,
     ) -> Result<(), AppError> {
@@ -136,8 +175,73 @@ impl AccessController {
         match actor.role {
             EmployeeRole::Admin => Ok(()),
 
+            // Managers can approve their employee's leave requests
             EmployeeRole::Manager => {
                 if employee.manager_unid == Some(actor.unid) {
+                    Ok(())
+                } else {
+                    Err(AppError::Forbidden)
+                }
+            }
+
+            _ => Err(AppError::Forbidden),
+        }
+    }
+
+    pub fn authorize_reject_leave_request(
+        actor: &AuthenticatedUser,
+        employee: &EmployeeAccess,
+    ) -> Result<(), AppError> {
+        if !actor.role.has_permission(Permission::RejectLeaveRequest) {
+            return Err(AppError::Forbidden);
+        }
+
+        match actor.role {
+            EmployeeRole::Admin => Ok(()),
+
+            EmployeeRole::Manager => {
+                if employee.manager_unid == Some(actor.unid) {
+                    Ok(())
+                } else {
+                    Err(AppError::Forbidden)
+                }
+            }
+
+            // RegularUser can reject their own leave requests
+            EmployeeRole::RegularUser => {
+                if actor.unid == employee.unid {
+                    Ok(())
+                } else {
+                    Err(AppError::Forbidden)
+                }
+            }
+
+            _ => Err(AppError::Forbidden),
+        }
+    }
+
+    pub fn authorize_update_employee(
+        actor: &AuthenticatedUser,
+        employee: &EmployeeAccess,
+    ) -> Result<(), AppError> {
+        if !actor.role.has_permission(Permission::UpdateEmployee) {
+            return Err(AppError::Forbidden);
+        }
+
+        match actor.role {
+            EmployeeRole::Admin => Ok(()),
+
+            EmployeeRole::Manager => {
+                if employee.manager_unid == Some(actor.unid) {
+                    Ok(())
+                } else {
+                    Err(AppError::Forbidden)
+                }
+            }
+
+            // RegularUser can update themselves
+            EmployeeRole::RegularUser => {
+                if actor.unid == employee.unid {
                     Ok(())
                 } else {
                     Err(AppError::Forbidden)

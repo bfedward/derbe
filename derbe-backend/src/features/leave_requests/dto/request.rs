@@ -141,11 +141,9 @@ pub struct LeaveRequestUpdate {
     #[ts(type = "string")]
     pub employee_unid: Uuid,
     pub leave_type_id: i32,
-    pub leave_status: LeaveStatus,
     #[validate(nested)]
     pub values: LeaveRequestValues,
     pub date_requested: DateTime<Utc>,
-    pub date_finalised: Option<DateTime<Utc>>,
     pub notes: Option<String>,
 }
 
@@ -153,10 +151,8 @@ pub struct LeaveRequestUpdate {
 struct LeaveRequestUpdateRaw {
     pub employee_unid: String,
     pub leave_type_id: i32,
-    pub leave_status: LeaveStatus,
     pub values: LeaveRequestValues,
     pub date_requested: DateTime<Utc>,
-    pub date_finalised: Option<DateTime<Utc>>,
     pub notes: Option<String>,
 }
 
@@ -170,13 +166,18 @@ impl TryFrom<LeaveRequestUpdateRaw> for LeaveRequestUpdate {
         Ok(Self {
             employee_unid,
             leave_type_id: raw.leave_type_id,
-            leave_status: raw.leave_status,
             values: raw.values,
             date_requested: raw.date_requested,
-            date_finalised: raw.date_finalised,
             notes: raw.notes,
         })
     }
+}
+
+#[derive(Debug, Deserialize, TS)]
+#[ts(export)]
+pub struct LeaveRequestStatusUpdate {
+    pub leave_status: LeaveStatus,
+    pub notes: Option<String>,
 }
 
 #[derive(Deserialize, TS)]
@@ -220,11 +221,4 @@ impl TryFrom<MyLeaveRequestRaw> for MyLeaveRequest {
             date_to: raw.date_to,
         })
     }
-}
-
-#[derive(Debug, Deserialize, TS)]
-#[ts(export)]
-pub struct LeaveRequestStatusUpdate {
-    pub leave_status: LeaveStatus,
-    pub notes: Option<String>,
 }

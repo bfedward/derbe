@@ -1,4 +1,3 @@
-use chrono::{DateTime, NaiveDate, Utc};
 use uuid::Uuid;
 
 use crate::{
@@ -49,12 +48,6 @@ pub async fn validate_create(dto: &LeaveRequestCreate, ctx: &AppState) -> Result
 }
 
 pub fn validate_new_request(dto: &LeaveRequestCreate) -> Result<(), AppError> {
-    validate_leave_request_dates(
-        &dto.values.date_from,
-        &dto.values.date_to,
-        &dto.date_requested,
-    )?;
-
     if dto.leave_status != LeaveStatus::Pending {
         return Err(AppError::ValidationFailed(
             "New leave requests must have Pending status".to_owned(),
@@ -72,17 +65,13 @@ pub fn validate_new_request(dto: &LeaveRequestCreate) -> Result<(), AppError> {
     Ok(())
 }
 
-pub async fn validate_update_rules(
+async fn validate_status_update_rules(
     id: i32,
-    dto: &LeaveRequestUpdate,
+    dto: &LeaveRequestStatusUpdate,
     ctx: &AppState,
 ) -> Result<(), AppError> {
-    validate_leave_request_dates(
-        &dto.values.date_from,
-        &dto.values.date_to,
-        &dto.date_requested,
-    )?;
     let existing_entity = get_by_id(id, ctx).await?;
+    let employee = employees::service::get_by_id(existing_entity.employee_unid, ctx).await?;
 
     let leave_status_state_change_ok: bool = matches!(
         (&existing_entity.leave_status, &dto.leave_status),
@@ -106,40 +95,12 @@ pub async fn validate_update_rules(
         && existing_entity.leave_status != LeaveStatus::Accepted
     {
         repository::ensure_no_accepted_leave_conflict(
-            dto.employee_unid,
-            dto.values.date_from,
-            dto.values.date_to,
+            employee.unid,
+            existing_entity.date_from,
+            existing_entity.date_to,
             ctx,
         )
         .await?;
-    }
-
-    if (dto.leave_status == LeaveStatus::Accepted || dto.leave_status == LeaveStatus::Rejected)
-        && dto.date_finalised.is_none()
-    {
-        return Err(AppError::ValidationFailed(
-            "Accepted and Rejected leave requests must have a finalised date".to_string(),
-        ));
-    }
-
-    Ok(())
-}
-
-fn validate_leave_request_dates(
-    date_from: &NaiveDate,
-    date_to: &NaiveDate,
-    date_requested: &DateTime<Utc>,
-) -> Result<(), AppError> {
-    if date_to < date_from {
-        return Err(AppError::ValidationFailed(
-            "Date To cannot be before Date From".to_owned(),
-        ));
-    }
-
-    if *date_requested > Utc::now() {
-        return Err(AppError::ValidationFailed(
-            "Date Requested cannot be in the future".to_owned(),
-        ));
     }
 
     Ok(())
@@ -168,13 +129,22 @@ pub async fn update(
     repository::update(id, dto, ctx).await
 }
 
+pub async fn update_status(
+    id: i32,
+    dto: LeaveRequestStatusUpdate,
+    ctx: &AppState,
+) -> Result<LeaveRequest, AppError> {
+    validate_status_update_rules(id, &dto, ctx).await?;
+    repository::update_status(id, dto, ctx).await
+}
+
 pub async fn validate_update(
     id: i32,
     dto: &LeaveRequestUpdate,
     ctx: &AppState,
 ) -> Result<(), AppError> {
+    get_by_id(id, ctx).await?;
     ensure_related_entities_exist(dto.employee_unid, dto.leave_type_id, ctx).await?;
-    validate_update_rules(id, dto, ctx).await?;
     Ok(())
 }
 
@@ -183,17 +153,9 @@ pub async fn update_leave_request_status(
     request: LeaveRequestStatusUpdate,
     ctx: &AppState,
 ) -> Result<LeaveRequest, AppError> {
-    let mut updated_leave_request = get_by_id(id, ctx).await?;
-    updated_leave_request.leave_status = request.leave_status;
-    updated_leave_request.notes = request.notes;
+    validate_status_update_rules(id, &request, ctx).await?;
 
-    if request.leave_status == LeaveStatus::Accepted
-        || request.leave_status == LeaveStatus::Rejected
-    {
-        updated_leave_request.date_finalised = Some(Utc::now());
-    }
-
-    updated_leave_request = update(id, updated_leave_request.into(), ctx).await?;
+    let updated_leave_request = update_status(id, request, ctx).await?;
 
     Ok(updated_leave_request)
 }
