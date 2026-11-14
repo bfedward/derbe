@@ -72,9 +72,6 @@ pub async fn list(ctx: &AppState) -> Result<Vec<LeaveRequest>, AppError> {
 }
 
 pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequest, AppError> {
-    let employee_unid =
-        Uuid::from_str(&dto.employee_unid).map_err(|_| AppError::InvalidUuid(dto.employee_unid))?;
-
     Ok(sqlx::query_as!(
         LeaveRequest,
         r#"
@@ -103,7 +100,7 @@ pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequ
                         date_finalised,
                         notes
             "#,
-        employee_unid,
+        dto.employee_unid,
         dto.leave_type_id,
         dto.leave_status as LeaveStatus,
         dto.values.date_from,
@@ -124,9 +121,6 @@ pub async fn update(
     dto: LeaveRequestUpdate,
     ctx: &AppState,
 ) -> Result<LeaveRequest, AppError> {
-    let employee_unid =
-        Uuid::from_str(&dto.employee_unid).map_err(|_| AppError::InvalidUuid(dto.employee_unid))?;
-
     sqlx::query_as!(
         LeaveRequest,
         r#"
@@ -156,7 +150,7 @@ pub async fn update(
                 date_finalised,
                 notes
             "#,
-        employee_unid,
+        dto.employee_unid,
         dto.leave_type_id,
         dto.leave_status as LeaveStatus,
         dto.values.date_from,
@@ -202,12 +196,9 @@ pub async fn ensure_not_referenced(_id: i32, _ctx: &AppState) -> Result<(), AppE
 }
 
 pub async fn get_my_leave(
-    my_leave_request: MyLeaveRequest,
+    dto: MyLeaveRequest,
     ctx: &AppState,
 ) -> Result<Vec<MyLeaveResponse>, AppError> {
-    let employee_unid = Uuid::from_str(&my_leave_request.employee_unid)
-        .map_err(|_| AppError::InvalidUuid(my_leave_request.employee_unid))?;
-
     Ok(sqlx::query_as!(
         MyLeaveResponse,
         r#"
@@ -230,11 +221,11 @@ pub async fn get_my_leave(
                 AND date_to BETWEEN $4 AND $5
             ORDER BY lr.date_from DESC
             "#,
-        employee_unid,
-        &my_leave_request.leave_type_ids,
-        my_leave_request.leave_statuses as Vec<LeaveStatus>,
-        my_leave_request.date_from,
-        my_leave_request.date_to
+        dto.employee_unid,
+        &dto.leave_type_ids,
+        dto.leave_statuses as Vec<LeaveStatus>,
+        dto.date_from,
+        dto.date_to
     )
     .fetch_all(&ctx.pool)
     .await?)

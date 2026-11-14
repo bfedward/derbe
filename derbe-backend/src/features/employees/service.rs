@@ -6,7 +6,8 @@ use crate::features::employees::{
     dto::{
         request::{EmployeeCreate, EmployeeUpdate},
         response::EmployeeDetailsResponse,
-    }, model::{CreatedEmployee, EmployeeAccess},
+    },
+    model::{CreatedEmployee, EmployeeAccess},
 };
 
 use crate::{
@@ -38,14 +39,7 @@ pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmploy
 }
 
 pub async fn validate_create(dto: &EmployeeCreate, ctx: &AppState) -> Result<(), AppError> {
-    let manager_unid: Option<Uuid> = dto
-        .manager_unid
-        .as_deref()
-        .map(Uuid::from_str)
-        .transpose()
-        .map_err(|_| AppError::InvalidUuid(dto.manager_unid.clone().unwrap_or_default()))?;
-
-    ensure_related_entities_exist(dto.location_id, dto.division_id, manager_unid, ctx).await?;
+    ensure_related_entities_exist(dto.location_id, dto.division_id, dto.manager_unid, ctx).await?;
 
     Ok(())
 }
@@ -62,14 +56,7 @@ pub async fn validate_update(
 ) -> Result<(), AppError> {
     validate_update_rules(unid, dto)?;
 
-    let manager_unid: Option<Uuid> = dto
-        .manager_unid
-        .as_deref()
-        .map(Uuid::from_str)
-        .transpose()
-        .map_err(|_| AppError::InvalidUuid(dto.manager_unid.clone().unwrap_or_default()))?;
-
-    ensure_related_entities_exist(dto.location_id, dto.division_id, manager_unid, ctx).await?;
+    ensure_related_entities_exist(dto.location_id, dto.division_id, dto.manager_unid, ctx).await?;
 
     Ok(())
 }
@@ -89,14 +76,7 @@ pub async fn ensure_related_entities_exist(
 }
 
 pub fn validate_update_rules(unid: Uuid, dto: &EmployeeUpdate) -> Result<(), AppError> {
-    let manager_unid: Option<Uuid> = dto
-        .manager_unid
-        .as_deref()
-        .map(Uuid::from_str)
-        .transpose()
-        .map_err(|_| AppError::InvalidUuid(dto.manager_unid.clone().unwrap_or_default()))?;
-
-    if let Some(manager_unid) = manager_unid {
+    if let Some(manager_unid) = dto.manager_unid {
         if unid == manager_unid {
             return Err(AppError::ConstraintError(
                 "An employee cannot be their own manager!".to_owned(),

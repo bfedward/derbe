@@ -33,10 +33,7 @@ pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<Employee, AppError>
     .ok_or_else(|| AppError::EntityUnidNotFound(unid, "Employee".to_owned()))
 }
 
-pub async fn get_access_by_id(
-    unid: Uuid,
-    ctx: &AppState,
-) -> Result<EmployeeAccess, AppError> {
+pub async fn get_access_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeAccess, AppError> {
     sqlx::query_as!(
         EmployeeAccess,
         r#"
@@ -73,13 +70,6 @@ pub async fn list(ctx: &AppState) -> Result<Vec<Employee>, AppError> {
 }
 
 pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmployee, AppError> {
-    let manager_unid: Option<Uuid> = dto
-        .manager_unid
-        .as_deref()
-        .map(Uuid::from_str)
-        .transpose()
-        .map_err(|_| AppError::InvalidUuid(dto.manager_unid.clone().unwrap_or_default()))?;
-
     let temporary_password = Uuid::new_v4().simple().to_string();
     let password_hash = pwhash::bcrypt::hash(&temporary_password).map_err(|e| {
         tracing::error!("Failed to hash temporary password: {e}");
@@ -115,7 +105,7 @@ pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmploy
         dto.division_id,
         dto.employment_type as EmploymentType,
         dto.location_id,
-        manager_unid,
+        dto.manager_unid,
         dto.email,
         password_hash
     )
@@ -129,13 +119,6 @@ pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmploy
 }
 
 pub async fn update(unid: Uuid, dto: EmployeeUpdate, ctx: &AppState) -> Result<Employee, AppError> {
-    let manager_unid: Option<Uuid> = dto
-        .manager_unid
-        .as_deref()
-        .map(Uuid::from_str)
-        .transpose()
-        .map_err(|_| AppError::InvalidUuid(dto.manager_unid.clone().unwrap_or_default()))?;
-
     sqlx::query_as!(
         Employee,
         r#"
@@ -165,7 +148,7 @@ pub async fn update(unid: Uuid, dto: EmployeeUpdate, ctx: &AppState) -> Result<E
         dto.division_id,
         dto.employment_type as EmploymentType,
         dto.location_id,
-        manager_unid,
+        dto.manager_unid,
         dto.email,
         unid
     )

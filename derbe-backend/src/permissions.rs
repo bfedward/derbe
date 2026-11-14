@@ -1,14 +1,39 @@
-use crate::{auth::AuthenticatedUser, enums::EmployeeRole, error::AppError, features::employees::model::{Employee, EmployeeAccess}};
+use crate::{
+    auth::AuthenticatedUser, enums::EmployeeRole, error::AppError,
+    features::employees::model::EmployeeAccess,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Permission {
-    CreateLeave,
+    CreateDivision,
+    ViewDivisions,
+    UpdateDivision,
+    DeleteDivision,
+
+    CreateLocation,
+    ViewLocations,
+    UpdateLocation,
+    DeleteLocation,
+
+    CreateLeaveType,
+    ViewLeaveTypes,
+    UpdateLeaveType,
+    DeleteLeaveType,
+
+    CreateLeaveRequest,
+    ViewLeaveRequests,
+    ViewLeaveRequest,
+    UpdateLeaveRequest,
+    DeleteLeaveRequest,
+
     CreateEmployee,
     ViewEmployees,
+    ViewEmployee,
     UpdateEmployee,
     DeleteEmployee,
-    ApproveLeave,
-    RejectLeave,
+
+    ApproveLeaveRequest,
+    RejectLeaveRequest,
 }
 
 pub trait Permissions {
@@ -22,14 +47,33 @@ impl Permissions for EmployeeRole {
 
             EmployeeRole::Manager => matches!(
                 permission,
-                Permission::CreateEmployee
+                Permission::ViewDivisions
+                    | Permission::ViewLocations
+                    | Permission::ViewLeaveTypes
+                    | Permission::CreateLeaveRequest
+                    | Permission::ViewLeaveRequest
+                    | Permission::UpdateLeaveRequest
+                    | Permission::DeleteLeaveRequest
+                    | Permission::CreateEmployee
                     | Permission::ViewEmployees
+                    | Permission::ViewEmployee
                     | Permission::UpdateEmployee
-                    | Permission::ApproveLeave
-                    | Permission::RejectLeave
+                    | Permission::ApproveLeaveRequest
+                    | Permission::RejectLeaveRequest
             ),
 
-            EmployeeRole::RegularUser => matches!(permission, Permission::ViewEmployees),
+            EmployeeRole::RegularUser => matches!(
+                permission,
+                Permission::ViewDivisions
+                    | Permission::ViewLocations
+                    | Permission::ViewLeaveTypes
+                    | Permission::ViewEmployees
+                    | Permission::CreateLeaveType
+                    | Permission::ViewLeaveRequest
+                    | Permission::UpdateLeaveRequest
+                    | Permission::DeleteLeaveRequest
+                    | Permission::RejectLeaveRequest
+            ),
 
             EmployeeRole::Demo => matches!(permission, Permission::ViewEmployees),
         }
@@ -54,7 +98,7 @@ impl AccessController {
         actor: &AuthenticatedUser,
         target: &EmployeeAccess,
     ) -> Result<(), AppError> {
-        if !actor.role.has_permission(Permission::CreateLeave) {
+        if !actor.role.has_permission(Permission::CreateLeaveRequest) {
             return Err(AppError::Forbidden);
         }
 
@@ -85,7 +129,7 @@ impl AccessController {
         actor: &AuthenticatedUser,
         employee: &EmployeeAccess,
     ) -> Result<(), AppError> {
-        if !actor.role.has_permission(Permission::ApproveLeave) {
+        if !actor.role.has_permission(Permission::ApproveLeaveRequest) {
             return Err(AppError::Forbidden);
         }
 

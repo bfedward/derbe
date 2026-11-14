@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use chrono::{DateTime, NaiveDate, Utc};
 use uuid::Uuid;
 
@@ -45,9 +43,7 @@ pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequ
 }
 
 pub async fn validate_create(dto: &LeaveRequestCreate, ctx: &AppState) -> Result<(), AppError> {
-    let employee_unid = Uuid::from_str(&dto.employee_unid)
-        .map_err(|_| AppError::InvalidUuid(dto.employee_unid.clone()))?;
-    ensure_related_entities_exist(employee_unid, dto.leave_type_id, ctx).await?;
+    ensure_related_entities_exist(dto.employee_unid, dto.leave_type_id, ctx).await?;
     validate_new_request(dto)?;
     Ok(())
 }
@@ -81,9 +77,6 @@ pub async fn validate_update_rules(
     dto: &LeaveRequestUpdate,
     ctx: &AppState,
 ) -> Result<(), AppError> {
-    let employee_unid = Uuid::from_str(&dto.employee_unid)
-        .map_err(|_| AppError::InvalidUuid(dto.employee_unid.clone()))?;
-
     validate_leave_request_dates(
         &dto.values.date_from,
         &dto.values.date_to,
@@ -113,7 +106,7 @@ pub async fn validate_update_rules(
         && existing_entity.leave_status != LeaveStatus::Accepted
     {
         repository::ensure_no_accepted_leave_conflict(
-            employee_unid,
+            dto.employee_unid,
             dto.values.date_from,
             dto.values.date_to,
             ctx,
@@ -180,9 +173,7 @@ pub async fn validate_update(
     dto: &LeaveRequestUpdate,
     ctx: &AppState,
 ) -> Result<(), AppError> {
-    let employee_unid = Uuid::from_str(&dto.employee_unid)
-        .map_err(|_| AppError::InvalidUuid(dto.employee_unid.clone()))?;
-    ensure_related_entities_exist(employee_unid, dto.leave_type_id, ctx).await?;
+    ensure_related_entities_exist(dto.employee_unid, dto.leave_type_id, ctx).await?;
     validate_update_rules(id, dto, ctx).await?;
     Ok(())
 }

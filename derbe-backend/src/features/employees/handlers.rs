@@ -23,8 +23,10 @@ use crate::{
 };
 
 pub async fn list_employees(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<EmployeeResponse>>, AppError> {
+    AccessController::authorize(&user.role, Permission::ViewEmployees)?;
     let employees = service::list(&state).await?;
     Ok(Json(
         employees.into_iter().map(EmployeeResponse::from).collect(),
@@ -32,16 +34,20 @@ pub async fn list_employees(
 }
 
 pub async fn get_employee_details_table(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<EmployeeDetailsResponse>>, AppError> {
+    AccessController::authorize(&user.role, Permission::ViewEmployees)?;
     let employees = service::get_employee_details_table(&state).await?;
     Ok(Json(employees))
 }
 
 pub async fn get_employee(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Path(unid): Path<String>,
 ) -> Result<Json<EmployeeResponse>, AppError> {
+    AccessController::authorize(&user.role, Permission::ViewEmployees)?;
     let unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
     let employee = service::get_by_id(unid, &state).await?;
     Ok(Json(employee.into()))
@@ -64,10 +70,12 @@ pub async fn create_employee(
 }
 
 pub async fn update_employee(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Path(unid): Path<String>,
     Json(input): Json<EmployeeUpdate>,
 ) -> Result<Json<EmployeeResponse>, AppError> {
+    AccessController::authorize(&user.role, Permission::UpdateEmployee)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;

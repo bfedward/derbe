@@ -1,41 +1,56 @@
-use std::str::FromStr;
-
 use axum::{
-    Extension, Json, extract::{Path, State}, http::StatusCode,
+    extract::{Path, State},
+    http::StatusCode,
+    Extension, Json,
 };
-use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    auth::AuthenticatedUser, error::AppError, features::{employees, leave_requests::{dto::{
-        request::{
-            AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
-            MyLeaveRequest,
+    auth::AuthenticatedUser,
+    error::AppError,
+    features::{
+        employees,
+        leave_requests::{
+            dto::{
+                request::{
+                    AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate,
+                    LeaveRequestUpdate, MyLeaveRequest,
+                },
+                response::{AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse},
+            },
+            service,
         },
-        response::{AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse},
-    }, service}}, http::AppState, permissions::AccessController,
+    },
+    http::AppState,
+    permissions::{AccessController, Permission},
 };
 
 pub async fn get_my_leave(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Json(input): Json<MyLeaveRequest>,
 ) -> Result<Json<Vec<MyLeaveResponse>>, AppError> {
+    AccessController::authorize(&user.role, Permission::ViewLeaveRequests)?;
     let leaves = service::get_my_leave(input, &state).await?;
     Ok(Json(leaves))
 }
 
 pub async fn get_all_leave(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Json(input): Json<AllLeaveRequest>,
 ) -> Result<Json<Vec<AllLeaveResponse>>, AppError> {
+    AccessController::authorize(&user.role, Permission::ViewLeaveRequests)?;
     let leaves = service::get_all_leave(input, &state).await?;
     Ok(Json(leaves))
 }
 
 pub async fn get_leave_request(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
+    AccessController::authorize(&user.role, Permission::ViewLeaveRequest)?;
     let leave_request = service::get_by_id(id, &state).await?;
     Ok(Json(leave_request.into()))
 }
@@ -45,8 +60,7 @@ pub async fn create_leave_request(
     State(state): State<AppState>,
     Json(input): Json<LeaveRequestCreate>,
 ) -> Result<(StatusCode, Json<LeaveRequestResponse>), AppError> {
-    let unid = Uuid::from_str(&input.employee_unid).map_err(|_| AppError::InvalidUuid(input.employee_unid.clone()))?;
-    let target = employees::service::get_access_by_id(unid, &state).await?;
+    let target = employees::service::get_access_by_id(input.employee_unid, &state).await?;
     AccessController::authorize_create_leave(&user, &target)?;
     input
         .validate()
@@ -56,10 +70,12 @@ pub async fn create_leave_request(
 }
 
 pub async fn update_leave_request(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Path(id): Path<i32>,
     Json(input): Json<LeaveRequestUpdate>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
+    AccessController::authorize(&user.role, Permission::UpdateLeaveRequest)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
@@ -68,10 +84,12 @@ pub async fn update_leave_request(
 }
 
 pub async fn update_leave_request_status(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Path(id): Path<i32>,
     Json(input): Json<LeaveRequestStatusUpdate>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
+    AccessController::authorize(&user.role, Permission::UpdateLeaveRequest)?;
     let leave_request = service::update_leave_request_status(id, input, &state).await?;
     Ok(Json(leave_request.into()))
 }
