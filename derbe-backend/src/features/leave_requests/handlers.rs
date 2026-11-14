@@ -1,21 +1,19 @@
+use std::str::FromStr;
+
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    Json,
+    Extension, Json, extract::{Path, State}, http::StatusCode,
 };
+use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    error::AppError,
-    features::leave_requests::dto::{
+    auth::AuthenticatedUser, error::AppError, features::{employees, leave_requests::{dto::{
         request::{
             AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
             MyLeaveRequest,
         },
         response::{AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse},
-    },
-    features::leave_requests::service,
-    http::AppState,
+    }, service}}, http::AppState, permissions::AccessController,
 };
 
 pub async fn get_my_leave(
@@ -43,9 +41,13 @@ pub async fn get_leave_request(
 }
 
 pub async fn create_leave_request(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Json(input): Json<LeaveRequestCreate>,
 ) -> Result<(StatusCode, Json<LeaveRequestResponse>), AppError> {
+    let unid = Uuid::from_str(&input.employee_unid).map_err(|_| AppError::InvalidUuid(input.employee_unid.clone()))?;
+    let target = employees::service::get_access_by_id(unid, &state).await?;
+    AccessController::authorize_create_leave(&user, &target)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;

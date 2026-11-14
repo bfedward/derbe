@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::features::employees::dto::request::{EmployeeCreate, EmployeeUpdate};
 use crate::features::employees::dto::response::EmployeeDetailsResponse;
 
-use crate::features::employees::model::CreatedEmployee;
+use crate::features::employees::model::{CreatedEmployee, EmployeeAccess};
 use crate::{
     enums::EmploymentType, error::AppError, features::employees::model::Employee, http::AppState,
 };
@@ -23,6 +23,25 @@ pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<Employee, AppError>
                     location_id, 
                     manager_unid, 
                     email
+            FROM employees
+            WHERE unid = $1
+            "#,
+        unid
+    )
+    .fetch_optional(&ctx.pool)
+    .await?
+    .ok_or_else(|| AppError::EntityUnidNotFound(unid, "Employee".to_owned()))
+}
+
+pub async fn get_access_by_id(
+    unid: Uuid,
+    ctx: &AppState,
+) -> Result<EmployeeAccess, AppError> {
+    sqlx::query_as!(
+        EmployeeAccess,
+        r#"
+            SELECT unid,  
+                    manager_unid            
             FROM employees
             WHERE unid = $1
             "#,

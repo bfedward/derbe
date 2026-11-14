@@ -71,3 +71,8 @@ impl From<CreatedEmployee> for CreatedEmployeeResponse {
         }
     }
 }
+
+pub struct EmployeeAccess {
+    pub unid: Uuid,
+    pub manager_unid: Option<Uuid>,
+}

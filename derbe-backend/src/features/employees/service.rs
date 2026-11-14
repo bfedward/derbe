@@ -6,8 +6,7 @@ use crate::features::employees::{
     dto::{
         request::{EmployeeCreate, EmployeeUpdate},
         response::EmployeeDetailsResponse,
-    },
-    model::CreatedEmployee,
+    }, model::{CreatedEmployee, EmployeeAccess},
 };
 
 use crate::{
@@ -23,6 +22,10 @@ pub async fn ensure_exists(unid: Uuid, ctx: &AppState) -> Result<(), AppError> {
 
 pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<Employee, AppError> {
     repository::get_by_id(unid, ctx).await
+}
+
+pub async fn get_access_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeAccess, AppError> {
+    repository::get_access_by_id(unid, ctx).await
 }
 
 pub async fn list(ctx: &AppState) -> Result<Vec<Employee>, AppError> {

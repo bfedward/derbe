@@ -1,7 +1,8 @@
-use crate::{enums::EmployeeRole, error::AppError};
+use crate::{auth::AuthenticatedUser, enums::EmployeeRole, error::AppError, features::employees::model::{Employee, EmployeeAccess}};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Permission {
+    CreateLeave,
     CreateEmployee,
     ViewEmployees,
     UpdateEmployee,
@@ -46,6 +47,60 @@ impl AccessController {
             Ok(())
         } else {
             Err(AppError::Forbidden)
+        }
+    }
+
+    pub fn authorize_create_leave(
+        actor: &AuthenticatedUser,
+        target: &EmployeeAccess,
+    ) -> Result<(), AppError> {
+        if !actor.role.has_permission(Permission::CreateLeave) {
+            return Err(AppError::Forbidden);
+        }
+
+        match actor.role {
+            EmployeeRole::Admin => Ok(()),
+
+            EmployeeRole::Manager => {
+                if target.manager_unid == Some(actor.unid) {
+                    Ok(())
+                } else {
+                    Err(AppError::Forbidden)
+                }
+            }
+
+            EmployeeRole::RegularUser => {
+                if target.unid == actor.unid {
+                    Ok(())
+                } else {
+                    Err(AppError::Forbidden)
+                }
+            }
+
+            EmployeeRole::Demo => Err(AppError::Forbidden),
+        }
+    }
+
+    pub fn authorize_approve_leave(
+        actor: &AuthenticatedUser,
+        employee: &EmployeeAccess,
+    ) -> Result<(), AppError> {
+        if !actor.role.has_permission(Permission::ApproveLeave) {
+            return Err(AppError::Forbidden);
+        }
+
+        match actor.role {
+            EmployeeRole::Admin => Ok(()),
+
+            EmployeeRole::Manager => {
+                if employee.manager_unid == Some(actor.unid) {
+                    Ok(())
+                } else {
+                    Err(AppError::Forbidden)
+                }
+            }
+
+            _ => Err(AppError::Forbidden),
         }
     }
 }
