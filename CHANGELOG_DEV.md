@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Added `SUGGESTIONS_W3.md`: week 3 review of `feature/auth` (access controller, leave status transitions, migrations, tests, auth structure).
+
 ## [0.2.0] - 2026-11-07
 
 ### Frontend naming and structure
