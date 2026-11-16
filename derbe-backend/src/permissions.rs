@@ -145,7 +145,7 @@ impl AccessController {
             EmployeeRole::Admin => Ok(()),
 
             EmployeeRole::Manager => {
-                if target.manager_unid == Some(actor.unid) {
+                if target.unid == actor.unid || target.manager_unid == Some(actor.unid) {
                     Ok(())
                 } else {
                     Err(AppError::Forbidden)
@@ -232,7 +232,7 @@ impl AccessController {
             EmployeeRole::Admin => Ok(()),
 
             EmployeeRole::Manager => {
-                if employee.manager_unid == Some(actor.unid) {
+                if employee.unid == actor.unid || employee.manager_unid == Some(actor.unid) {
                     Ok(())
                 } else {
                     Err(AppError::Forbidden)
@@ -250,5 +250,62 @@ impl AccessController {
 
             _ => Err(AppError::Forbidden),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use uuid::Uuid;
+
+    use super::*;
+
+    fn user(role: EmployeeRole) -> AuthenticatedUser {
+        AuthenticatedUser {
+            unid: Uuid::new_v4(),
+            role,
+        }
+    }
+
+    fn as_target(user: &AuthenticatedUser, manager_unid: Option<Uuid>) -> EmployeeAccess {
+        EmployeeAccess {
+            unid: user.unid,
+            manager_unid,
+        }
+    }
+
+    #[test]
+    fn manager_can_create_leave_for_themselves() {
+        let sam = user(EmployeeRole::Manager);
+        let sam_as_target = as_target(&sam, Some(Uuid::new_v4()));
+        assert!(AccessController::authorize_create_leave_request(&sam, &sam_as_target).is_ok());
+    }
+
+    #[test]
+    fn manager_can_update_their_own_leave_request() {
+        let sam = user(EmployeeRole::Manager);
+        let sam_as_target = as_target(&sam, Some(Uuid::new_v4()));
+        assert!(AccessController::authorize_update_leave_request(&sam, &sam_as_target).is_ok());
+    }
+
+    #[test]
+    fn manager_can_update_themselves() {
+        let sam = user(EmployeeRole::Manager);
+        let sam_as_target = as_target(&sam, Some(Uuid::new_v4()));
+        assert!(AccessController::authorize_update_employee(&sam, &sam_as_target).is_ok());
+    }
+
+    #[test]
+    fn manager_cannot_approve_their_own_leave() {
+        let sam = user(EmployeeRole::Manager);
+        let sam_as_target = as_target(&sam, Some(Uuid::new_v4()));
+        assert!(AccessController::authorize_approve_leave_request(&sam, &sam_as_target).is_err());
+    }
+
+    #[test]
+    fn manager_cannot_create_leave_for_someone_else_team() {
+        let sam = user(EmployeeRole::Manager);
+        let stranger = user(EmployeeRole::RegularUser);
+        let stranger_target = as_target(&stranger, Some(Uuid::new_v4()));
+        assert!(AccessController::authorize_create_leave_request(&sam, &stranger_target).is_err());
     }
 }

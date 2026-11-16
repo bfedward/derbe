@@ -4,6 +4,22 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Fixed: a Manager could not create or update their own leave request, or update their own employee record. The `Manager` arm only checked the target's manager. Approving stays restricted: a Manager cannot approve their own leave. Added unit tests for these cases in `permissions.rs`.
+
+Before:
+
+```rust
+EmployeeRole::Manager => {
+    if target.manager_unid == Some(actor.unid) {
+```
+
+After:
+
+```rust
+EmployeeRole::Manager => {
+    if target.unid == actor.unid || target.manager_unid == Some(actor.unid) {
+```
+
 - Added `derbe-backend/reset_db.sh`: drops, recreates and migrates the local database from `DATABASE_URL`. Needs `--yes` and refuses non-local hosts. Documented in `README.md`.
 
 - Renamed migrations from timestamps to a simple sequence (`0001_...` to `0008_...`), same order as before. **Every existing local database must be recreated**: sqlx stores the migration version, so a database that ran the old names refuses the new ones. This also covers the in-place edits of the employees and leave requests migrations from `feature/auth`.
