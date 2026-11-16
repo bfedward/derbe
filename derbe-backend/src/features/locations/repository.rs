@@ -1,10 +1,12 @@
 use crate::features::locations::dto::request::{LocationCreate, LocationUpdate};
 
-use crate::{error::AppError, features::locations::model::Location, http::AppState};
+use crate::{
+    error::AppError, features::locations::dto::response::LocationResponse, http::AppState,
+};
 
-pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<Location, AppError> {
+pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LocationResponse, AppError> {
     sqlx::query_as!(
-        Location,
+        LocationResponse,
         r#"
             SELECT id, name
             FROM locations
@@ -17,9 +19,9 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<Location, AppError> {
     .ok_or_else(|| AppError::EntityNotFound(id, "Location".to_owned()))
 }
 
-pub async fn list(ctx: &AppState) -> Result<Vec<Location>, AppError> {
+pub async fn list(ctx: &AppState) -> Result<Vec<LocationResponse>, AppError> {
     Ok(sqlx::query_as!(
-        Location,
+        LocationResponse,
         r#"
             SELECT id, name
             FROM locations
@@ -29,9 +31,9 @@ pub async fn list(ctx: &AppState) -> Result<Vec<Location>, AppError> {
     .await?)
 }
 
-pub async fn create(dto: LocationCreate, ctx: &AppState) -> Result<Location, AppError> {
+pub async fn create(dto: LocationCreate, ctx: &AppState) -> Result<LocationResponse, AppError> {
     Ok(sqlx::query_as!(
-        Location,
+        LocationResponse,
         r#"
             INSERT INTO locations (name)
             VALUES ($1)
@@ -43,9 +45,13 @@ pub async fn create(dto: LocationCreate, ctx: &AppState) -> Result<Location, App
     .await?)
 }
 
-pub async fn update(id: i32, dto: LocationUpdate, ctx: &AppState) -> Result<Location, AppError> {
+pub async fn update(
+    id: i32,
+    dto: LocationUpdate,
+    ctx: &AppState,
+) -> Result<LocationResponse, AppError> {
     sqlx::query_as!(
-        Location,
+        LocationResponse,
         r#"
             UPDATE locations
             SET name = $1
@@ -111,7 +117,9 @@ pub async fn ensure_name_available(name: &str, ctx: &AppState) -> Result<(), App
     .unwrap_or(0);
 
     if count > 0 {
-        Err(AppError::DuplicateNamedEntity("Location".to_owned()))
+        Err(AppError::DuplicateNamedEntity(
+            "Location".to_owned(),
+        ))
     } else {
         Ok(())
     }

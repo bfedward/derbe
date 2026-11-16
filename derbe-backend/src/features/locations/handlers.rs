@@ -23,9 +23,7 @@ pub async fn list_locations(
 ) -> Result<Json<Vec<LocationResponse>>, AppError> {
     authorize(&user, LocationPermission::View)?;
     let locations = service::list(&state).await?;
-    Ok(Json(
-        locations.into_iter().map(LocationResponse::from).collect(),
-    ))
+    Ok(Json(locations))
 }
 
 pub async fn get_location(
@@ -35,7 +33,7 @@ pub async fn get_location(
 ) -> Result<Json<LocationResponse>, AppError> {
     authorize(&user, LocationPermission::View)?;
     let location = service::get_by_id(id, &state).await?;
-    Ok(Json(location.into()))
+    Ok(Json(location))
 }
 
 pub async fn create_location(
@@ -48,5 +46,5 @@ pub async fn create_location(
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
     let location = service::create(input, &state).await?;
-    Ok((StatusCode::CREATED, Json(location.into())))
+    Ok((StatusCode::CREATED, Json(location)))
 }

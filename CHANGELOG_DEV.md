@@ -4,6 +4,24 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `divisions`, `leave_types` and `locations` query their `*Response` DTO directly. The `Division`, `LeaveType` and `Location` models and their `From` impls are removed, because they were field-for-field copies of the DTOs. Their `model.rs` files are deleted. JSON and TypeScript bindings are unchanged.
+
+Before:
+
+```rust
+pub async fn list(ctx: &AppState) -> Result<Vec<Division>, AppError> { /* query_as!(Division, ...) */ }
+
+Ok(Json(divisions.into_iter().map(DivisionResponse::from).collect()))
+```
+
+After:
+
+```rust
+pub async fn list(ctx: &AppState) -> Result<Vec<DivisionResponse>, AppError> { /* query_as!(DivisionResponse, ...) */ }
+
+Ok(Json(divisions))
+```
+
 - Employee queries now fill `EmployeeResponse` directly. The `Employee` and `CreatedEmployee` models and their two `From` impls are removed, because they only turned `Uuid` into `String`. `EmployeeResponse` holds `Uuid` fields with `#[ts(type = "string")]`, so the JSON and the TypeScript bindings are unchanged. The queries alias `unid AS employee_unid`.
 
 Before:

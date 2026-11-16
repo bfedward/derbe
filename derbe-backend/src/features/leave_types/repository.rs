@@ -1,10 +1,12 @@
 use crate::features::leave_types::dto::request::{LeaveTypeCreate, LeaveTypeUpdate};
 
-use crate::{error::AppError, features::leave_types::model::LeaveType, http::AppState};
+use crate::{
+    error::AppError, features::leave_types::dto::response::LeaveTypeResponse, http::AppState,
+};
 
-pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveType, AppError> {
+pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveTypeResponse, AppError> {
     sqlx::query_as!(
-            LeaveType,
+            LeaveTypeResponse,
             r#"
             SELECT id, name, default_quota, colour, can_book_in_future, 
                 show_in_others_days, default_in_others_days, default_in_leave_request, show_in_approve_days
@@ -17,9 +19,9 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveType, AppError> {
         .await?.ok_or_else(|| AppError::EntityNotFound(id, "Leave Type".to_owned()))
 }
 
-pub async fn list(ctx: &AppState) -> Result<Vec<LeaveType>, AppError> {
+pub async fn list(ctx: &AppState) -> Result<Vec<LeaveTypeResponse>, AppError> {
     Ok(sqlx::query_as!(
-            LeaveType,
+            LeaveTypeResponse,
             r#"
             SELECT id, name, default_quota, colour, can_book_in_future, 
                 show_in_others_days, default_in_others_days, default_in_leave_request, show_in_approve_days
@@ -30,9 +32,9 @@ pub async fn list(ctx: &AppState) -> Result<Vec<LeaveType>, AppError> {
         .await?)
 }
 
-pub async fn create(dto: LeaveTypeCreate, ctx: &AppState) -> Result<LeaveType, AppError> {
+pub async fn create(dto: LeaveTypeCreate, ctx: &AppState) -> Result<LeaveTypeResponse, AppError> {
     Ok(sqlx::query_as!(
-        LeaveType,
+        LeaveTypeResponse,
         r#"
             INSERT INTO leave_types (name, 
                                     default_quota, 
@@ -84,9 +86,13 @@ pub async fn ensure_name_available(name: &str, ctx: &AppState) -> Result<(), App
     }
 }
 
-pub async fn update(id: i32, dto: LeaveTypeUpdate, ctx: &AppState) -> Result<LeaveType, AppError> {
+pub async fn update(
+    id: i32,
+    dto: LeaveTypeUpdate,
+    ctx: &AppState,
+) -> Result<LeaveTypeResponse, AppError> {
     sqlx::query_as!(
-        LeaveType,
+        LeaveTypeResponse,
         r#"
             UPDATE leave_types
             SET name = $1,

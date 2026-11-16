@@ -1,10 +1,12 @@
 use crate::features::divisions::dto::request::{DivisionCreate, DivisionUpdate};
 
-use crate::{error::AppError, features::divisions::model::Division, http::AppState};
+use crate::{
+    error::AppError, features::divisions::dto::response::DivisionResponse, http::AppState,
+};
 
-pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<Division, AppError> {
+pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<DivisionResponse, AppError> {
     sqlx::query_as!(
-        Division,
+        DivisionResponse,
         r#"
             SELECT id, name
             FROM divisions
@@ -17,9 +19,9 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<Division, AppError> {
     .ok_or_else(|| AppError::EntityNotFound(id, "Division".to_owned()))
 }
 
-pub async fn list(ctx: &AppState) -> Result<Vec<Division>, AppError> {
+pub async fn list(ctx: &AppState) -> Result<Vec<DivisionResponse>, AppError> {
     Ok(sqlx::query_as!(
-        Division,
+        DivisionResponse,
         r#"
             SELECT id, name
             FROM divisions
@@ -29,9 +31,12 @@ pub async fn list(ctx: &AppState) -> Result<Vec<Division>, AppError> {
     .await?)
 }
 
-pub async fn create(create_dto: DivisionCreate, ctx: &AppState) -> Result<Division, AppError> {
+pub async fn create(
+    create_dto: DivisionCreate,
+    ctx: &AppState,
+) -> Result<DivisionResponse, AppError> {
     Ok(sqlx::query_as!(
-        Division,
+        DivisionResponse,
         r#"
             INSERT INTO divisions (name)
             VALUES ($1)
@@ -43,9 +48,13 @@ pub async fn create(create_dto: DivisionCreate, ctx: &AppState) -> Result<Divisi
     .await?)
 }
 
-pub async fn update(id: i32, dto: DivisionUpdate, ctx: &AppState) -> Result<Division, AppError> {
+pub async fn update(
+    id: i32,
+    dto: DivisionUpdate,
+    ctx: &AppState,
+) -> Result<DivisionResponse, AppError> {
     sqlx::query_as!(
-        Division,
+        DivisionResponse,
         r#"
             UPDATE divisions
             SET name = $1
@@ -111,7 +120,9 @@ pub async fn ensure_name_available(name: &str, ctx: &AppState) -> Result<(), App
     .unwrap_or(0);
 
     if count > 0 {
-        Err(AppError::DuplicateNamedEntity("Division".to_owned()))
+        Err(AppError::DuplicateNamedEntity(
+            "Division".to_owned(),
+        ))
     } else {
         Ok(())
     }
