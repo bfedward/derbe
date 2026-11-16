@@ -6,21 +6,22 @@ use axum::{
 use validator::Validate;
 
 use crate::{
+    access_control::authorize,
     error::AppError,
     features::auth::middleware::AuthenticatedUser,
+    features::locations::permission::LocationPermission,
     features::locations::{
         dto::{request::LocationCreate, response::LocationResponse},
         service,
     },
     http::AppState,
-    permissions::{AccessController, Permission},
 };
 
 pub async fn list_locations(
     Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<LocationResponse>>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewLocations)?;
+    authorize(&user, LocationPermission::View)?;
     let locations = service::list(&state).await?;
     Ok(Json(
         locations.into_iter().map(LocationResponse::from).collect(),
@@ -32,7 +33,7 @@ pub async fn get_location(
     State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> Result<Json<LocationResponse>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewLocations)?;
+    authorize(&user, LocationPermission::View)?;
     let location = service::get_by_id(id, &state).await?;
     Ok(Json(location.into()))
 }
@@ -42,7 +43,7 @@ pub async fn create_location(
     State(state): State<AppState>,
     Json(input): Json<LocationCreate>,
 ) -> Result<(StatusCode, Json<LocationResponse>), AppError> {
-    AccessController::authorize(&user.role, Permission::CreateLocation)?;
+    authorize(&user, LocationPermission::Create)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;

@@ -6,21 +6,22 @@ use axum::{
 use validator::Validate;
 
 use crate::{
+    access_control::authorize,
     error::AppError,
     features::auth::middleware::AuthenticatedUser,
+    features::divisions::permission::DivisionPermission,
     features::divisions::{
         dto::{request::DivisionCreate, response::DivisionResponse},
         service,
     },
     http::AppState,
-    permissions::{AccessController, Permission},
 };
 
 pub async fn list_divisions(
     Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<DivisionResponse>>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewDivisions)?;
+    authorize(&user, DivisionPermission::View)?;
     let divisions = service::list(&state).await?;
     Ok(Json(
         divisions.into_iter().map(DivisionResponse::from).collect(),
@@ -32,7 +33,7 @@ pub async fn get_division(
     State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> Result<Json<DivisionResponse>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewDivisions)?;
+    authorize(&user, DivisionPermission::View)?;
     let division = service::get_by_id(id, &state).await?;
     Ok(Json(division.into()))
 }
@@ -42,7 +43,7 @@ pub async fn create_division(
     State(state): State<AppState>,
     Json(input): Json<DivisionCreate>,
 ) -> Result<(StatusCode, Json<DivisionResponse>), AppError> {
-    AccessController::authorize(&user.role, Permission::CreateDivision)?;
+    authorize(&user, DivisionPermission::Create)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
