@@ -85,9 +85,8 @@ export function LeaveRequestProfilePage() {
     mutationFn: (values: LeaveRequestEditValues) => {
       if (!query.data) throw new Error("Leave request not loaded.");
       const input: LeaveRequestUpdate = {
-        employee_id: query.data.employee_id,
+        employee_unid: query.data.employee_unid,
         leave_type_id: query.data.leave_type_id,
-        leave_status: query.data.leave_status,
         values: {
           date_from: values.date_from,
           date_to: values.date_to,
@@ -99,7 +98,6 @@ export function LeaveRequestProfilePage() {
           ),
         },
         date_requested: query.data.date_requested,
-        date_finalised: query.data.date_finalised,
         notes: values.notes || null,
       };
       return updateLeaveRequest(requestId, input);
@@ -150,7 +148,7 @@ export function LeaveRequestProfilePage() {
             >
               <div className="grid gap-2">
                 <span className="text-sm font-medium">Employee</span>
-                <Input readOnly value={`Employee #${request.employee_id}`} />
+                <Input readOnly value={`Employee #${request.employee_unid}`} />
               </div>
               <div className="grid gap-2">
                 <span className="text-sm font-medium">Leave Type</span>

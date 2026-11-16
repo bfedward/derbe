@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use serde_json::json;
+use uuid::Uuid;
 use validator::ValidationErrors;
 
 #[derive(Debug, thiserror::Error)]
@@ -13,6 +14,9 @@ pub enum AppError {
 
     #[error("{1} with id {0} not found!")]
     EntityNotFound(i32, String),
+
+    #[error("{1} with id {0} not found!")]
+    EntityUnidNotFound(Uuid, String),
 
     #[error("Cannot delete {0} due to related entity!")]
     RelatedEntity(String),
@@ -31,6 +35,21 @@ pub enum AppError {
 
     #[error("{0} with this name already exists!")]
     DuplicateNamedEntity(String),
+
+    #[error("{0} is not a valid UUID")]
+    InvalidUuid(String),
+
+    #[error("Failed to hash")]
+    HashFailure,
+
+    #[error("Failed to create session token")]
+    TokenFailure,
+
+    #[error("{0}")]
+    Unauthorized(&'static str),
+
+    #[error("Forbidden")]
+    Forbidden,
 }
 
 impl IntoResponse for AppError {
@@ -40,16 +59,39 @@ impl IntoResponse for AppError {
         }
 
         let status = match &self {
-            Self::DatabaseQueryError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DatabaseQueryError(_) | Self::HashFailure | Self::TokenFailure => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+            Self::Unauthorized(_) => StatusCode::UNAUTHORIZED,
+            Self::EntityUnidNotFound(_, _) => StatusCode::NOT_FOUND,
             Self::EntityNotFound(_, _) => StatusCode::NOT_FOUND,
             Self::RelatedEntity(_) | Self::ConstraintError(_) | Self::DuplicateNamedEntity(_) => {
                 StatusCode::CONFLICT
             }
             Self::InvalidStructArgs(_)
             | Self::ValidationFailed(_)
-            | Self::RequestValidationFailed(_) => StatusCode::BAD_REQUEST,
+            | Self::RequestValidationFailed(_)
+            | Self::InvalidUuid(_) => StatusCode::BAD_REQUEST,
+            Self::Forbidden => StatusCode::FORBIDDEN,
         };
 
         (status, Json(json!({ "error": self.to_string() }))).into_response()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unauthorized_is_a_401_with_its_message() {
+        let response = AppError::Unauthorized("no session").into_response();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn token_failure_is_a_500() {
+        let response = AppError::TokenFailure.into_response();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 }

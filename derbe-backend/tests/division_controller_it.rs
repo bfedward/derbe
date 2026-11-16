@@ -6,7 +6,8 @@ mod test_helpers;
 #[tokio::test]
 async fn create_division_success() {
     let (app, config) = spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
     let name = "The Division";
 
     let response = create_division(name, &client, &app).await;
@@ -27,7 +28,8 @@ async fn create_division_success() {
 #[tokio::test]
 async fn cannot_create_divisions_with_duplicate_names() {
     let (app, config) = spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let name = "The Division";
 
@@ -60,7 +62,8 @@ async fn cannot_create_divisions_with_duplicate_names() {
 #[tokio::test]
 async fn get_division() {
     let (app, config) = spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let name = "The Division";
 
@@ -85,7 +88,8 @@ async fn get_division() {
 #[tokio::test]
 async fn get_divisions() {
     let (app, config) = spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let name = "The Division";
 
@@ -104,14 +108,16 @@ async fn get_divisions() {
     assert!(response_text.is_array());
     let divisions = response_text.as_array().unwrap();
 
-    assert_eq!(divisions.len(), 1, "Expected one division in the response");
+    // The seeded admin owns one extra "Seed division", so look ours up by name.
+    let created = divisions
+        .iter()
+        .find(|item| item["name"] == name)
+        .expect("Expected the created division in the response");
 
     assert!(
-        divisions[0]["id"].as_i64().unwrap_or(0) > 0,
+        created["id"].as_i64().unwrap_or(0) > 0,
         "Division ID should be greater than 0"
     );
-
-    assert_eq!(divisions[0]["name"], name);
 
     // Clean up the test application
     cleanup_test_app(&config.database, app).await;
@@ -120,7 +126,8 @@ async fn get_divisions() {
 #[tokio::test]
 async fn cannot_get_nonexistant_division() {
     let (app, config) = spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let response = client
         .get(format!("{}/divisions/{}", app.address, 0))

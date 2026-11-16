@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod divisions;
 pub mod employees;
 pub mod leave_requests;

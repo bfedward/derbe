@@ -2,12 +2,14 @@ use std::collections::HashMap;
 
 use crate::enums::LeaveStatus;
 use crate::features::leave_requests::dto::request::{
-    AllLeaveRequest, LeaveRequestCreate, LeaveRequestUpdate, MyLeaveRequest,
+    AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
+    MyLeaveRequest,
 };
 use crate::features::leave_requests::dto::response::{
     AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse,
 };
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc};
+use uuid::Uuid;
 
 use crate::{error::AppError, features::leave_requests::model::LeaveRequest, http::AppState};
 
@@ -25,7 +27,7 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveRequest, AppError
         LeaveRequest,
         r#"
              SELECT id, 
-                     employee_id, 
+                     employee_unid, 
                      leave_type_id, 
                      leave_status AS "leave_status!: LeaveStatus", 
                      date_from,
@@ -51,7 +53,7 @@ pub async fn list(ctx: &AppState) -> Result<Vec<LeaveRequest>, AppError> {
         LeaveRequest,
         r#"
             SELECT id, 
-                employee_id, 
+                employee_unid, 
                 leave_type_id, 
                 leave_status AS "leave_status!: LeaveStatus", 
                 date_from,
@@ -73,7 +75,7 @@ pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequ
     Ok(sqlx::query_as!(
         LeaveRequest,
         r#"
-            INSERT INTO leave_requests (employee_id, 
+            INSERT INTO leave_requests (employee_unid, 
                                         leave_type_id, 
                                         leave_status,
                                         date_from, 
@@ -86,7 +88,7 @@ pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequ
                                         notes)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id, 
-                        employee_id, 
+                        employee_unid, 
                         leave_type_id, 
                         leave_status AS "leave_status!: LeaveStatus", 
                         date_from, 
@@ -98,7 +100,7 @@ pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequ
                         date_finalised,
                         notes
             "#,
-        dto.employee_id,
+        dto.employee_unid,
         dto.leave_type_id,
         dto.leave_status as LeaveStatus,
         dto.values.date_from,
@@ -123,20 +125,18 @@ pub async fn update(
         LeaveRequest,
         r#"
             UPDATE leave_requests
-            SET employee_id = $1,
+            SET employee_unid = $1,
                 leave_type_id = $2,
-                leave_status = $3,
-                date_from = $4,
-                date_to = $5,
-                first_day_half = $6,
-                last_day_half = $7,
-                total_duration = $8,
-                date_requested = $9,
-                date_finalised = $10,
-                notes = $11
-            WHERE id = $12
+                date_from = $3,
+                date_to = $4,
+                first_day_half = $5,
+                last_day_half = $6,
+                total_duration = $7,
+                date_requested = $8,
+                notes = $9
+            WHERE id = $10
             RETURNING id, 
-                employee_id, 
+                employee_unid, 
                 leave_type_id, 
                 leave_status AS "leave_status!: LeaveStatus", 
                 date_from, 
@@ -148,16 +148,55 @@ pub async fn update(
                 date_finalised,
                 notes
             "#,
-        dto.employee_id,
+        dto.employee_unid,
         dto.leave_type_id,
-        dto.leave_status as LeaveStatus,
         dto.values.date_from,
         dto.values.date_to,
         dto.values.first_day_half,
         dto.values.last_day_half,
         dto.values.total_duration,
         dto.date_requested,
-        dto.date_finalised,
+        dto.notes,
+        id
+    )
+    .fetch_optional(&ctx.pool)
+    .await?
+    .ok_or_else(|| AppError::EntityNotFound(id, "LeaveRequest".to_owned()))
+}
+
+pub async fn update_status(
+    id: i32,
+    dto: LeaveRequestStatusUpdate,
+    ctx: &AppState,
+) -> Result<LeaveRequest, AppError> {
+    let date_finalised = match dto.leave_status {
+        LeaveStatus::Accepted | LeaveStatus::Rejected => Some(Utc::now()),
+        _ => None,
+    };
+
+    sqlx::query_as!(
+        LeaveRequest,
+        r#"
+            UPDATE leave_requests
+            SET leave_status = $1,
+                date_finalised = $2,
+                notes = $3
+            WHERE id = $4
+            RETURNING id, 
+                employee_unid, 
+                leave_type_id, 
+                leave_status AS "leave_status!: LeaveStatus", 
+                date_from, 
+                date_to,
+                first_day_half, 
+                last_day_half, 
+                total_duration,
+                date_requested,
+                date_finalised,
+                notes
+            "#,
+        dto.leave_status as LeaveStatus,
+        date_finalised,
         dto.notes,
         id
     )
@@ -194,7 +233,8 @@ pub async fn ensure_not_referenced(_id: i32, _ctx: &AppState) -> Result<(), AppE
 }
 
 pub async fn get_my_leave(
-    my_leave_request: MyLeaveRequest,
+    employee_unid: Uuid,
+    dto: MyLeaveRequest,
     ctx: &AppState,
 ) -> Result<Vec<MyLeaveResponse>, AppError> {
     Ok(sqlx::query_as!(
@@ -212,25 +252,25 @@ pub async fn get_my_leave(
             JOIN
                 leave_types lt ON lr.leave_type_id = lt.id
             WHERE
-                employee_id = $1
+                employee_unid = $1
                 AND leave_type_id = ANY($2)
                 AND leave_status = ANY($3)
                 AND date_from BETWEEN $4 AND $5 
                 AND date_to BETWEEN $4 AND $5
             ORDER BY lr.date_from DESC
             "#,
-        my_leave_request.employee_id,
-        &my_leave_request.leave_type_ids,
-        my_leave_request.leave_statuses as Vec<LeaveStatus>,
-        my_leave_request.date_from,
-        my_leave_request.date_to
+        employee_unid,
+        &dto.leave_type_ids,
+        dto.leave_statuses as Vec<LeaveStatus>,
+        dto.date_from,
+        dto.date_to
     )
     .fetch_all(&ctx.pool)
     .await?)
 }
 
 pub async fn ensure_no_accepted_leave_conflict(
-    employee_id: i32,
+    employee_unid: Uuid,
     date_from: NaiveDate,
     date_to: NaiveDate,
     ctx: &AppState,
@@ -238,11 +278,11 @@ pub async fn ensure_no_accepted_leave_conflict(
     let exists = sqlx::query_scalar!(
         "SELECT EXISTS(SELECT 1 
                 FROM leave_requests 
-                WHERE employee_id = $1 
+                WHERE employee_unid = $1 
                 AND leave_status = $2
                 AND date_from BETWEEN $3 AND $4 
                 AND date_to BETWEEN $3 AND $4)",
-        employee_id,
+        employee_unid,
         LeaveStatus::Accepted as LeaveStatus,
         date_from,
         date_to
@@ -275,7 +315,7 @@ pub async fn get_all_leave(
                 lr.last_day_half,
                 lt.colour
             FROM leave_requests lr
-            JOIN employees e ON lr.employee_id = e.id
+            JOIN employees e ON lr.employee_unid = e.unid
             JOIN leave_types lt ON lr.leave_type_id = lt.id
             WHERE lr.leave_status = 'Accepted'
             AND lr.date_from >= $1

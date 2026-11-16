@@ -2,4 +2,4 @@
 import type { LeaveRequestValues } from "./LeaveRequestValues";
 import type { LeaveStatus } from "./LeaveStatus";
 
-export type LeaveRequestCreate = { employee_id: number, leave_type_id: number, leave_status: LeaveStatus, values: LeaveRequestValues, date_requested: string, date_finalised: string | null, notes: string | null, };
+export type LeaveRequestCreate = { employee_unid: string, leave_type_id: number, leave_status: LeaveStatus, values: LeaveRequestValues, date_requested: string, date_finalised: string | null, notes: string | null, };

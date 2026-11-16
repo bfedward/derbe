@@ -8,7 +8,7 @@ use crate::enums::LeaveStatus;
 #[ts(export)]
 pub struct LeaveRequestResponse {
     pub id: i32,
-    pub employee_id: i32,
+    pub employee_unid: String,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
     pub date_from: NaiveDate,

@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import {
   createEmployee,
-  DEFAULT_EMPLOYEE_ID,
   divisionsQueryOptions,
   employeeQueryOptions,
   employeesQueryOptions,
@@ -43,9 +42,8 @@ const employeeFormSchema = z.object({
   division_id: z.number().int().positive("Choose a division."),
   employment_type: z.enum(EMPLOYMENT_TYPES),
   location_id: z.number().int().positive("Choose a location."),
-  manager_id: z.number().int().positive().nullable(),
+  manager_unid: z.string().trim().nullable(),
   email: z.email("Enter a valid email address."),
-  phone: z.string(),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
@@ -57,12 +55,11 @@ const EMPTY_EMPLOYEE: EmployeeFormValues = {
   division_id: 0,
   employment_type: "Permanent",
   location_id: 0,
-  manager_id: null,
+  manager_unid: null,
   email: "",
-  phone: "",
 };
 
-export function EmployeeForm({ id }: { id?: number }) {
+export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm<EmployeeFormValues>({
@@ -71,8 +68,8 @@ export function EmployeeForm({ id }: { id?: number }) {
   });
   const { reset } = form;
   const employeeQuery = useQuery({
-    ...employeeQueryOptions(id ?? DEFAULT_EMPLOYEE_ID),
-    enabled: id !== undefined,
+    ...employeeQueryOptions(employee_unid),
+    enabled: employee_unid !== undefined,
   });
   const employeesQuery = useQuery(employeesQueryOptions());
   const divisionsQuery = useQuery(divisionsQueryOptions());
@@ -88,16 +85,17 @@ export function EmployeeForm({ id }: { id?: number }) {
       division_id: employee.division_id,
       employment_type: employee.employment_type,
       location_id: employee.location_id,
-      manager_id: employee.manager_id,
+      manager_unid: employee.manager_unid,
       email: employee.email,
-      phone: employee.phone ?? "",
     });
   }, [employeeQuery.data, reset]);
 
   const saveMutation = useMutation({
     mutationFn: (values: EmployeeFormValues) => {
-      const payload = { ...values, phone: values.phone || null };
-      return id === undefined ? createEmployee(payload) : updateEmployee(id, payload);
+      const payload = { ...values };
+      return employee_unid === undefined
+        ? createEmployee(payload)
+        : updateEmployee(employee_unid, payload);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.employees() });
@@ -107,7 +105,7 @@ export function EmployeeForm({ id }: { id?: number }) {
   });
 
   if (
-    (id !== undefined && employeeQuery.isPending) ||
+    (employee_unid !== undefined && employeeQuery.isPending) ||
     employeesQuery.isPending ||
     divisionsQuery.isPending ||
     locationsQuery.isPending
@@ -126,7 +124,7 @@ export function EmployeeForm({ id }: { id?: number }) {
   return (
     <>
       <PageHeading
-        title={id === undefined ? "New Employee Details" : "Employee Details"}
+        title={employee_unid === undefined ? "New Employee Details" : "Employee Details"}
       />
       <Card>
         <CardContent className="pt-6">
@@ -176,12 +174,12 @@ export function EmployeeForm({ id }: { id?: number }) {
               />
               <RHFField
                 control={form.control}
-                name="manager_id"
+                name="manager_unid"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Manager</FormLabel>
                     <Select
-                      value={field.value === null ? NONE_OPTION : String(field.value)}
+                      value={field.value === null ? NONE_OPTION : field.value}
                       onValueChange={(value) =>
                         field.onChange(value === NONE_OPTION ? null : Number(value))
                       }
@@ -194,9 +192,12 @@ export function EmployeeForm({ id }: { id?: number }) {
                       <SelectContent>
                         <SelectItem value={NONE_OPTION}>No manager</SelectItem>
                         {employees
-                          .filter((employee) => employee.id !== id)
+                          .filter((employee) => employee.employee_unid !== employee_unid)
                           .map((employee) => (
-                            <SelectItem key={employee.id} value={String(employee.id)}>
+                            <SelectItem
+                              key={employee.employee_unid}
+                              value={employee.employee_unid}
+                            >
                               {employee.first_name} {employee.last_name}
                             </SelectItem>
                           ))}
@@ -292,19 +293,6 @@ export function EmployeeForm({ id }: { id?: number }) {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <RHFField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input type="tel" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

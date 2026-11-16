@@ -1,7 +1,7 @@
 export const derbeKeys = {
   all: ["derbe"] as const,
   employees: () => [...derbeKeys.all, "employees"] as const,
-  employee: (id: number) => [...derbeKeys.employees(), id] as const,
+  employee: (employee_unid: string) => [...derbeKeys.employees(), employee_unid] as const,
   employeeDetails: () => [...derbeKeys.all, "employee-details"] as const,
   divisions: () => [...derbeKeys.all, "divisions"] as const,
   locations: () => [...derbeKeys.all, "locations"] as const,

@@ -1,18 +1,21 @@
 use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc, Weekday};
 use serde::Deserialize;
 use ts_rs::TS;
+use uuid::Uuid;
 
 use crate::{
     enums::{HalfDayOptions, LeaveStatus},
-    features::leave_requests::dto::response::LeaveRequestResponse,
+    error::AppError,
 };
 
 use validator::Validate;
 
 #[derive(Debug, Validate, Deserialize, Clone, TS)]
+#[serde(try_from = "LeaveRequestCreateRaw")]
 #[ts(export)]
 pub struct LeaveRequestCreate {
-    pub employee_id: i32,
+    #[ts(type = "string")]
+    pub employee_unid: Uuid,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
     #[validate(nested)]
@@ -22,17 +25,33 @@ pub struct LeaveRequestCreate {
     pub notes: Option<String>,
 }
 
-impl Default for LeaveRequestCreate {
-    fn default() -> Self {
-        LeaveRequestCreate {
-            employee_id: 0,
-            leave_type_id: 0,
-            leave_status: LeaveStatus::default(),
-            values: LeaveRequestValues::default(),
-            date_requested: Utc::now(),
-            date_finalised: None,
-            notes: None,
-        }
+#[derive(Deserialize)]
+struct LeaveRequestCreateRaw {
+    employee_unid: String,
+    leave_type_id: i32,
+    leave_status: LeaveStatus,
+    values: LeaveRequestValues,
+    date_requested: DateTime<Utc>,
+    date_finalised: Option<DateTime<Utc>>,
+    notes: Option<String>,
+}
+
+impl TryFrom<LeaveRequestCreateRaw> for LeaveRequestCreate {
+    type Error = AppError;
+
+    fn try_from(raw: LeaveRequestCreateRaw) -> Result<Self, Self::Error> {
+        let employee_unid = Uuid::parse_str(&raw.employee_unid)
+            .map_err(|_| AppError::InvalidUuid(raw.employee_unid))?;
+
+        Ok(Self {
+            employee_unid,
+            leave_type_id: raw.leave_type_id,
+            leave_status: raw.leave_status,
+            values: raw.values,
+            date_requested: raw.date_requested,
+            date_finalised: raw.date_finalised,
+            notes: raw.notes,
+        })
     }
 }
 
@@ -116,36 +135,49 @@ impl LeaveRequestValues {
 }
 
 #[derive(Validate, Debug, Clone, Deserialize, TS)]
+#[serde(try_from = "LeaveRequestUpdateRaw")]
 #[ts(export)]
 pub struct LeaveRequestUpdate {
-    pub employee_id: i32,
+    #[ts(type = "string")]
+    pub employee_unid: Uuid,
     pub leave_type_id: i32,
-    pub leave_status: LeaveStatus,
     #[validate(nested)]
     pub values: LeaveRequestValues,
     pub date_requested: DateTime<Utc>,
-    pub date_finalised: Option<DateTime<Utc>>,
     pub notes: Option<String>,
 }
 
-impl From<LeaveRequestResponse> for LeaveRequestUpdate {
-    fn from(value: LeaveRequestResponse) -> Self {
-        LeaveRequestUpdate {
-            employee_id: value.employee_id,
-            leave_type_id: value.leave_type_id,
-            leave_status: value.leave_status,
-            values: LeaveRequestValues {
-                date_from: value.date_from,
-                date_to: value.date_to,
-                first_day_half: value.first_day_half,
-                last_day_half: value.last_day_half,
-                total_duration: value.total_duration,
-            },
-            date_requested: value.date_requested,
-            date_finalised: value.date_finalised,
-            notes: value.notes,
-        }
+#[derive(Deserialize)]
+struct LeaveRequestUpdateRaw {
+    pub employee_unid: String,
+    pub leave_type_id: i32,
+    pub values: LeaveRequestValues,
+    pub date_requested: DateTime<Utc>,
+    pub notes: Option<String>,
+}
+
+impl TryFrom<LeaveRequestUpdateRaw> for LeaveRequestUpdate {
+    type Error = AppError;
+
+    fn try_from(raw: LeaveRequestUpdateRaw) -> Result<Self, Self::Error> {
+        let employee_unid = Uuid::parse_str(&raw.employee_unid)
+            .map_err(|_| AppError::InvalidUuid(raw.employee_unid))?;
+
+        Ok(Self {
+            employee_unid,
+            leave_type_id: raw.leave_type_id,
+            values: raw.values,
+            date_requested: raw.date_requested,
+            notes: raw.notes,
+        })
     }
+}
+
+#[derive(Debug, Deserialize, TS)]
+#[ts(export)]
+pub struct LeaveRequestStatusUpdate {
+    pub leave_status: LeaveStatus,
+    pub notes: Option<String>,
 }
 
 #[derive(Deserialize, TS)]
@@ -158,16 +190,29 @@ pub struct AllLeaveRequest {
 #[derive(Debug, Deserialize, TS)]
 #[ts(export)]
 pub struct MyLeaveRequest {
-    pub employee_id: i32,
     pub leave_type_ids: Vec<i32>,
     pub leave_statuses: Vec<LeaveStatus>,
     pub date_from: NaiveDate,
     pub date_to: NaiveDate,
 }
 
-#[derive(Debug, Deserialize, TS)]
-#[ts(export)]
-pub struct LeaveRequestStatusUpdate {
-    pub leave_status: LeaveStatus,
-    pub notes: Option<String>,
+struct MyLeaveRequestRaw {
+    employee_unid: String,
+    leave_type_ids: Vec<i32>,
+    leave_statuses: Vec<LeaveStatus>,
+    date_from: NaiveDate,
+    date_to: NaiveDate,
+}
+
+impl TryFrom<MyLeaveRequestRaw> for MyLeaveRequest {
+    type Error = AppError;
+
+    fn try_from(raw: MyLeaveRequestRaw) -> Result<Self, Self::Error> {
+        Ok(Self {
+            leave_type_ids: raw.leave_type_ids,
+            leave_statuses: raw.leave_statuses,
+            date_from: raw.date_from,
+            date_to: raw.date_to,
+        })
+    }
 }

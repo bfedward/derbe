@@ -5,7 +5,8 @@ mod test_helpers;
 #[tokio::test]
 async fn create_location() {
     let (app, config) = test_helpers::spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
     let name = "The Location";
 
     let response = test_helpers::create_location(name, &client, &app).await;
@@ -26,7 +27,8 @@ async fn create_location() {
 #[tokio::test]
 async fn cannot_create_locations_with_duplicate_names() {
     let (app, config) = test_helpers::spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let name = "The Location";
 
@@ -59,7 +61,8 @@ async fn cannot_create_locations_with_duplicate_names() {
 #[tokio::test]
 async fn get_location() {
     let (app, config) = test_helpers::spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let name = "The Location";
 
@@ -84,7 +87,8 @@ async fn get_location() {
 #[tokio::test]
 async fn get_locations() {
     let (app, config) = test_helpers::spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let name = "The Location";
 
@@ -103,14 +107,16 @@ async fn get_locations() {
     assert!(response_text.is_array());
     let locations = response_text.as_array().unwrap();
 
-    assert_eq!(locations.len(), 1, "Expected one location in the response");
+    // The seeded admin owns one extra "Seed location", so look ours up by name.
+    let created = locations
+        .iter()
+        .find(|item| item["name"] == name)
+        .expect("Expected the created location in the response");
 
     assert!(
-        locations[0]["id"].as_i64().unwrap_or(0) > 0,
+        created["id"].as_i64().unwrap_or(0) > 0,
         "Location ID should be greater than 0"
     );
-
-    assert_eq!(locations[0]["name"], name);
 
     // Clean up the test application
     test_helpers::cleanup_test_app(&config.database, app).await;
@@ -119,7 +125,8 @@ async fn get_locations() {
 #[tokio::test]
 async fn cannot_get_nonexistant_location() {
     let (app, config) = test_helpers::spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let response = client
         .get(format!("{}/locations/{}", app.address, 0))

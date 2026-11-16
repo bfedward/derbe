@@ -1,20 +1,27 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    Json,
+    Extension, Json,
 };
 use validator::Validate;
 
 use crate::{
+    access_control::authorize,
     error::AppError,
-    features::divisions::dto::{request::DivisionCreate, response::DivisionResponse},
-    features::divisions::service,
+    features::auth::middleware::AuthenticatedUser,
+    features::divisions::permission::DivisionPermission,
+    features::divisions::{
+        dto::{request::DivisionCreate, response::DivisionResponse},
+        service,
+    },
     http::AppState,
 };
 
 pub async fn list_divisions(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<DivisionResponse>>, AppError> {
+    authorize(&user, DivisionPermission::View)?;
     let divisions = service::list(&state).await?;
     Ok(Json(
         divisions.into_iter().map(DivisionResponse::from).collect(),
@@ -22,17 +29,21 @@ pub async fn list_divisions(
 }
 
 pub async fn get_division(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> Result<Json<DivisionResponse>, AppError> {
+    authorize(&user, DivisionPermission::View)?;
     let division = service::get_by_id(id, &state).await?;
     Ok(Json(division.into()))
 }
 
 pub async fn create_division(
+    Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Json(input): Json<DivisionCreate>,
 ) -> Result<(StatusCode, Json<DivisionResponse>), AppError> {
+    authorize(&user, DivisionPermission::Create)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
