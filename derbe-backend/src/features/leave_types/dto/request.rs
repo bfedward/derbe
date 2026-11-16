@@ -1,3 +1,4 @@
+use crate::features::leave_types::model::OthersDaysVisibility;
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -13,8 +14,7 @@ pub struct LeaveTypeCreate {
     #[validate(length(min = 1))]
     pub colour: String,
     pub can_book_in_future: bool,
-    pub show_in_others_days: bool,
-    pub default_in_others_days: bool,
+    pub others_days_visibility: OthersDaysVisibility,
     pub default_in_leave_request: bool,
     pub show_in_approve_days: bool,
 }
@@ -28,8 +28,7 @@ pub struct LeaveTypeUpdate {
     pub default_quota: Option<f64>,
     pub colour: String,
     pub can_book_in_future: bool,
-    pub show_in_others_days: bool,
-    pub default_in_others_days: bool,
+    pub others_days_visibility: OthersDaysVisibility,
     pub default_in_leave_request: bool,
     pub show_in_approve_days: bool,
 }

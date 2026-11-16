@@ -23,9 +23,7 @@ pub async fn list_divisions(
 ) -> Result<Json<Vec<DivisionResponse>>, AppError> {
     authorize(&user, DivisionPermission::View)?;
     let divisions = service::list(&state).await?;
-    Ok(Json(
-        divisions.into_iter().map(DivisionResponse::from).collect(),
-    ))
+    Ok(Json(divisions))
 }
 
 pub async fn get_division(
@@ -35,7 +33,7 @@ pub async fn get_division(
 ) -> Result<Json<DivisionResponse>, AppError> {
     authorize(&user, DivisionPermission::View)?;
     let division = service::get_by_id(id, &state).await?;
-    Ok(Json(division.into()))
+    Ok(Json(division))
 }
 
 pub async fn create_division(
@@ -48,5 +46,5 @@ pub async fn create_division(
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
     let division = service::create(input, &state).await?;
-    Ok((StatusCode::CREATED, Json(division.into())))
+    Ok((StatusCode::CREATED, Json(division)))
 }

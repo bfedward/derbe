@@ -1,9 +1,9 @@
 use uuid::Uuid;
 
 use crate::{
-    enums::EmployeeRole,
     error::AppError,
     features::auth::model::{CurrentUser, LoginCredentials},
+    features::employees::model::EmployeeRole,
     http::AppState,
 };
 

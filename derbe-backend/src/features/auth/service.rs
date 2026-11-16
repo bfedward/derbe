@@ -5,18 +5,18 @@ use uuid::Uuid;
 
 use crate::{
     configuration::AppEnvironment,
-    enums::EmployeeRole,
     error::AppError,
     features::auth::{
         dto::LoginRequest, jwt::make_token, middleware::SESSION_COOKIE, model::CurrentUser,
         repository,
     },
+    features::employees::model::EmployeeRole,
     http::AppState,
 };
 
 /// Checks the credentials and returns a session token.
 pub async fn login(input: LoginRequest, ctx: &AppState) -> Result<String, AppError> {
-    let credentials = repository::find_login_by_email(&input.email, ctx)
+    let credentials = repository::find_login_by_email(&input.email.trim().to_lowercase(), ctx)
         .await?
         .ok_or(AppError::Unauthorized("invalid credentials"))?;
 

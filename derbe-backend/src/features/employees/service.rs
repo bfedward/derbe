@@ -3,15 +3,12 @@ use uuid::Uuid;
 use crate::features::employees::{
     dto::{
         request::{EmployeeCreate, EmployeeUpdate},
-        response::EmployeeDetailsResponse,
+        response::{CreatedEmployeeResponse, EmployeeDetailsResponse, EmployeeResponse},
     },
-    model::{CreatedEmployee, EmployeeAccess},
+    model::EmployeeAccess,
 };
 
-use crate::{
-    error::AppError, features::employees::model::Employee, features::employees::repository,
-    http::AppState,
-};
+use crate::{error::AppError, features::employees::repository, http::AppState};
 
 use crate::features::{divisions, locations};
 
@@ -19,7 +16,7 @@ pub async fn ensure_exists(unid: Uuid, ctx: &AppState) -> Result<(), AppError> {
     repository::ensure_exists(unid, ctx).await
 }
 
-pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<Employee, AppError> {
+pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeResponse, AppError> {
     repository::get_by_id(unid, ctx).await
 }
 
@@ -27,11 +24,14 @@ pub async fn get_access_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeAcce
     repository::get_access_by_id(unid, ctx).await
 }
 
-pub async fn list(ctx: &AppState) -> Result<Vec<Employee>, AppError> {
+pub async fn list(ctx: &AppState) -> Result<Vec<EmployeeResponse>, AppError> {
     repository::list(ctx).await
 }
 
-pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmployee, AppError> {
+pub async fn create(
+    dto: EmployeeCreate,
+    ctx: &AppState,
+) -> Result<CreatedEmployeeResponse, AppError> {
     validate_create(&dto, ctx).await?;
     repository::create(dto, ctx).await
 }
@@ -42,7 +42,11 @@ pub async fn validate_create(dto: &EmployeeCreate, ctx: &AppState) -> Result<(),
     Ok(())
 }
 
-pub async fn update(unid: Uuid, dto: EmployeeUpdate, ctx: &AppState) -> Result<Employee, AppError> {
+pub async fn update(
+    unid: Uuid,
+    dto: EmployeeUpdate,
+    ctx: &AppState,
+) -> Result<EmployeeResponse, AppError> {
     validate_update(unid, &dto, ctx).await?;
     repository::update(unid, dto, ctx).await
 }

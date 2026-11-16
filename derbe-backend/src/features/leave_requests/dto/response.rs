@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::enums::LeaveStatus;
+use crate::features::leave_requests::model::LeaveStatus;
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[ts(export)]

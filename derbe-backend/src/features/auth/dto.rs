@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::enums::EmployeeRole;
+use crate::features::employees::model::EmployeeRole;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoginRequest {

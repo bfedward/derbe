@@ -1,8 +1,11 @@
+// Each integration test crate uses a different subset of these helpers.
+#![allow(dead_code)]
+
 use std::{net::SocketAddr, sync::Arc};
 
 use derbe_backend::{
     configuration::{get_configuration, DatabaseSettings, Settings},
-    enums::EmployeeRole,
+    features::employees::model::EmployeeRole,
     http::{app_router, AppState},
 };
 use reqwest::{
@@ -240,6 +243,36 @@ pub async fn do_post(client: &Client, url: String, body: Value, err_msg: &str) -
     client.post(url).json(&body).send().await.expect(err_msg)
 }
 
+pub fn leave_type_body(name: &str) -> serde_json::Value {
+    serde_json::json!({
+        "name": name,
+        "default_quota": Some(10.0),
+        "colour": "#FFFFFF",
+        "can_book_in_future": true,
+        "others_days_visibility": "ShownByDefault",
+        "default_in_leave_request": true,
+        "show_in_approve_days": true
+    })
+}
+
+pub fn employee_body(
+    first_name: &str,
+    email: &str,
+    division: &serde_json::Value,
+    location: &serde_json::Value,
+) -> serde_json::Value {
+    serde_json::json!({
+        "first_name": first_name,
+        "last_name": "Testerson",
+        "job_title": "Tester",
+        "division_id": division["id"],
+        "employment_type": "Permanent",
+        "location_id": location["id"],
+        "manager_unid": None::<String>,
+        "email": email
+    })
+}
+
 pub async fn create_division(name: &str, client: &Client, app: &TestApp) -> serde_json::Value {
     let body = serde_json::json!({
         "name": name
@@ -284,16 +317,7 @@ pub async fn create_employee(
     let division = create_division("Division", client, app).await;
     let location = create_location("Location", client, app).await;
 
-    let body = serde_json::json!({
-        "first_name": first_name,
-        "last_name": "Testerson",
-        "job_title": "Tester",
-        "division_id": division["id"],
-        "employment_type": "Permanent",
-        "location_id": location["id"],
-        "manager_unid": None::<String>,
-        "email": "test@derbe.com"
-    });
+    let body = employee_body(first_name, "test@derbe.com", &division, &location);
 
     let response = do_post(
         client,
@@ -310,16 +334,7 @@ pub async fn create_employee(
 }
 
 pub async fn create_leave_type(name: &str, client: &Client, app: &TestApp) -> serde_json::Value {
-    let body = serde_json::json!({
-        "name": name,
-        "default_quota": Some(10.0),
-        "colour": "#FFFFFF",
-        "can_book_in_future": true,
-        "show_in_others_days": true,
-        "default_in_others_days": true,
-        "default_in_leave_request": true,
-        "show_in_approve_days": true
-    });
+    let body = leave_type_body(name);
 
     let response = do_post(
         client,

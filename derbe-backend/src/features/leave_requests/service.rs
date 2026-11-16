@@ -1,7 +1,6 @@
 use uuid::Uuid;
 
 use crate::{
-    enums::LeaveStatus,
     features::leave_requests::dto::{
         request::{
             AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
@@ -9,6 +8,7 @@ use crate::{
         },
         response::{AllLeaveResponse, MyLeaveResponse},
     },
+    features::leave_requests::model::LeaveStatus,
 };
 
 use crate::{
@@ -95,7 +95,7 @@ async fn validate_status_update_rules(
         && existing_entity.leave_status != LeaveStatus::Accepted
     {
         repository::ensure_no_accepted_leave_conflict(
-            employee.unid,
+            employee.employee_unid,
             existing_entity.date_from,
             existing_entity.date_to,
             ctx,

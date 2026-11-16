@@ -1,10 +1,14 @@
 use crate::features::locations::dto::request::{LocationCreate, LocationUpdate};
 
-use crate::{error::AppError, features::locations::model::Location, http::AppState};
+use crate::{
+    error::AppError, features::locations::dto::response::LocationResponse, http::AppState,
+};
 
-pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<Location, AppError> {
+const ENTITY: &str = "Location";
+
+pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LocationResponse, AppError> {
     sqlx::query_as!(
-        Location,
+        LocationResponse,
         r#"
             SELECT id, name
             FROM locations
@@ -14,12 +18,12 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<Location, AppError> {
     )
     .fetch_optional(&ctx.pool)
     .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, "Location".to_owned()))
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
-pub async fn list(ctx: &AppState) -> Result<Vec<Location>, AppError> {
+pub async fn list(ctx: &AppState) -> Result<Vec<LocationResponse>, AppError> {
     Ok(sqlx::query_as!(
-        Location,
+        LocationResponse,
         r#"
             SELECT id, name
             FROM locations
@@ -29,9 +33,9 @@ pub async fn list(ctx: &AppState) -> Result<Vec<Location>, AppError> {
     .await?)
 }
 
-pub async fn create(dto: LocationCreate, ctx: &AppState) -> Result<Location, AppError> {
+pub async fn create(dto: LocationCreate, ctx: &AppState) -> Result<LocationResponse, AppError> {
     Ok(sqlx::query_as!(
-        Location,
+        LocationResponse,
         r#"
             INSERT INTO locations (name)
             VALUES ($1)
@@ -40,12 +44,17 @@ pub async fn create(dto: LocationCreate, ctx: &AppState) -> Result<Location, App
         dto.name,
     )
     .fetch_one(&ctx.pool)
-    .await?)
+    .await
+    .map_err(|error| AppError::duplicate_name_or_db(error, ENTITY))?)
 }
 
-pub async fn update(id: i32, dto: LocationUpdate, ctx: &AppState) -> Result<Location, AppError> {
+pub async fn update(
+    id: i32,
+    dto: LocationUpdate,
+    ctx: &AppState,
+) -> Result<LocationResponse, AppError> {
     sqlx::query_as!(
-        Location,
+        LocationResponse,
         r#"
             UPDATE locations
             SET name = $1
@@ -57,8 +66,9 @@ pub async fn update(id: i32, dto: LocationUpdate, ctx: &AppState) -> Result<Loca
         id
     )
     .fetch_optional(&ctx.pool)
-    .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, "Location".to_owned()))
+    .await
+    .map_err(|error| AppError::duplicate_name_or_db(error, ENTITY))?
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn delete(id: i32, ctx: &AppState) -> Result<(), AppError> {
@@ -77,7 +87,7 @@ pub async fn ensure_exists(id: i32, ctx: &AppState) -> Result<(), AppError> {
     if exists {
         Ok(())
     } else {
-        Err(AppError::EntityNotFound(id, "Location".to_owned()))
+        Err(AppError::EntityNotFound(id, ENTITY.to_owned()))
     }
 }
 
@@ -93,25 +103,7 @@ pub async fn ensure_not_referenced(id: i32, ctx: &AppState) -> Result<(), AppErr
     .unwrap_or(0);
 
     if count > 0 {
-        Err(AppError::RelatedEntity("Location".to_owned()))
-    } else {
-        Ok(())
-    }
-}
-
-pub async fn ensure_name_available(name: &str, ctx: &AppState) -> Result<(), AppError> {
-    let count = sqlx::query_scalar!(
-        "
-            SELECT COUNT(*) FROM locations WHERE UPPER(name) = $1
-        ",
-        name.to_uppercase()
-    )
-    .fetch_one(&ctx.pool)
-    .await?
-    .unwrap_or(0);
-
-    if count > 0 {
-        Err(AppError::DuplicateNamedEntity("Location".to_owned()))
+        Err(AppError::RelatedEntity(ENTITY.to_owned()))
     } else {
         Ok(())
     }

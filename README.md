@@ -173,7 +173,7 @@ sqlx migrate run
 
 This applies any outstanding migrations and creates the database tables.
 
-To start again from an empty database (local only), run `bash reset_db.sh --yes` from `derbe-backend`. It drops the database, recreates it and runs all migrations. Use it after pulling changes to existing migration files.
+To start again from an empty database (local only), run `bash reset_db.sh --yes` from the repository root. It drops the database, recreates it and runs all migrations. Use it after pulling changes to existing migration files.
 
 The backend's local database configuration is provided by `derbe_config.yaml` and `.env`.
 

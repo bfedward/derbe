@@ -1,26 +1,23 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
+use uuid::Uuid;
 
-use crate::enums::EmploymentType;
+use crate::features::employees::model::EmploymentType;
 
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct EmployeeResponse {
-    pub employee_unid: String,
+    #[ts(type = "string")]
+    pub employee_unid: Uuid,
     pub first_name: String,
     pub last_name: String,
     pub job_title: String,
     pub division_id: i32,
     pub employment_type: EmploymentType,
     pub location_id: i32,
-    pub manager_unid: Option<String>,
+    #[ts(type = "string | null")]
+    pub manager_unid: Option<Uuid>,
     pub email: String,
-}
-
-impl EmployeeResponse {
-    pub fn get_full_name(&self) -> String {
-        format!("{} {}", self.first_name, self.last_name)
-    }
 }
 
 #[derive(Serialize, Deserialize, TS)]

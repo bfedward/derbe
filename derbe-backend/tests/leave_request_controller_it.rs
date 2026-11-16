@@ -5,8 +5,11 @@ mod test_helpers;
 #[tokio::test]
 async fn create_leave_request_fails_with_unknown_employee() {
     let (app, config) = test_helpers::spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let body = serde_json::json!({
         "employee_unid": uuid::Uuid::nil(),

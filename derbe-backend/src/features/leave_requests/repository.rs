@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use crate::enums::LeaveStatus;
 use crate::features::leave_requests::dto::request::{
     AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
     MyLeaveRequest,
@@ -8,10 +7,13 @@ use crate::features::leave_requests::dto::request::{
 use crate::features::leave_requests::dto::response::{
     AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse,
 };
+use crate::features::leave_requests::model::LeaveStatus;
 use chrono::{NaiveDate, Utc};
 use uuid::Uuid;
 
 use crate::{error::AppError, features::leave_requests::model::LeaveRequest, http::AppState};
+
+const ENTITY: &str = "Leave Request";
 
 struct AllLeaveRow {
     employee_name: Option<String>,
@@ -45,7 +47,7 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveRequest, AppError
     )
     .fetch_optional(&ctx.pool)
     .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, "Leave Request".to_owned()))
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn list(ctx: &AppState) -> Result<Vec<LeaveRequest>, AppError> {
@@ -161,7 +163,7 @@ pub async fn update(
     )
     .fetch_optional(&ctx.pool)
     .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, "LeaveRequest".to_owned()))
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn update_status(
@@ -202,7 +204,7 @@ pub async fn update_status(
     )
     .fetch_optional(&ctx.pool)
     .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, "LeaveRequest".to_owned()))
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn delete(id: i32, ctx: &AppState) -> Result<(), AppError> {
@@ -224,7 +226,7 @@ pub async fn ensure_exists(id: i32, ctx: &AppState) -> Result<(), AppError> {
     if exists {
         Ok(())
     } else {
-        Err(AppError::EntityNotFound(id, "Leave Request".to_owned()))
+        Err(AppError::EntityNotFound(id, ENTITY.to_owned()))
     }
 }
 

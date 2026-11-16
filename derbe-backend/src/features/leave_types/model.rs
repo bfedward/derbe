@@ -1,29 +1,14 @@
-use crate::features::leave_types::dto::response::LeaveTypeResponse;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-pub struct LeaveType {
-    pub id: i32,
-    pub name: String,
-    pub default_quota: Option<f64>,
-    pub colour: String,
-    pub can_book_in_future: bool,
-    pub show_in_others_days: bool,
-    pub default_in_others_days: bool,
-    pub default_in_leave_request: bool,
-    pub show_in_approve_days: bool,
-}
-
-impl From<LeaveType> for LeaveTypeResponse {
-    fn from(value: LeaveType) -> Self {
-        Self {
-            id: value.id,
-            name: value.name,
-            default_quota: value.default_quota,
-            colour: value.colour,
-            can_book_in_future: value.can_book_in_future,
-            show_in_others_days: value.show_in_others_days,
-            default_in_others_days: value.default_in_others_days,
-            default_in_leave_request: value.default_in_leave_request,
-            show_in_approve_days: value.show_in_approve_days,
-        }
-    }
+/// How a leave type appears in the "others' days" view.
+/// `ShownByDefault` implies shown, so the invalid "default but hidden" state cannot exist.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, TS)]
+#[sqlx(type_name = "valid_others_days_visibilities")]
+#[ts(export)]
+pub enum OthersDaysVisibility {
+    #[default]
+    Hidden,
+    Shown,
+    ShownByDefault,
 }

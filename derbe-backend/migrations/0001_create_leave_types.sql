@@ -1,12 +1,19 @@
-CREATE TABLE leave_types (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
-    default_quota FLOAT,
-    colour VARCHAR NOT NULL DEFAULT '#FFFFFF',
-    can_book_in_future BOOLEAN NOT NULL,
-    show_in_others_days BOOLEAN NOT NULL,
-    default_in_others_days BOOLEAN NOT NULL,
-    default_in_leave_request BOOLEAN NOT NULL,
-    show_in_approve_days BOOLEAN NOT NULL,
-    CONSTRAINT unique_leave_type_name UNIQUE (name)
+CREATE TYPE public.valid_others_days_visibilities AS ENUM (
+    'Hidden',
+    'Shown',
+    'ShownByDefault'
 );
+
+CREATE TABLE public.leave_types (
+    id                          serial                                 NOT NULL,
+    name                        character varying                      NOT NULL,
+    default_quota               double precision,
+    colour                      character varying                      DEFAULT '#FFFFFF'::character varying NOT NULL,
+    can_book_in_future          boolean                                NOT NULL,
+    others_days_visibility      public.valid_others_days_visibilities  NOT NULL,
+    default_in_leave_request    boolean                                NOT NULL,
+    show_in_approve_days        boolean                                NOT NULL,
+    CONSTRAINT leave_types_pkey PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX unique_leave_type_name ON public.leave_types USING btree (lower((name)::text));

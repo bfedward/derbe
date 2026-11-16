@@ -24,12 +24,7 @@ pub async fn list_leave_types(
 ) -> Result<Json<Vec<LeaveTypeResponse>>, AppError> {
     authorize(&user, LeaveTypePermission::View)?;
     let leave_types = service::list(&state).await?;
-    Ok(Json(
-        leave_types
-            .into_iter()
-            .map(LeaveTypeResponse::from)
-            .collect(),
-    ))
+    Ok(Json(leave_types))
 }
 
 pub async fn get_leave_type(
@@ -39,7 +34,7 @@ pub async fn get_leave_type(
 ) -> Result<Json<LeaveTypeResponse>, AppError> {
     authorize(&user, LeaveTypePermission::View)?;
     let leave_type = service::get_by_id(id, &state).await?;
-    Ok(Json(leave_type.into()))
+    Ok(Json(leave_type))
 }
 
 pub async fn create_leave_type(
@@ -52,5 +47,5 @@ pub async fn create_leave_type(
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
     let leave_type = service::create(input, &state).await?;
-    Ok((StatusCode::CREATED, Json(leave_type.into())))
+    Ok((StatusCode::CREATED, Json(leave_type)))
 }

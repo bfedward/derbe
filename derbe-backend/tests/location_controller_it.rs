@@ -5,8 +5,11 @@ mod test_helpers;
 #[tokio::test]
 async fn create_location() {
     let (app, config) = test_helpers::spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
     let name = "The Location";
 
     let response = test_helpers::create_location(name, &client, &app).await;
@@ -27,8 +30,11 @@ async fn create_location() {
 #[tokio::test]
 async fn cannot_create_locations_with_duplicate_names() {
     let (app, config) = test_helpers::spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "The Location";
 
@@ -61,8 +67,11 @@ async fn cannot_create_locations_with_duplicate_names() {
 #[tokio::test]
 async fn get_location() {
     let (app, config) = test_helpers::spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "The Location";
 
@@ -87,8 +96,11 @@ async fn get_location() {
 #[tokio::test]
 async fn get_locations() {
     let (app, config) = test_helpers::spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "The Location";
 
@@ -125,8 +137,11 @@ async fn get_locations() {
 #[tokio::test]
 async fn cannot_get_nonexistant_location() {
     let (app, config) = test_helpers::spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let response = client
         .get(format!("{}/locations/{}", app.address, 0))
@@ -139,5 +154,28 @@ async fn cannot_get_nonexistant_location() {
     assert_eq!(response_text["error"], "Location with id 0 not found!");
 
     // Clean up the test application
+    test_helpers::cleanup_test_app(&config.database, app).await;
+}
+
+#[tokio::test]
+async fn cannot_create_locations_with_names_differing_only_by_case() {
+    let (app, config) = test_helpers::spawn_app().await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
+
+    test_helpers::create_location("The Location", &client, &app).await;
+
+    let response = client
+        .post(format!("{}/locations", app.address))
+        .json(&serde_json::json!({ "name": "THE LOCATION" }))
+        .send()
+        .await
+        .expect("Failed to create location");
+
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+
     test_helpers::cleanup_test_app(&config.database, app).await;
 }

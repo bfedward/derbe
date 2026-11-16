@@ -4,6 +4,135 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Name uniqueness for divisions, leave types and locations is enforced by the database only. Migrations `0001`, `0002` and `0003` replace `UNIQUE (name)` with a unique index on `lower(name)`, so "Sales" and "sales" conflict. The check-then-insert `ensure_name_available` (racy, and case sensitive) is removed. `AppError::duplicate_name_or_db` maps a unique violation to `DuplicateNamedEntity` (409) and other errors to `DatabaseQueryError`. Local DBs must be recreated with `bash reset_db.sh --yes` from the repo root.
+
+Before:
+
+```rust
+ensure_name_available(&dto.name, ctx).await?;
+let row = query_as!(...).fetch_one(&ctx.pool).await?;
+```
+
+After:
+
+```rust
+let row = query_as!(...)
+    .fetch_one(&ctx.pool)
+    .await
+    .map_err(|error| AppError::duplicate_name_or_db(error, ENTITY))?;
+```
+
+- Employee emails are validated (`#[validate(email)]`, 400 on bad input instead of a 500 from the DB) and stored trimmed and lowercase. Login lowercases the email too.
+- Each repository has a `const ENTITY: &str` instead of repeating the entity name string. This also fixes "LeaveRequest" vs "Leave Request" in leave request error messages (now "Leave Request").
+- Integration tests share `leave_type_body` and `employee_body` helpers instead of repeating JSON bodies. New tests cover invalid email, lowercase email storage, and case-insensitive duplicate names.
+- `EmployeeCreate.manager_unid` and `EmployeeUpdate.manager_unid` bindings are `string | null` (were `string | undefined`-like, mismatching the API). Frontend: `employeeQueryOptions` takes `string | undefined` and uses `skipToken`, the leave request form no longer sends an undefined employee, and `protected-route.tsx` button has `type="button"`. `pnpm typecheck` and `biome check` are clean.
+- Dead code removed: `MyLeaveRequestRaw`, `EmployeeResponse::get_full_name`. `test_helpers.rs` allows `dead_code` because each test crate uses a different subset.
+
+- `leave_types` replaces the two dependent booleans `show_in_others_days` and `default_in_others_days` with one enum `others_days_visibility` (`Hidden`, `Shown`, `ShownByDefault`). The old pair allowed the invalid state "default but not shown". The enum is a Postgres type (`valid_others_days_visibilities`, created in migration `0001`), a Rust enum in `features/leave_types/model.rs`, and a generated TypeScript binding. The create form uses a select instead of two checkboxes. The three independent flags (`can_book_in_future`, `default_in_leave_request`, `show_in_approve_days`) stay booleans. This changes the JSON API and `0001`, so local DBs must be recreated with `bash reset_db.sh --yes` from the repo root.
+
+Before:
+
+```rust
+pub show_in_others_days: bool,
+pub default_in_others_days: bool,
+```
+
+After:
+
+```rust
+pub others_days_visibility: OthersDaysVisibility,
+```
+
+- `divisions`, `leave_types` and `locations` query their `*Response` DTO directly. The `Division`, `LeaveType` and `Location` models and their `From` impls are removed, because they were field-for-field copies of the DTOs. Their `model.rs` files are deleted. JSON and TypeScript bindings are unchanged.
+
+Before:
+
+```rust
+pub async fn list(ctx: &AppState) -> Result<Vec<Division>, AppError> { /* query_as!(Division, ...) */ }
+
+Ok(Json(divisions.into_iter().map(DivisionResponse::from).collect()))
+```
+
+After:
+
+```rust
+pub async fn list(ctx: &AppState) -> Result<Vec<DivisionResponse>, AppError> { /* query_as!(DivisionResponse, ...) */ }
+
+Ok(Json(divisions))
+```
+
+- Employee queries now fill `EmployeeResponse` directly. The `Employee` and `CreatedEmployee` models and their two `From` impls are removed, because they only turned `Uuid` into `String`. `EmployeeResponse` holds `Uuid` fields with `#[ts(type = "string")]`, so the JSON and the TypeScript bindings are unchanged. The queries alias `unid AS employee_unid`.
+
+Before:
+
+```rust
+pub async fn list(ctx: &AppState) -> Result<Vec<Employee>, AppError> { /* query_as!(Employee, ...) */ }
+
+employees.into_iter().map(EmployeeResponse::from).collect()
+```
+
+After:
+
+```rust
+pub async fn list(ctx: &AppState) -> Result<Vec<EmployeeResponse>, AppError> { /* query_as!(EmployeeResponse, ...) */ }
+
+Json(service::list(&state).await?)
+```
+
+- Redundant `#[strum(serialize = "...")]` attributes are removed. `EmployeeRole` variants already serialize to their own names, so the four attributes are gone. `HalfDayOptions` uses `serialize_all = "camelCase"` and keeps overrides only for `FullDays` (`allDaysFull`) and `BothHalfDays` (`firstAndLastHalfs`). Parsed values are unchanged.
+
+- `src/enums.rs` is removed and each enum now lives with its feature. `EmployeeRole` and `EmploymentType` moved to `features/employees/model.rs`, `LeaveStatus` (with `can_become`) and `HalfDayOptions` moved to `features/leave_requests/model.rs`, along with their unit tests. Variants, serde names, sqlx type names and generated TypeScript bindings are unchanged.
+
+Before:
+
+```rust
+use crate::enums::{EmployeeRole, LeaveStatus};
+```
+
+After:
+
+```rust
+use crate::features::employees::model::EmployeeRole;
+use crate::features::leave_requests::model::LeaveStatus;
+```
+
+- SQL migrations `0001` to `0007` are reformatted in the pg_dump style used by Rustify. Columns line up in three blocks (name, type, modifiers), types are lowercase (`character varying`, `timestamp with time zone`, `double precision`), tables are schema-qualified (`public.`), enum values sit one per line, and every constraint is named and listed at the end. Foreign keys are now explicit named constraints (`fk_<table>_<column>`) and `!=` became `<>`. Schema semantics are unchanged, and the missing comma before `date_check` in `0007` is fixed. sqlx stores a checksum per migration, so existing local databases must be recreated (`bash reset_db.sh --yes`).
+
+Before:
+
+```sql
+CREATE TABLE locations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    CONSTRAINT unique_location_name UNIQUE (name)
+);
+```
+
+After:
+
+```sql
+CREATE TABLE public.locations (
+    id      serial               NOT NULL,
+    name    character varying    NOT NULL,
+    CONSTRAINT locations_pkey PRIMARY KEY (id),
+    CONSTRAINT unique_location_name UNIQUE (name)
+);
+```
+
+- The local database reset script moved from `derbe-backend/` to the repository root, next to `README.md`. It now changes into `derbe-backend` itself to find `.env` and `migrations`, so it runs from the root. Behaviour is unchanged (needs `--yes`, refuses non-local hosts).
+
+Before:
+
+```text
+cd derbe-backend && bash reset_db.sh --yes
+```
+
+After:
+
+```text
+bash reset_db.sh --yes
+```
+
 - Integration tests compile and pass again, and the permission layer is now tested through the real router. `test_helpers.rs` builds the current `AppState` and `app_router`, and gets `seed_employee` (inserts an employee with a role, bcrypt password), `login_client` (logs in via `POST /login`, keeps the session cookie) and `login_as(role)`. The five old `*_controller_it.rs` files log in as Admin and use the current JSON shapes (UUID `employee_unid`, `manager_unid`, no `phone`). New `tests/permissions_it.rs` has 18 tests: 401 without a session, wrong password, deleted employee cannot log in, `/me` per role, Admin-only creates (divisions, locations, leave types), every role can read, Manager creates employees but RegularUser and Demo cannot, no update of someone else, own leave request only, Manager approves a report but not their own leave or a stranger's, rejected cannot return to Pending. `EmployeeRole` derives `Display` (used by the helpers). Seeded employees own one "Seed division" and one "Seed location", so list tests find their row by name.
 
 Before:

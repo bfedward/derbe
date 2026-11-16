@@ -67,10 +67,7 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
     defaultValues: EMPTY_EMPLOYEE,
   });
   const { reset } = form;
-  const employeeQuery = useQuery({
-    ...employeeQueryOptions(employee_unid),
-    enabled: employee_unid !== undefined,
-  });
+  const employeeQuery = useQuery(employeeQueryOptions(employee_unid));
   const employeesQuery = useQuery(employeesQueryOptions());
   const divisionsQuery = useQuery(divisionsQueryOptions());
   const locationsQuery = useQuery(locationsQueryOptions());

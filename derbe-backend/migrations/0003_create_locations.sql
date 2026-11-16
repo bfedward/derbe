@@ -1,5 +1,7 @@
-CREATE TABLE locations (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
-    CONSTRAINT unique_location_name UNIQUE (name)
+CREATE TABLE public.locations (
+    id      serial               NOT NULL,
+    name    character varying    NOT NULL,
+    CONSTRAINT locations_pkey PRIMARY KEY (id)
 );
+
+CREATE UNIQUE INDEX unique_location_name ON public.locations USING btree (lower((name)::text));
