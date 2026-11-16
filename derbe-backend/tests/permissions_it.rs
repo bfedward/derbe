@@ -1,7 +1,7 @@
 //! One integration test per permission rule, through the real router,
 //! with a real session cookie per role.
 
-use derbe_backend::enums::EmployeeRole::{Admin, Demo, Manager, RegularUser};
+use derbe_backend::features::employees::model::EmployeeRole::{Admin, Demo, Manager, RegularUser};
 use reqwest::{Client, Response, StatusCode};
 use serde_json::{json, Value};
 use test_helpers::{

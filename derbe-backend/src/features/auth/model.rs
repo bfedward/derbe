@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{enums::EmployeeRole, features::auth::dto::MeResponse};
+use crate::{features::auth::dto::MeResponse, features::employees::model::EmployeeRole};
 
 pub struct LoginCredentials {
     pub unid: Uuid,

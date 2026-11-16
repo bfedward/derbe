@@ -2,7 +2,7 @@ use std::{net::SocketAddr, sync::Arc};
 
 use derbe_backend::{
     configuration::{get_configuration, DatabaseSettings, Settings},
-    enums::EmployeeRole,
+    features::employees::model::EmployeeRole,
     http::{app_router, AppState},
 };
 use reqwest::{

@@ -8,12 +8,12 @@ use secrecy::ExposeSecret;
 use uuid::Uuid;
 
 use crate::{
-    enums::EmployeeRole,
     error::AppError,
     features::auth::{
         jwt::{verify_token, Claims},
         service,
     },
+    features::employees::model::EmployeeRole,
     http::AppState,
 };
 

@@ -1,9 +1,9 @@
 use crate::{
     access_control::{Permission, ALL_ROLES},
-    enums::EmployeeRole,
     error::AppError,
     features::auth::middleware::AuthenticatedUser,
     features::employees::model::EmployeeAccess,
+    features::employees::model::EmployeeRole,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -1,31 +1,30 @@
-use derbe_backend::{
-    enums::{EmploymentType, HalfDayOptions, LeaveStatus},
-    features::{
-        divisions::dto::{
-            request::{DivisionCreate, DivisionUpdate},
-            response::DivisionResponse,
+use derbe_backend::features::{
+    divisions::dto::{
+        request::{DivisionCreate, DivisionUpdate},
+        response::DivisionResponse,
+    },
+    employees::dto::{
+        request::{EmployeeCreate, EmployeeUpdate},
+        response::{EmployeeDetailsResponse, EmployeeResponse},
+    },
+    employees::model::EmploymentType,
+    leave_requests::dto::{
+        request::{
+            AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
+            LeaveRequestValues, MyLeaveRequest,
         },
-        employees::dto::{
-            request::{EmployeeCreate, EmployeeUpdate},
-            response::{EmployeeDetailsResponse, EmployeeResponse},
+        response::{
+            AllLeaveInnerResponse, AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse,
         },
-        leave_requests::dto::{
-            request::{
-                AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
-                LeaveRequestValues, MyLeaveRequest,
-            },
-            response::{
-                AllLeaveInnerResponse, AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse,
-            },
-        },
-        leave_types::dto::{
-            request::{LeaveTypeCreate, LeaveTypeUpdate},
-            response::LeaveTypeResponse,
-        },
-        locations::dto::{
-            request::{LocationCreate, LocationUpdate},
-            response::LocationResponse,
-        },
+    },
+    leave_requests::model::{HalfDayOptions, LeaveStatus},
+    leave_types::dto::{
+        request::{LeaveTypeCreate, LeaveTypeUpdate},
+        response::LeaveTypeResponse,
+    },
+    locations::dto::{
+        request::{LocationCreate, LocationUpdate},
+        response::LocationResponse,
     },
 };
 use ts_rs::TS;

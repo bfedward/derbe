@@ -5,12 +5,12 @@ use uuid::Uuid;
 
 use crate::{
     configuration::AppEnvironment,
-    enums::EmployeeRole,
     error::AppError,
     features::auth::{
         dto::LoginRequest, jwt::make_token, middleware::SESSION_COOKIE, model::CurrentUser,
         repository,
     },
+    features::employees::model::EmployeeRole,
     http::AppState,
 };
 

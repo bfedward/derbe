@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use crate::enums::LeaveStatus;
 use crate::features::leave_requests::dto::request::{
     AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
     MyLeaveRequest,
@@ -8,6 +7,7 @@ use crate::features::leave_requests::dto::request::{
 use crate::features::leave_requests::dto::response::{
     AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse,
 };
+use crate::features::leave_requests::model::LeaveStatus;
 use chrono::{NaiveDate, Utc};
 use uuid::Uuid;
 

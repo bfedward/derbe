@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::enums::EmploymentType;
+use crate::features::employees::model::EmploymentType;
 
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export)]

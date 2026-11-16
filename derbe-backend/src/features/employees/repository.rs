@@ -5,7 +5,8 @@ use crate::features::employees::dto::response::EmployeeDetailsResponse;
 
 use crate::features::employees::model::{CreatedEmployee, EmployeeAccess};
 use crate::{
-    enums::EmploymentType, error::AppError, features::employees::model::Employee, http::AppState,
+    error::AppError, features::employees::model::Employee,
+    features::employees::model::EmploymentType, http::AppState,
 };
 
 pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<Employee, AppError> {

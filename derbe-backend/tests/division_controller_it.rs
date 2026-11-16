@@ -6,8 +6,11 @@ mod test_helpers;
 #[tokio::test]
 async fn create_division_success() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
     let name = "The Division";
 
     let response = create_division(name, &client, &app).await;
@@ -28,8 +31,11 @@ async fn create_division_success() {
 #[tokio::test]
 async fn cannot_create_divisions_with_duplicate_names() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "The Division";
 
@@ -62,8 +68,11 @@ async fn cannot_create_divisions_with_duplicate_names() {
 #[tokio::test]
 async fn get_division() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "The Division";
 
@@ -88,8 +97,11 @@ async fn get_division() {
 #[tokio::test]
 async fn get_divisions() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "The Division";
 
@@ -126,8 +138,11 @@ async fn get_divisions() {
 #[tokio::test]
 async fn cannot_get_nonexistant_division() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let response = client
         .get(format!("{}/divisions/{}", app.address, 0))

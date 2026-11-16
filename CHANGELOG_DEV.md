@@ -4,6 +4,21 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `src/enums.rs` is removed and each enum now lives with its feature. `EmployeeRole` and `EmploymentType` moved to `features/employees/model.rs`, `LeaveStatus` (with `can_become`) and `HalfDayOptions` moved to `features/leave_requests/model.rs`, along with their unit tests. Variants, serde names, sqlx type names and generated TypeScript bindings are unchanged.
+
+Before:
+
+```rust
+use crate::enums::{EmployeeRole, LeaveStatus};
+```
+
+After:
+
+```rust
+use crate::features::employees::model::EmployeeRole;
+use crate::features::leave_requests::model::LeaveStatus;
+```
+
 - SQL migrations `0001` to `0007` are reformatted in the pg_dump style used by Rustify. Columns line up in three blocks (name, type, modifiers), types are lowercase (`character varying`, `timestamp with time zone`, `double precision`), tables are schema-qualified (`public.`), enum values sit one per line, and every constraint is named and listed at the end. Foreign keys are now explicit named constraints (`fk_<table>_<column>`) and `!=` became `<>`. Schema semantics are unchanged, and the missing comma before `date_check` in `0007` is fixed. sqlx stores a checksum per migration, so existing local databases must be recreated (`bash reset_db.sh --yes`).
 
 Before:

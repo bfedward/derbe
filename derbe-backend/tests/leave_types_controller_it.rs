@@ -6,8 +6,11 @@ mod test_helpers;
 #[tokio::test]
 async fn create_leave_type_success() {
     let (app, config) = test_helpers::spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
     let name = "Leave Type";
 
     let response = create_leave_type(name, &client, &app).await;
@@ -28,8 +31,11 @@ async fn create_leave_type_success() {
 #[tokio::test]
 async fn cannot_create_leave_types_with_duplicate_names() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "Leave Type";
 
@@ -69,8 +75,11 @@ async fn cannot_create_leave_types_with_duplicate_names() {
 #[tokio::test]
 async fn cannot_create_leave_types_with_negative_default_quota() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let body = serde_json::json!({
         "name": "Leave Type",
@@ -103,8 +112,11 @@ async fn cannot_create_leave_types_with_negative_default_quota() {
 #[tokio::test]
 async fn get_leave_types_success() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "Leave Type";
 
@@ -143,8 +155,11 @@ async fn get_leave_types_success() {
 #[tokio::test]
 async fn cannot_get_nonexistant_leave_type() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let response = client
         .get(format!("{}/leaveTypes/{}", app.address, 0))
@@ -163,8 +178,11 @@ async fn cannot_get_nonexistant_leave_type() {
 #[tokio::test]
 async fn get_leave_type() {
     let (app, config) = spawn_app().await;
-    let (_admin, client) =
-        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
 
     let name = "Leave Type";
 

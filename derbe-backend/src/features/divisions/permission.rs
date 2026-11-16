@@ -1,6 +1,6 @@
 use crate::{
     access_control::{Permission, ALL_ROLES},
-    enums::EmployeeRole,
+    features::employees::model::EmployeeRole,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -7,9 +7,9 @@ use validator::Validate;
 
 use crate::{
     access_control::{authorize, authorize_on},
-    enums::{LeaveStatus::Accepted, LeaveStatus::Pending},
     error::AppError,
     features::auth::middleware::AuthenticatedUser,
+    features::leave_requests::model::{LeaveStatus::Accepted, LeaveStatus::Pending},
     features::{
         employees,
         leave_requests::{

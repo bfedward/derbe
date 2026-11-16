@@ -1,10 +1,49 @@
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use strum::{Display, EnumString};
+use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::{
-    enums::{EmployeeRole, EmploymentType},
-    features::employees::dto::response::{CreatedEmployeeResponse, EmployeeResponse},
-};
+use crate::features::employees::dto::response::{CreatedEmployeeResponse, EmployeeResponse};
+
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, TS, Display,
+)]
+#[sqlx(type_name = "valid_employment_types")]
+#[ts(export)]
+pub enum EmploymentType {
+    #[default]
+    Permanent,
+    Contract,
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    sqlx::Type,
+    TS,
+    EnumString,
+    Display,
+)]
+#[sqlx(type_name = "TEXT")]
+#[ts(export)]
+pub enum EmployeeRole {
+    #[strum(serialize = "Admin")]
+    Admin,
+    #[strum(serialize = "Manager")]
+    Manager,
+    #[default]
+    #[strum(serialize = "RegularUser")]
+    RegularUser,
+    #[strum(serialize = "Demo")]
+    Demo,
+}
 
 pub struct Employee {
     pub unid: Uuid,
@@ -75,4 +114,15 @@ impl From<CreatedEmployee> for CreatedEmployeeResponse {
 pub struct EmployeeAccess {
     pub unid: Uuid,
     pub manager_unid: Option<Uuid>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::EmploymentType;
+
+    #[test]
+    fn employment_type_display_keeps_existing_api_labels() {
+        assert_eq!(EmploymentType::Permanent.to_string(), "Permanent");
+        assert_eq!(EmploymentType::Contract.to_string(), "Contract");
+    }
 }

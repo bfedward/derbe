@@ -1,7 +1,6 @@
 use uuid::Uuid;
 
 use crate::{
-    enums::LeaveStatus,
     features::leave_requests::dto::{
         request::{
             AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
@@ -9,6 +8,7 @@ use crate::{
         },
         response::{AllLeaveResponse, MyLeaveResponse},
     },
+    features::leave_requests::model::LeaveStatus,
 };
 
 use crate::{

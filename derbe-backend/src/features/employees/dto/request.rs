@@ -4,7 +4,7 @@ use serde::Deserialize;
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::{enums::EmploymentType, error::AppError};
+use crate::{error::AppError, features::employees::model::EmploymentType};
 
 use validator::Validate;
 

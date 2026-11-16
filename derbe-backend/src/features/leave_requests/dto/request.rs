@@ -4,8 +4,8 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::{
-    enums::{HalfDayOptions, LeaveStatus},
     error::AppError,
+    features::leave_requests::model::{HalfDayOptions, LeaveStatus},
 };
 
 use validator::Validate;
