@@ -13,7 +13,7 @@ export function HomePage() {
   return (
     <>
       <PageHeading
-        title="Derbe"
+        title="derbe"
         description="Manage leave, employees, and leave types."
       />
       <div className="grid gap-4 sm:grid-cols-3">

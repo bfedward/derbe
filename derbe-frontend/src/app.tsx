@@ -77,6 +77,23 @@ function NavigationMenu({
   );
 }
 
+function LoginLayout() {
+  return (
+    <div className="min-h-screen">
+      <header className="border-b bg-card">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link to="/" className="text-lg font-semibold tracking-tight">
+            derbe
+          </Link>
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
 function Layout() {
   return (
     <div className="min-h-screen">
@@ -143,8 +160,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-
+        <Route element={<LoginLayout />}>
+          <Route path="/login" element={<LoginPage />} />
+        </Route>
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
