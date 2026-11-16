@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Added `derbe-backend/reset_db.sh`: drops, recreates and migrates the local database from `DATABASE_URL`. Needs `--yes` and refuses non-local hosts. Documented in `README.md`.
+
 - Renamed migrations from timestamps to a simple sequence (`0001_...` to `0008_...`), same order as before. **Every existing local database must be recreated**: sqlx stores the migration version, so a database that ran the old names refuses the new ones. This also covers the in-place edits of the employees and leave requests migrations from `feature/auth`.
 
 Before:
