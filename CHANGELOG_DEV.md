@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Redundant `#[strum(serialize = "...")]` attributes are removed. `EmployeeRole` variants already serialize to their own names, so the four attributes are gone. `HalfDayOptions` uses `serialize_all = "camelCase"` and keeps overrides only for `FullDays` (`allDaysFull`) and `BothHalfDays` (`firstAndLastHalfs`). Parsed values are unchanged.
+
 - `src/enums.rs` is removed and each enum now lives with its feature. `EmployeeRole` and `EmploymentType` moved to `features/employees/model.rs`, `LeaveStatus` (with `can_become`) and `HalfDayOptions` moved to `features/leave_requests/model.rs`, along with their unit tests. Variants, serde names, sqlx type names and generated TypeScript bindings are unchanged.
 
 Before:

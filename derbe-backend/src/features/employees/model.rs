@@ -34,14 +34,10 @@ pub enum EmploymentType {
 #[sqlx(type_name = "TEXT")]
 #[ts(export)]
 pub enum EmployeeRole {
-    #[strum(serialize = "Admin")]
     Admin,
-    #[strum(serialize = "Manager")]
     Manager,
     #[default]
-    #[strum(serialize = "RegularUser")]
     RegularUser,
-    #[strum(serialize = "Demo")]
     Demo,
 }
 

@@ -24,14 +24,13 @@ pub enum LeaveStatus {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, TS, EnumString)]
+#[strum(serialize_all = "camelCase")]
 #[ts(export)]
 pub enum HalfDayOptions {
     #[default]
     #[strum(serialize = "allDaysFull")]
     FullDays,
-    #[strum(serialize = "firstDayHalf")]
     FirstDayHalf,
-    #[strum(serialize = "lastDayHalf")]
     LastDayHalf,
     #[strum(serialize = "firstAndLastHalfs")]
     BothHalfDays,
