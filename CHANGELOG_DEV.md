@@ -4,6 +4,20 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Fixed: a deleted employee could log in and received a session cookie, then got a 401 on every request. `login` now skips soft-deleted employees, like `require_auth` and `me` already do.
+
+Before:
+
+```rust
+"SELECT unid, password FROM employees WHERE email = $1",
+```
+
+After:
+
+```rust
+"SELECT unid, password FROM employees WHERE email = $1 AND deleted_at IS NULL",
+```
+
 - Removed `authorize_get_leave_request` and `authorize_get_my_leave_requests` from `permissions.rs`. No handler called them: the three GET leave request handlers only check the role, so any employee can read any leave request. Behaviour is unchanged. Who may read what is still to decide (see `SUGGESTIONS_W3.md` item 5).
 
 - Added permission matrix tests in `permissions.rs`: one test per role lists every permission it gets, checked against all 24 `Permission` variants. Adding or removing a permission in `has_permission` now fails a test until the expected list is updated on purpose.

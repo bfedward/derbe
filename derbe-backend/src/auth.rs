@@ -170,7 +170,7 @@ pub async fn login(
 ) -> impl IntoResponse {
     let row = sqlx::query_as!(
         LoginRow,
-        "SELECT unid, password FROM employees WHERE email = $1",
+        "SELECT unid, password FROM employees WHERE email = $1 AND deleted_at IS NULL",
         body.email
     )
     .fetch_optional(&state.pool)
