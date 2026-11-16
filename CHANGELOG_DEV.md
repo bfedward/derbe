@@ -4,6 +4,22 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Renamed migrations from timestamps to a simple sequence (`0001_...` to `0008_...`), same order as before. **Every existing local database must be recreated**: sqlx stores the migration version, so a database that ran the old names refuses the new ones. This also covers the in-place edits of the employees and leave requests migrations from `feature/auth`.
+
+Before:
+
+```text
+migrations/20240423195045_create_employees.sql
+migrations/20261112082313_create_role_accesses.sql
+```
+
+After:
+
+```text
+migrations/0005_create_employees.sql
+migrations/0008_create_role_accesses.sql
+```
+
 - Sorted `derbe-backend/Cargo.toml` dependencies alphabetically (features too) and relaxed versions to the major (`"1"`, or `"0.8"` for 0.x crates). `Cargo.lock` keeps the exact versions, so builds are unchanged.
 
 Before:
