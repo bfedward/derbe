@@ -117,9 +117,7 @@ pub async fn ensure_name_available(name: &str, ctx: &AppState) -> Result<(), App
     .unwrap_or(0);
 
     if count > 0 {
-        Err(AppError::DuplicateNamedEntity(
-            "Location".to_owned(),
-        ))
+        Err(AppError::DuplicateNamedEntity("Location".to_owned()))
     } else {
         Ok(())
     }
