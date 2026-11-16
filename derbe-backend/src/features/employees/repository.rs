@@ -1,19 +1,18 @@
 use uuid::Uuid;
 
 use crate::features::employees::dto::request::{EmployeeCreate, EmployeeUpdate};
-use crate::features::employees::dto::response::EmployeeDetailsResponse;
-
-use crate::features::employees::model::{CreatedEmployee, EmployeeAccess};
-use crate::{
-    error::AppError, features::employees::model::Employee,
-    features::employees::model::EmploymentType, http::AppState,
+use crate::features::employees::dto::response::{
+    CreatedEmployeeResponse, EmployeeDetailsResponse, EmployeeResponse,
 };
 
-pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<Employee, AppError> {
+use crate::features::employees::model::EmployeeAccess;
+use crate::{error::AppError, features::employees::model::EmploymentType, http::AppState};
+
+pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeResponse, AppError> {
     sqlx::query_as!(
-        Employee,
+        EmployeeResponse,
         r#"
-            SELECT unid, 
+            SELECT unid AS employee_unid, 
                     first_name, 
                     last_name, 
                     job_title, 
@@ -48,11 +47,11 @@ pub async fn get_access_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeAcce
     .ok_or_else(|| AppError::EntityUnidNotFound(unid, "Employee".to_owned()))
 }
 
-pub async fn list(ctx: &AppState) -> Result<Vec<Employee>, AppError> {
+pub async fn list(ctx: &AppState) -> Result<Vec<EmployeeResponse>, AppError> {
     Ok(sqlx::query_as!(
-        Employee,
+        EmployeeResponse,
         r#"
-            SELECT unid, 
+            SELECT unid AS employee_unid, 
                     first_name, 
                     last_name, 
                     job_title, 
@@ -68,7 +67,10 @@ pub async fn list(ctx: &AppState) -> Result<Vec<Employee>, AppError> {
     .await?)
 }
 
-pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmployee, AppError> {
+pub async fn create(
+    dto: EmployeeCreate,
+    ctx: &AppState,
+) -> Result<CreatedEmployeeResponse, AppError> {
     let temporary_password = Uuid::new_v4().simple().to_string();
     let password_hash = pwhash::bcrypt::hash(&temporary_password).map_err(|e| {
         tracing::error!("Failed to hash temporary password: {e}");
@@ -76,7 +78,7 @@ pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmploy
     })?;
 
     let employee = sqlx::query_as!(
-        Employee,
+        EmployeeResponse,
         r#"
             INSERT INTO employees (first_name, 
                                     last_name, 
@@ -88,7 +90,7 @@ pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmploy
                                     email,
                                     password)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING unid, 
+            RETURNING unid AS employee_unid, 
                         first_name, 
                         last_name, 
                         job_title, 
@@ -111,15 +113,19 @@ pub async fn create(dto: EmployeeCreate, ctx: &AppState) -> Result<CreatedEmploy
     .fetch_one(&ctx.pool)
     .await?;
 
-    Ok(CreatedEmployee {
+    Ok(CreatedEmployeeResponse {
         employee,
         temporary_password,
     })
 }
 
-pub async fn update(unid: Uuid, dto: EmployeeUpdate, ctx: &AppState) -> Result<Employee, AppError> {
+pub async fn update(
+    unid: Uuid,
+    dto: EmployeeUpdate,
+    ctx: &AppState,
+) -> Result<EmployeeResponse, AppError> {
     sqlx::query_as!(
-        Employee,
+        EmployeeResponse,
         r#"
             UPDATE employees
             SET first_name = $1,
@@ -131,7 +137,7 @@ pub async fn update(unid: Uuid, dto: EmployeeUpdate, ctx: &AppState) -> Result<E
                 manager_unid = $7,
                 email = $8
             WHERE unid = $9
-            RETURNING unid, 
+            RETURNING unid AS employee_unid, 
                 first_name, 
                 last_name, 
                 job_title, 

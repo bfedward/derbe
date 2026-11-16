@@ -4,8 +4,6 @@ use strum::{Display, EnumString};
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::features::employees::dto::response::{CreatedEmployeeResponse, EmployeeResponse};
-
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, TS, Display,
 )]
@@ -41,34 +39,6 @@ pub enum EmployeeRole {
     Demo,
 }
 
-pub struct Employee {
-    pub unid: Uuid,
-    pub first_name: String,
-    pub last_name: String,
-    pub job_title: String,
-    pub email: String,
-    pub division_id: i32,
-    pub employment_type: EmploymentType,
-    pub location_id: i32,
-    pub manager_unid: Option<Uuid>,
-}
-
-impl From<Employee> for EmployeeResponse {
-    fn from(value: Employee) -> Self {
-        Self {
-            employee_unid: value.unid.to_string(),
-            first_name: value.first_name,
-            last_name: value.last_name,
-            job_title: value.job_title,
-            email: value.email,
-            division_id: value.division_id,
-            employment_type: value.employment_type,
-            location_id: value.location_id,
-            manager_unid: value.manager_unid.map(|m| m.to_string()),
-        }
-    }
-}
-
 pub struct EmployeeRecord {
     pub unid: Uuid,
     pub first_name: String,
@@ -89,22 +59,6 @@ pub struct EmployeeRecord {
     pub email_change_token_expires_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-}
-
-pub struct CreatedEmployee {
-    pub employee: Employee,
-    pub temporary_password: String,
-}
-
-impl From<CreatedEmployee> for CreatedEmployeeResponse {
-    fn from(value: CreatedEmployee) -> Self {
-        let employee: EmployeeResponse = value.employee.into();
-
-        Self {
-            employee,
-            temporary_password: value.temporary_password,
-        }
-    }
 }
 
 pub struct EmployeeAccess {

@@ -4,6 +4,24 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Employee queries now fill `EmployeeResponse` directly. The `Employee` and `CreatedEmployee` models and their two `From` impls are removed, because they only turned `Uuid` into `String`. `EmployeeResponse` holds `Uuid` fields with `#[ts(type = "string")]`, so the JSON and the TypeScript bindings are unchanged. The queries alias `unid AS employee_unid`.
+
+Before:
+
+```rust
+pub async fn list(ctx: &AppState) -> Result<Vec<Employee>, AppError> { /* query_as!(Employee, ...) */ }
+
+employees.into_iter().map(EmployeeResponse::from).collect()
+```
+
+After:
+
+```rust
+pub async fn list(ctx: &AppState) -> Result<Vec<EmployeeResponse>, AppError> { /* query_as!(EmployeeResponse, ...) */ }
+
+Json(service::list(&state).await?)
+```
+
 - Redundant `#[strum(serialize = "...")]` attributes are removed. `EmployeeRole` variants already serialize to their own names, so the four attributes are gone. `HalfDayOptions` uses `serialize_all = "camelCase"` and keeps overrides only for `FullDays` (`allDaysFull`) and `BothHalfDays` (`firstAndLastHalfs`). Parsed values are unchanged.
 
 - `src/enums.rs` is removed and each enum now lives with its feature. `EmployeeRole` and `EmploymentType` moved to `features/employees/model.rs`, `LeaveStatus` (with `can_become`) and `HalfDayOptions` moved to `features/leave_requests/model.rs`, along with their unit tests. Variants, serde names, sqlx type names and generated TypeScript bindings are unchanged.

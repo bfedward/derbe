@@ -28,10 +28,7 @@ pub async fn list_employees(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<EmployeeResponse>>, AppError> {
     authorize(&user, EmployeePermission::List)?;
-    let employees = service::list(&state).await?;
-    Ok(Json(
-        employees.into_iter().map(EmployeeResponse::from).collect(),
-    ))
+    Ok(Json(service::list(&state).await?))
 }
 
 pub async fn get_employee_details_table(
@@ -51,7 +48,7 @@ pub async fn get_employee(
     authorize(&user, EmployeePermission::View)?;
     let unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
     let employee = service::get_by_id(unid, &state).await?;
-    Ok(Json(employee.into()))
+    Ok(Json(employee))
 }
 
 pub async fn create_employee(
@@ -67,7 +64,7 @@ pub async fn create_employee(
 
     let employee = service::create(input, &state).await?;
 
-    Ok((StatusCode::CREATED, Json(employee.into())))
+    Ok((StatusCode::CREATED, Json(employee)))
 }
 
 pub async fn update_employee(
@@ -83,5 +80,5 @@ pub async fn update_employee(
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
     let employee = service::update(employee_unid, input, &state).await?;
-    Ok(Json(employee.into()))
+    Ok(Json(employee))
 }
