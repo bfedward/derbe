@@ -8,6 +8,8 @@ use crate::features::employees::dto::response::{
 use crate::features::employees::model::EmployeeAccess;
 use crate::{error::AppError, features::employees::model::EmploymentType, http::AppState};
 
+const ENTITY: &str = "Employee";
+
 pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeResponse, AppError> {
     sqlx::query_as!(
         EmployeeResponse,
@@ -28,7 +30,7 @@ pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeResponse, A
     )
     .fetch_optional(&ctx.pool)
     .await?
-    .ok_or_else(|| AppError::EntityUnidNotFound(unid, "Employee".to_owned()))
+    .ok_or_else(|| AppError::EntityUnidNotFound(unid, ENTITY.to_owned()))
 }
 
 pub async fn get_access_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeAccess, AppError> {
@@ -44,7 +46,7 @@ pub async fn get_access_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeAcce
     )
     .fetch_optional(&ctx.pool)
     .await?
-    .ok_or_else(|| AppError::EntityUnidNotFound(unid, "Employee".to_owned()))
+    .ok_or_else(|| AppError::EntityUnidNotFound(unid, ENTITY.to_owned()))
 }
 
 pub async fn list(ctx: &AppState) -> Result<Vec<EmployeeResponse>, AppError> {
@@ -159,7 +161,7 @@ pub async fn update(
     )
     .fetch_optional(&ctx.pool)
     .await?
-    .ok_or_else(|| AppError::EntityUnidNotFound(unid, "Employee".to_owned()))
+    .ok_or_else(|| AppError::EntityUnidNotFound(unid, ENTITY.to_owned()))
 }
 
 pub async fn delete(unid: Uuid, ctx: &AppState) -> Result<(), AppError> {
@@ -181,7 +183,7 @@ pub async fn ensure_exists(unid: Uuid, ctx: &AppState) -> Result<(), AppError> {
     if exists {
         Ok(())
     } else {
-        Err(AppError::EntityUnidNotFound(unid, "Employee".to_owned()))
+        Err(AppError::EntityUnidNotFound(unid, ENTITY.to_owned()))
     }
 }
 
@@ -198,7 +200,7 @@ pub async fn ensure_not_referenced(unid: Uuid, ctx: &AppState) -> Result<(), App
     .unwrap_or(0);
 
     if count > 0 {
-        Err(AppError::RelatedEntity("Employee".to_owned()))
+        Err(AppError::RelatedEntity(ENTITY.to_owned()))
     } else {
         Ok(())
     }

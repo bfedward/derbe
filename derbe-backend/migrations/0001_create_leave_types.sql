@@ -13,6 +13,7 @@ CREATE TABLE public.leave_types (
     others_days_visibility      public.valid_others_days_visibilities  NOT NULL,
     default_in_leave_request    boolean                                NOT NULL,
     show_in_approve_days        boolean                                NOT NULL,
-    CONSTRAINT leave_types_pkey PRIMARY KEY (id),
-    CONSTRAINT unique_leave_type_name UNIQUE (name)
+    CONSTRAINT leave_types_pkey PRIMARY KEY (id)
 );
+
+CREATE UNIQUE INDEX unique_leave_type_name ON public.leave_types USING btree (lower((name)::text));

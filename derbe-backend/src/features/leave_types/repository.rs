@@ -5,6 +5,8 @@ use crate::{
     error::AppError, features::leave_types::dto::response::LeaveTypeResponse, http::AppState,
 };
 
+const ENTITY: &str = "Leave Type";
+
 pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveTypeResponse, AppError> {
     sqlx::query_as!(
             LeaveTypeResponse,
@@ -17,7 +19,7 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveTypeResponse, App
             id
         )
         .fetch_optional(&ctx.pool)
-        .await?.ok_or_else(|| AppError::EntityNotFound(id, "Leave Type".to_owned()))
+        .await?.ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn list(ctx: &AppState) -> Result<Vec<LeaveTypeResponse>, AppError> {
@@ -63,25 +65,8 @@ pub async fn create(dto: LeaveTypeCreate, ctx: &AppState) -> Result<LeaveTypeRes
         dto.show_in_approve_days
     )
     .fetch_one(&ctx.pool)
-    .await?)
-}
-
-pub async fn ensure_name_available(name: &str, ctx: &AppState) -> Result<(), AppError> {
-    let count = sqlx::query_scalar!(
-        "
-            SELECT COUNT(*) FROM leave_types WHERE UPPER(name) = $1
-        ",
-        name.to_uppercase()
-    )
-    .fetch_one(&ctx.pool)
-    .await?
-    .unwrap_or(0);
-
-    if count > 0 {
-        Err(AppError::DuplicateNamedEntity("Leave Type".to_owned()))
-    } else {
-        Ok(())
-    }
+    .await
+    .map_err(|error| AppError::duplicate_name_or_db(error, ENTITY))?)
 }
 
 pub async fn update(
@@ -120,8 +105,9 @@ pub async fn update(
         id
     )
     .fetch_optional(&ctx.pool)
-    .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, "Leave Type".to_owned()))
+    .await
+    .map_err(|error| AppError::duplicate_name_or_db(error, ENTITY))?
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn delete(id: i32, ctx: &AppState) -> Result<(), AppError> {
@@ -140,7 +126,7 @@ pub async fn ensure_exists(id: i32, ctx: &AppState) -> Result<(), AppError> {
     if exists {
         Ok(())
     } else {
-        Err(AppError::EntityNotFound(id, "Leave Type".to_owned()))
+        Err(AppError::EntityNotFound(id, ENTITY.to_owned()))
     }
 }
 
@@ -156,7 +142,7 @@ pub async fn ensure_not_referenced(id: i32, ctx: &AppState) -> Result<(), AppErr
     .unwrap_or(0);
 
     if count > 0 {
-        Err(AppError::RelatedEntity("Leave Type".to_owned()))
+        Err(AppError::RelatedEntity(ENTITY.to_owned()))
     } else {
         Ok(())
     }

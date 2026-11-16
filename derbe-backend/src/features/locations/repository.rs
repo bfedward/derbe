@@ -4,6 +4,8 @@ use crate::{
     error::AppError, features::locations::dto::response::LocationResponse, http::AppState,
 };
 
+const ENTITY: &str = "Location";
+
 pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LocationResponse, AppError> {
     sqlx::query_as!(
         LocationResponse,
@@ -16,7 +18,7 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LocationResponse, AppE
     )
     .fetch_optional(&ctx.pool)
     .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, "Location".to_owned()))
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn list(ctx: &AppState) -> Result<Vec<LocationResponse>, AppError> {
@@ -42,7 +44,8 @@ pub async fn create(dto: LocationCreate, ctx: &AppState) -> Result<LocationRespo
         dto.name,
     )
     .fetch_one(&ctx.pool)
-    .await?)
+    .await
+    .map_err(|error| AppError::duplicate_name_or_db(error, ENTITY))?)
 }
 
 pub async fn update(
@@ -63,8 +66,9 @@ pub async fn update(
         id
     )
     .fetch_optional(&ctx.pool)
-    .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, "Location".to_owned()))
+    .await
+    .map_err(|error| AppError::duplicate_name_or_db(error, ENTITY))?
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn delete(id: i32, ctx: &AppState) -> Result<(), AppError> {
@@ -83,7 +87,7 @@ pub async fn ensure_exists(id: i32, ctx: &AppState) -> Result<(), AppError> {
     if exists {
         Ok(())
     } else {
-        Err(AppError::EntityNotFound(id, "Location".to_owned()))
+        Err(AppError::EntityNotFound(id, ENTITY.to_owned()))
     }
 }
 
@@ -99,25 +103,7 @@ pub async fn ensure_not_referenced(id: i32, ctx: &AppState) -> Result<(), AppErr
     .unwrap_or(0);
 
     if count > 0 {
-        Err(AppError::RelatedEntity("Location".to_owned()))
-    } else {
-        Ok(())
-    }
-}
-
-pub async fn ensure_name_available(name: &str, ctx: &AppState) -> Result<(), AppError> {
-    let count = sqlx::query_scalar!(
-        "
-            SELECT COUNT(*) FROM locations WHERE UPPER(name) = $1
-        ",
-        name.to_uppercase()
-    )
-    .fetch_one(&ctx.pool)
-    .await?
-    .unwrap_or(0);
-
-    if count > 0 {
-        Err(AppError::DuplicateNamedEntity("Location".to_owned()))
+        Err(AppError::RelatedEntity(ENTITY.to_owned()))
     } else {
         Ok(())
     }

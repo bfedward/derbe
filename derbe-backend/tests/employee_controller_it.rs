@@ -1,6 +1,6 @@
 use reqwest::StatusCode;
 use test_helpers::{
-    cleanup_test_app, create_division, create_employee, create_location, do_post,
+    cleanup_test_app, create_division, create_employee, create_location, do_post, employee_body,
     get_response_body_as_json,
 };
 
@@ -127,16 +127,7 @@ async fn cannot_create_employee_with_blank_first_name() {
     let division = create_division("Division", &client, &app).await;
     let location = create_location("Location", &client, &app).await;
 
-    let body = serde_json::json!({
-        "first_name": "", // first name is blank
-        "last_name": "Testerson",
-        "job_title": "Tester",
-        "division_id": division["id"],
-        "employment_type": "Permanent",
-        "location_id": location["id"],
-        "manager_unid": None::<String>,
-        "email": "test@derbe.com"
-    });
+    let body = employee_body("", "test@derbe.com", &division, &location); // first name is blank
 
     let response = do_post(
         &client,
@@ -153,5 +144,65 @@ async fn cannot_create_employee_with_blank_first_name() {
     assert!(response_text.contains("first_name"));
 
     // Clean up the test application
+    cleanup_test_app(&config.database, app).await;
+}
+
+#[tokio::test]
+async fn employee_email_is_stored_lowercase() {
+    let (app, config) = test_helpers::spawn_app().await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
+
+    let division = create_division("Division", &client, &app).await;
+    let location = create_location("Location", &client, &app).await;
+    let body = employee_body("Dorothy", "  Dorothy@Derbe.COM ", &division, &location);
+
+    let response = do_post(
+        &client,
+        format!("{}/employees", app.address),
+        body,
+        "Failed to create employee",
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let response_json = get_response_body_as_json(response).await;
+
+    assert_eq!(response_json["employee"]["email"], "dorothy@derbe.com");
+
+    cleanup_test_app(&config.database, app).await;
+}
+
+#[tokio::test]
+async fn cannot_create_employee_with_invalid_email() {
+    let (app, config) = test_helpers::spawn_app().await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
+
+    let division = create_division("Division", &client, &app).await;
+    let location = create_location("Location", &client, &app).await;
+    let body = employee_body("Dorothy", "not-an-email", &division, &location);
+
+    let response = do_post(
+        &client,
+        format!("{}/employees", app.address),
+        body,
+        "Failed to create employee",
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let response_text: String = test_helpers::get_response_body(response).await;
+
+    assert!(response_text.contains("email"));
+
     cleanup_test_app(&config.database, app).await;
 }

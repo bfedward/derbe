@@ -157,3 +157,26 @@ async fn cannot_get_nonexistant_division() {
     // Clean up the test application
     cleanup_test_app(&config.database, app).await;
 }
+
+#[tokio::test]
+async fn cannot_create_divisions_with_names_differing_only_by_case() {
+    let (app, config) = spawn_app().await;
+    let (_admin, client) = test_helpers::login_as(
+        &app,
+        derbe_backend::features::employees::model::EmployeeRole::Admin,
+    )
+    .await;
+
+    create_division("The Division", &client, &app).await;
+
+    let response = client
+        .post(format!("{}/divisions", app.address))
+        .json(&serde_json::json!({ "name": "THE DIVISION" }))
+        .send()
+        .await
+        .expect("Failed to create division");
+
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+
+    cleanup_test_app(&config.database, app).await;
+}

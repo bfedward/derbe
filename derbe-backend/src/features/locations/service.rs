@@ -20,10 +20,5 @@ pub async fn ensure_exists(id: i32, ctx: &AppState) -> Result<(), AppError> {
 }
 
 pub async fn create(dto: LocationCreate, ctx: &AppState) -> Result<LocationResponse, AppError> {
-    validate_create(&dto, ctx).await?;
     repository::create(dto, ctx).await
-}
-
-pub async fn validate_create(dto: &LocationCreate, ctx: &AppState) -> Result<(), AppError> {
-    repository::ensure_name_available(&dto.name, ctx).await
 }

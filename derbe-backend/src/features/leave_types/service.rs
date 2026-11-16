@@ -18,10 +18,5 @@ pub async fn ensure_exists(id: i32, ctx: &AppState) -> Result<(), AppError> {
 }
 
 pub async fn create(dto: LeaveTypeCreate, ctx: &AppState) -> Result<LeaveTypeResponse, AppError> {
-    validate_create(&dto, ctx).await?;
     repository::create(dto, ctx).await
-}
-
-pub async fn validate_create(dto: &LeaveTypeCreate, ctx: &AppState) -> Result<(), AppError> {
-    repository::ensure_name_available(&dto.name, ctx).await
 }

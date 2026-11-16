@@ -4,6 +4,30 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Name uniqueness for divisions, leave types and locations is enforced by the database only. Migrations `0001`, `0002` and `0003` replace `UNIQUE (name)` with a unique index on `lower(name)`, so "Sales" and "sales" conflict. The check-then-insert `ensure_name_available` (racy, and case sensitive) is removed. `AppError::duplicate_name_or_db` maps a unique violation to `DuplicateNamedEntity` (409) and other errors to `DatabaseQueryError`. Local DBs must be recreated with `bash reset_db.sh --yes` from the repo root.
+
+Before:
+
+```rust
+ensure_name_available(&dto.name, ctx).await?;
+let row = query_as!(...).fetch_one(&ctx.pool).await?;
+```
+
+After:
+
+```rust
+let row = query_as!(...)
+    .fetch_one(&ctx.pool)
+    .await
+    .map_err(|error| AppError::duplicate_name_or_db(error, ENTITY))?;
+```
+
+- Employee emails are validated (`#[validate(email)]`, 400 on bad input instead of a 500 from the DB) and stored trimmed and lowercase. Login lowercases the email too.
+- Each repository has a `const ENTITY: &str` instead of repeating the entity name string. This also fixes "LeaveRequest" vs "Leave Request" in leave request error messages (now "Leave Request").
+- Integration tests share `leave_type_body` and `employee_body` helpers instead of repeating JSON bodies. New tests cover invalid email, lowercase email storage, and case-insensitive duplicate names.
+- `EmployeeCreate.manager_unid` and `EmployeeUpdate.manager_unid` bindings are `string | null` (were `string | undefined`-like, mismatching the API). Frontend: `employeeQueryOptions` takes `string | undefined` and uses `skipToken`, the leave request form no longer sends an undefined employee, and `protected-route.tsx` button has `type="button"`. `pnpm typecheck` and `biome check` are clean.
+- Dead code removed: `MyLeaveRequestRaw`, `EmployeeResponse::get_full_name`. `test_helpers.rs` allows `dead_code` because each test crate uses a different subset.
+
 - `leave_types` replaces the two dependent booleans `show_in_others_days` and `default_in_others_days` with one enum `others_days_visibility` (`Hidden`, `Shown`, `ShownByDefault`). The old pair allowed the invalid state "default but not shown". The enum is a Postgres type (`valid_others_days_visibilities`, created in migration `0001`), a Rust enum in `features/leave_types/model.rs`, and a generated TypeScript binding. The create form uses a select instead of two checkboxes. The three independent flags (`can_book_in_future`, `default_in_leave_request`, `show_in_approve_days`) stay booleans. This changes the JSON API and `0001`, so local DBs must be recreated with `bash reset_db.sh --yes` from the repo root.
 
 Before:

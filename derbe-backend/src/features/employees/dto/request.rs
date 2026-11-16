@@ -21,8 +21,9 @@ pub struct EmployeeCreate {
     pub division_id: i32,
     pub employment_type: EmploymentType,
     pub location_id: i32,
-    #[ts(type = "string")]
+    #[ts(type = "string | null")]
     pub manager_unid: Option<Uuid>,
+    #[validate(email)]
     pub email: String,
 }
 
@@ -57,7 +58,7 @@ impl TryFrom<EmployeeCreateRaw> for EmployeeCreate {
             employment_type: raw.employment_type,
             location_id: raw.location_id,
             manager_unid,
-            email: raw.email,
+            email: raw.email.trim().to_lowercase(),
         })
     }
 }
@@ -75,8 +76,9 @@ pub struct EmployeeUpdate {
     pub division_id: i32,
     pub employment_type: EmploymentType,
     pub location_id: i32,
-    #[ts(type = "string")]
+    #[ts(type = "string | null")]
     pub manager_unid: Option<Uuid>,
+    #[validate(email)]
     pub email: String,
 }
 
@@ -111,7 +113,7 @@ impl TryFrom<EmployeeUpdateRaw> for EmployeeUpdate {
             employment_type: raw.employment_type,
             location_id: raw.location_id,
             manager_unid,
-            email: raw.email,
+            email: raw.email.trim().to_lowercase(),
         })
     }
 }

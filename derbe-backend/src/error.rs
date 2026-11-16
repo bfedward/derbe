@@ -52,6 +52,18 @@ pub enum AppError {
     Forbidden,
 }
 
+impl AppError {
+    /// Turns a unique violation into `DuplicateNamedEntity`, any other database error stays a 500.
+    pub fn duplicate_name_or_db(error: sqlx::Error, entity: &str) -> Self {
+        match &error {
+            sqlx::Error::Database(db_error) if db_error.is_unique_violation() => {
+                Self::DuplicateNamedEntity(entity.to_owned())
+            }
+            _ => Self::DatabaseQueryError(error),
+        }
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         if let Self::DatabaseQueryError(error) = &self {

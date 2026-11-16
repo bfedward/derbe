@@ -20,12 +20,6 @@ pub struct EmployeeResponse {
     pub email: String,
 }
 
-impl EmployeeResponse {
-    pub fn get_full_name(&self) -> String {
-        format!("{} {}", self.first_name, self.last_name)
-    }
-}
-
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct EmployeeDetailsResponse {

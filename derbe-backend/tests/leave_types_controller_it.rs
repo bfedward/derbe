@@ -1,5 +1,5 @@
 use reqwest::StatusCode;
-use test_helpers::{create_leave_type, get_response_body_as_json, spawn_app};
+use test_helpers::{create_leave_type, get_response_body_as_json, leave_type_body, spawn_app};
 
 mod test_helpers;
 
@@ -41,15 +41,7 @@ async fn cannot_create_leave_types_with_duplicate_names() {
 
     create_leave_type(name, &client, &app).await;
 
-    let body = serde_json::json!({
-        "name": name,
-        "default_quota": Some(10.0),
-        "colour": "#FFFFFF",
-        "can_book_in_future": true,
-        "others_days_visibility": "ShownByDefault",
-        "default_in_leave_request": true,
-        "show_in_approve_days": true
-    });
+    let body = leave_type_body(name);
 
     let response = client
         .post(format!("{}/leaveTypes", app.address))
@@ -80,15 +72,8 @@ async fn cannot_create_leave_types_with_negative_default_quota() {
     )
     .await;
 
-    let body = serde_json::json!({
-        "name": "Leave Type",
-        "default_quota": Some(-10.0),
-        "colour": "#FFFFFF",
-        "can_book_in_future": true,
-        "others_days_visibility": "ShownByDefault",
-        "default_in_leave_request": true,
-        "show_in_approve_days": true
-    });
+    let mut body = leave_type_body("Leave Type");
+    body["default_quota"] = serde_json::json!(-10.0);
 
     let response = client
         .post(format!("{}/leaveTypes", app.address))

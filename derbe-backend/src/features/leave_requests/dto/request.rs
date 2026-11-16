@@ -195,24 +195,3 @@ pub struct MyLeaveRequest {
     pub date_from: NaiveDate,
     pub date_to: NaiveDate,
 }
-
-struct MyLeaveRequestRaw {
-    employee_unid: String,
-    leave_type_ids: Vec<i32>,
-    leave_statuses: Vec<LeaveStatus>,
-    date_from: NaiveDate,
-    date_to: NaiveDate,
-}
-
-impl TryFrom<MyLeaveRequestRaw> for MyLeaveRequest {
-    type Error = AppError;
-
-    fn try_from(raw: MyLeaveRequestRaw) -> Result<Self, Self::Error> {
-        Ok(Self {
-            leave_type_ids: raw.leave_type_ids,
-            leave_statuses: raw.leave_statuses,
-            date_from: raw.date_from,
-            date_to: raw.date_to,
-        })
-    }
-}

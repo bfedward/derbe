@@ -189,7 +189,7 @@ export function updateLeaveRequestStatus(id: number, input: LeaveRequestStatusUp
   return putJson<LeaveRequestResponse>(`${API_PATHS.leaveRequests}/${id}/status`, input);
 }
 
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, skipToken } from "@tanstack/react-query";
 import type { DivisionCreate } from "./bindings/DivisionCreate";
 import type { LocationCreate } from "./bindings/LocationCreate";
 
@@ -199,10 +199,13 @@ export const employeesQueryOptions = () =>
     queryFn: ({ signal }) => getEmployees(signal),
   });
 
-export const employeeQueryOptions = (employee_unid: string) =>
+export const employeeQueryOptions = (employee_unid: string | undefined) =>
   queryOptions({
-    queryKey: derbeKeys.employee(employee_unid),
-    queryFn: ({ signal }) => getEmployee(employee_unid, signal),
+    queryKey: derbeKeys.employee(employee_unid ?? ""),
+    queryFn:
+      employee_unid === undefined
+        ? skipToken
+        : ({ signal }) => getEmployee(employee_unid, signal),
   });
 
 export const employeeDetailsQueryOptions = () =>

@@ -100,9 +100,13 @@ export function LeaveRequestFormPage() {
         ...halfDayFlags(values.half_days),
         total_duration: leaveDuration(values.date_from, values.date_to, values.half_days),
       };
+      const employee_unid =
+        values.employee_unid ?? employeesQuery.data?.[0]?.employee_unid;
+      if (employee_unid === undefined) {
+        throw new Error("Choose an employee for this leave request.");
+      }
       const request: LeaveRequestCreate = {
-        employee_unid:
-          values.employee_unid ?? employeesQuery.data?.[0]?.employee_unid ?? undefined,
+        employee_unid,
         leave_type_id:
           values.leave_type_id ??
           leaveTypesQuery.data?.find((leaveType) => leaveType.default_in_leave_request)

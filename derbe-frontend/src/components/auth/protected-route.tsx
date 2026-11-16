@@ -25,7 +25,9 @@ export function ProtectedRoute() {
     return (
       <div>
         <p>Unable to verify your session. Please try again.</p>
-        <button onClick={() => refetch()}>Retry</button>
+        <button type="button" onClick={() => refetch()}>
+          Retry
+        </button>
       </div>
     );
   }

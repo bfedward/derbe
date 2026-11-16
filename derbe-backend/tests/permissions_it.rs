@@ -5,8 +5,8 @@ use derbe_backend::features::employees::model::EmployeeRole::{Admin, Demo, Manag
 use reqwest::{Client, Response, StatusCode};
 use serde_json::{json, Value};
 use test_helpers::{
-    cleanup_test_app, create_division, create_leave_type, get_response_body_as_json, login_as,
-    login_client, seed_employee, spawn_app, TestApp,
+    cleanup_test_app, create_division, create_leave_type, get_response_body_as_json,
+    leave_type_body, login_as, login_client, seed_employee, spawn_app, TestApp,
 };
 use uuid::Uuid;
 
@@ -217,15 +217,7 @@ async fn only_admin_can_create_leave_types() {
         let (_user, client) = login_as(&app, role).await;
         let response = client
             .post(format!("{}/leaveTypes", app.address))
-            .json(&json!({
-                "name": format!("Type of {role}"),
-                "default_quota": 10.0,
-                "colour": "#FFFFFF",
-                "can_book_in_future": true,
-                "others_days_visibility": "ShownByDefault",
-                "default_in_leave_request": true,
-                "show_in_approve_days": true
-            }))
+            .json(&leave_type_body(&format!("Type of {role}")))
             .send()
             .await
             .unwrap();
