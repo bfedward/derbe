@@ -32,7 +32,7 @@ pub async fn get_my_leave(
     Json(input): Json<MyLeaveRequest>,
 ) -> Result<Json<Vec<MyLeaveResponse>>, AppError> {
     AccessController::authorize(&user.role, Permission::ViewLeaveRequests)?;
-    let leaves = service::get_my_leave(input, &state).await?;
+    let leaves = service::get_my_leave(user.unid, input, &state).await?;
     Ok(Json(leaves))
 }
 

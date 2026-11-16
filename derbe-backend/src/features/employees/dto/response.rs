@@ -6,7 +6,7 @@ use crate::enums::EmploymentType;
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct EmployeeResponse {
-    pub unid: String,
+    pub employee_unid: String,
     pub first_name: String,
     pub last_name: String,
     pub job_title: String,
@@ -26,7 +26,7 @@ impl EmployeeResponse {
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct EmployeeDetailsResponse {
-    pub unid: String,
+    pub employee_unid: String,
     pub name: String,
     pub job_title: String,
     pub division: String,

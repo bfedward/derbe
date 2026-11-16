@@ -233,6 +233,7 @@ pub async fn ensure_not_referenced(_id: i32, _ctx: &AppState) -> Result<(), AppE
 }
 
 pub async fn get_my_leave(
+    employee_unid: Uuid,
     dto: MyLeaveRequest,
     ctx: &AppState,
 ) -> Result<Vec<MyLeaveResponse>, AppError> {
@@ -258,7 +259,7 @@ pub async fn get_my_leave(
                 AND date_to BETWEEN $4 AND $5
             ORDER BY lr.date_from DESC
             "#,
-        dto.employee_unid,
+        employee_unid,
         &dto.leave_type_ids,
         dto.leave_statuses as Vec<LeaveStatus>,
         dto.date_from,

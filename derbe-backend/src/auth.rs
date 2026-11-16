@@ -43,6 +43,12 @@ pub struct AuthenticatedUser {
     pub role: EmployeeRole,
 }
 
+struct MeRow {
+    unid: Uuid,
+    email: String,
+    role: String,
+}
+
 pub async fn require_auth(
     State(state): State<AppState>,
     mut request: Request,
@@ -157,7 +163,6 @@ fn verify_token(token: &str, secret: &str) -> Result<Claims, jsonwebtoken::error
     Ok(data.claims)
 }
 
-/// POST /api/auth/login
 pub async fn login(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -222,7 +227,56 @@ pub async fn login(
     (jar.add(cookie), Json(json!({"ok": true}))).into_response()
 }
 
-/// POST /api/auth/logout
+pub async fn me(State(state): State<AppState>, jar: CookieJar) -> impl IntoResponse {
+    let token = match jar.get("session") {
+        Some(c) => c.value().to_string(),
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(json!({"error": "no session"})),
+            )
+                .into_response()
+        }
+    };
+
+    let Ok(claims) = verify_token(&token, state.jwt_secret.expose_secret()) else {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(json!({"error": "invalid token"})),
+        )
+            .into_response();
+    };
+
+    let row = sqlx::query_as!(MeRow, "SELECT unid, email, role as \"role!\" FROM employees WHERE unid = $1 AND deleted_at IS NULL", claims.sub)
+        .fetch_optional(&state.pool)
+        .await;
+
+    match row {
+        Ok(Some(r)) => (
+            StatusCode::OK,
+            Json(json!({
+                "unid": r.unid,
+                "email": r.email,
+                "role": r.role
+            })),
+        )
+            .into_response(),
+        Ok(None) => (
+            StatusCode::UNAUTHORIZED,
+            Json(json!({"error": "user not found"})),
+        )
+            .into_response(),
+        Err(e) => {
+            tracing::error!("Failed to fetch current user: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": "internal server error"})),
+            )
+                .into_response()
+        }
+    }
+}
+
 pub async fn logout(jar: CookieJar) -> impl IntoResponse {
     let cookie = Cookie::build(("session", ""))
         .http_only(true)

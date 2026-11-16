@@ -38,6 +38,8 @@ import {
   NewLocationPage,
   OrganisationPage,
 } from "@/pages";
+import { ProtectedRoute } from "./components/auth/protected-route";
+import { LoginPage } from "./pages/login-page";
 
 function NavigationMenu({
   title,
@@ -141,23 +143,28 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<HomePage />} />
-          <Route path="my-leave" element={<MyLeavePage />} />
-          <Route path="all-leave" element={<AllLeavePage />} />
-          <Route path="leave-request" element={<LeaveRequestFormPage />} />
-          <Route path="leave-request/:id" element={<LeaveRequestProfilePage />} />
-          <Route path="organisation" element={<OrganisationPage />} />
-          <Route path="employee/new" element={<EmployeeFormPage />} />
-          <Route path="employee/:id" element={<EmployeeProfilePage />} />
-          <Route path="leave-types" element={<LeaveTypesPage />} />
-          <Route path="leave-types/new" element={<NewLeaveTypePage />} />
-          <Route path="locations" element={<LocationsPage />} />
-          <Route path="locations/new" element={<NewLocationPage />} />
-          <Route path="divisions" element={<DivisionsPage />} />
-          <Route path="divisions/new" element={<NewDivisionPage />} />
-          <Route path="*" element={<NotFoundPage />} />
+        <Route path="/login" element={<LoginPage />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route index element={<HomePage />} />
+            <Route path="my-leave" element={<MyLeavePage />} />
+            <Route path="all-leave" element={<AllLeavePage />} />
+            <Route path="leave-request" element={<LeaveRequestFormPage />} />
+            <Route path="leave-request/:id" element={<LeaveRequestProfilePage />} />
+            <Route path="organisation" element={<OrganisationPage />} />
+            <Route path="employee/new" element={<EmployeeFormPage />} />
+            <Route path="employee/:id" element={<EmployeeProfilePage />} />
+            <Route path="leave-types" element={<LeaveTypesPage />} />
+            <Route path="leave-types/new" element={<NewLeaveTypePage />} />
+            <Route path="locations" element={<LocationsPage />} />
+            <Route path="locations/new" element={<NewLocationPage />} />
+            <Route path="divisions" element={<DivisionsPage />} />
+            <Route path="divisions/new" element={<NewDivisionPage />} />
+          </Route>
         </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

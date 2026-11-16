@@ -107,10 +107,11 @@ async fn validate_status_update_rules(
 }
 
 pub async fn get_my_leave(
+    employee_unid: Uuid,
     my_leave_request: MyLeaveRequest,
     ctx: &AppState,
 ) -> Result<Vec<MyLeaveResponse>, AppError> {
-    repository::get_my_leave(my_leave_request, ctx).await
+    repository::get_my_leave(employee_unid, my_leave_request, ctx).await
 }
 
 pub async fn get_all_leave(

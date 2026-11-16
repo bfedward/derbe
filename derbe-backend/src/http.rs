@@ -13,7 +13,7 @@ use tokio::net::TcpListener;
 use tower_http::cors::{AllowCredentials, CorsLayer};
 
 use crate::{
-    auth::{self, login, logout},
+    auth::{self, login, logout, me},
     configuration::{AppEnvironment, ApplicationSettings, Settings},
     routes,
 };
@@ -71,7 +71,8 @@ pub fn app_router(state: AppState, settings: &ApplicationSettings) -> Router {
     let public = Router::new()
         .route("/health", get(health))
         .route("/login", post(login))
-        .route("/logout", post(logout));
+        .route("/logout", post(logout))
+        .route("/me", get(me));
 
     Router::new()
         .merge(protected)

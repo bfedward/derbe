@@ -204,7 +204,7 @@ pub async fn get_employee_details_table(
             EmployeeDetailsResponse,
             r#"
             SELECT
-                e.unid,
+                e.unid AS "employee_unid",
                 CONCAT(e.first_name, ' ', e.last_name) AS "name!: std::string::String",
                 e.job_title,
                 d.name AS "division!: std::string::String",

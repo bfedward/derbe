@@ -18,12 +18,27 @@ import type { MyLeaveResponse } from "@/bindings/MyLeaveResponse";
 import { dateRangeIso } from "@/lib/dates";
 import { derbeKeys } from "@/query-keys";
 
-const API_DEFAULT_BASE_URL = "http://127.0.0.1:8001";
+const API_DEFAULT_BASE_URL = "http://localhost:8001";
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? API_DEFAULT_BASE_URL).replace(
   /\/$/,
   "",
 );
+
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+interface CurrentUser {
+  unid: string;
+  email: string;
+  role: string;
+}
+
 const API_PATHS = {
+  login: "/login",
+  logout: "/logout",
+  me: "/me",
   divisions: "/divisions",
   employees: "/employees",
   employeeDetails: "/employees/detailsTable",
@@ -34,7 +49,6 @@ const API_PATHS = {
   locations: "/locations",
 } as const;
 
-export const DEFAULT_EMPLOYEE_ID = 1;
 export const DEFAULT_LEAVE_TYPE_IDS = [1, 5] as const;
 export const DEFAULT_LEAVE_STATUSES: LeaveStatus[] = ["Pending"];
 
@@ -56,6 +70,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -67,15 +82,33 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (response.status === 204) return undefined as T;
+  if (response.status === 401) return undefined as T;
+  if (response.status === 403) return undefined as T;
   return (await response.json()) as T;
 }
 
-function postJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
-  return request<T>(path, { method: "POST", body: JSON.stringify(body), signal });
+function postJson<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  return request<T>(path, {
+    method: "POST",
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    signal,
+  });
 }
 
 function putJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
   return request<T>(path, { method: "PUT", body: JSON.stringify(body), signal });
+}
+
+export function login(input: LoginRequest) {
+  return postJson<{ ok: boolean }>(API_PATHS.login, input);
+}
+
+export function logout() {
+  return postJson<{ ok: boolean }>(API_PATHS.logout);
+}
+
+export function getCurrentUser() {
+  return request<CurrentUser>(API_PATHS.me);
 }
 
 export function getEmployees(signal?: AbortSignal) {
@@ -86,16 +119,16 @@ export function getEmployeeDetails(signal?: AbortSignal) {
   return request<EmployeeDetailsResponse[]>(API_PATHS.employeeDetails, { signal });
 }
 
-export function getEmployee(id: number, signal?: AbortSignal) {
-  return request<EmployeeResponse>(`${API_PATHS.employees}/${id}`, { signal });
+export function getEmployee(employee_unid: string, signal?: AbortSignal) {
+  return request<EmployeeResponse>(`${API_PATHS.employees}/${employee_unid}`, { signal });
 }
 
 export function createEmployee(input: EmployeeCreate) {
   return postJson<EmployeeResponse>(API_PATHS.employees, input);
 }
 
-export function updateEmployee(id: number, input: EmployeeUpdate) {
-  return putJson<EmployeeResponse>(`${API_PATHS.employees}/${id}`, input);
+export function updateEmployee(employee_unid: string, input: EmployeeUpdate) {
+  return putJson<EmployeeResponse>(`${API_PATHS.employees}/${employee_unid}`, input);
 }
 
 export function getDivisions(signal?: AbortSignal) {
@@ -128,7 +161,6 @@ export function createLeaveType(input: LeaveTypeCreate) {
 
 export function getMyLeave(year: number, signal?: AbortSignal) {
   const input: MyLeaveRequest = {
-    employee_id: DEFAULT_EMPLOYEE_ID,
     leave_type_ids: [...DEFAULT_LEAVE_TYPE_IDS],
     leave_statuses: DEFAULT_LEAVE_STATUSES,
     date_from: `${year}-01-01`,
@@ -167,10 +199,10 @@ export const employeesQueryOptions = () =>
     queryFn: ({ signal }) => getEmployees(signal),
   });
 
-export const employeeQueryOptions = (id: number) =>
+export const employeeQueryOptions = (employee_unid: string) =>
   queryOptions({
-    queryKey: derbeKeys.employee(id),
-    queryFn: ({ signal }) => getEmployee(id, signal),
+    queryKey: derbeKeys.employee(employee_unid),
+    queryFn: ({ signal }) => getEmployee(employee_unid, signal),
   });
 
 export const employeeDetailsQueryOptions = () =>

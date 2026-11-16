@@ -4,12 +4,7 @@ import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import {
-  createLeaveRequest,
-  DEFAULT_EMPLOYEE_ID,
-  employeesQueryOptions,
-  leaveTypesQueryOptions,
-} from "@/api";
+import { createLeaveRequest, employeesQueryOptions, leaveTypesQueryOptions } from "@/api";
 import type { LeaveRequestCreate } from "@/bindings/LeaveRequestCreate";
 import { PageHeading } from "@/components/page-heading";
 import { ErrorAlert, QueryMessage } from "@/components/query-message";
@@ -40,10 +35,8 @@ import { derbeKeys } from "@/query-keys";
 
 const leaveRequestFormSchema = z
   .object({
-    employee_id: z
-      .number()
-      .int()
-      .positive()
+    employee_unid: z
+      .string()
       .nullable()
       .refine((value): boolean => value !== null, "Choose an employee."),
     leave_type_id: z
@@ -73,7 +66,7 @@ export function LeaveRequestFormPage() {
   const form = useForm<LeaveRequestFormValues>({
     resolver: zodResolver(leaveRequestFormSchema),
     defaultValues: {
-      employee_id: null,
+      employee_unid: null,
       leave_type_id: null,
       date_from: today,
       date_to: today,
@@ -88,8 +81,8 @@ export function LeaveRequestFormPage() {
   const duration = leaveDuration(dateFrom, dateTo, halfDays);
 
   useEffect(() => {
-    if (getValues("employee_id") === null && employeesQuery.data?.[0]) {
-      setValue("employee_id", employeesQuery.data[0].id);
+    if (getValues("employee_unid") === null && employeesQuery.data?.[0]) {
+      setValue("employee_unid", employeesQuery.data[0].employee_unid);
     }
     if (getValues("leave_type_id") === null && leaveTypesQuery.data?.length) {
       const defaultLeaveType =
@@ -108,8 +101,8 @@ export function LeaveRequestFormPage() {
         total_duration: leaveDuration(values.date_from, values.date_to, values.half_days),
       };
       const request: LeaveRequestCreate = {
-        employee_id:
-          values.employee_id ?? employeesQuery.data?.[0]?.id ?? DEFAULT_EMPLOYEE_ID,
+        employee_unid:
+          values.employee_unid ?? employeesQuery.data?.[0]?.employee_unid ?? undefined,
         leave_type_id:
           values.leave_type_id ??
           leaveTypesQuery.data?.find((leaveType) => leaveType.default_in_leave_request)
@@ -155,12 +148,12 @@ export function LeaveRequestFormPage() {
             >
               <RHFField
                 control={control}
-                name="employee_id"
+                name="employee_unid"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Employee</FormLabel>
                     <Select
-                      value={field.value ? String(field.value) : undefined}
+                      value={field.value ? field.value : undefined}
                       onValueChange={(value) => field.onChange(Number(value))}
                     >
                       <FormControl>
@@ -170,7 +163,10 @@ export function LeaveRequestFormPage() {
                       </FormControl>
                       <SelectContent>
                         {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={String(employee.id)}>
+                          <SelectItem
+                            key={employee.employee_unid}
+                            value={employee.employee_unid}
+                          >
                             {employee.first_name} {employee.last_name}
                           </SelectItem>
                         ))}

@@ -190,8 +190,6 @@ pub struct AllLeaveRequest {
 #[derive(Debug, Deserialize, TS)]
 #[ts(export)]
 pub struct MyLeaveRequest {
-    #[ts(type = "string")]
-    pub employee_unid: Uuid,
     pub leave_type_ids: Vec<i32>,
     pub leave_statuses: Vec<LeaveStatus>,
     pub date_from: NaiveDate,
@@ -210,11 +208,7 @@ impl TryFrom<MyLeaveRequestRaw> for MyLeaveRequest {
     type Error = AppError;
 
     fn try_from(raw: MyLeaveRequestRaw) -> Result<Self, Self::Error> {
-        let employee_unid = Uuid::parse_str(&raw.employee_unid)
-            .map_err(|_| AppError::InvalidUuid(raw.employee_unid))?;
-
         Ok(Self {
-            employee_unid,
             leave_type_ids: raw.leave_type_ids,
             leave_statuses: raw.leave_statuses,
             date_from: raw.date_from,

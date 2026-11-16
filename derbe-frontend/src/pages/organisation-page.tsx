@@ -61,7 +61,7 @@ export function OrganisationPage() {
             <TableBody>
               {employees.map((employee) => {
                 const manager = employees.find(
-                  (candidate) => candidate.id === employee.manager_id,
+                  (candidate) => candidate.employee_unid === employee.manager_unid,
                 );
                 const division = divisionsQuery.data?.find(
                   (candidate) => candidate.id === employee.division_id,
@@ -70,11 +70,11 @@ export function OrganisationPage() {
                   (candidate) => candidate.id === employee.location_id,
                 );
                 return (
-                  <TableRow key={employee.id}>
+                  <TableRow key={employee.employee_unid}>
                     <TableCell className="font-medium">
                       <Link
                         className="text-primary hover:underline"
-                        to={`/employee/${employee.id}`}
+                        to={`/employee/${employee.employee_unid}`}
                       >
                         {employee.first_name} {employee.last_name}
                       </Link>
@@ -89,7 +89,6 @@ export function OrganisationPage() {
                         : EMPTY_VALUE}
                     </TableCell>
                     <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.phone ?? EMPTY_VALUE}</TableCell>
                   </TableRow>
                 );
               })}

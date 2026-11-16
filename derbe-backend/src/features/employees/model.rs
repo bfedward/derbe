@@ -21,7 +21,7 @@ pub struct Employee {
 impl From<Employee> for EmployeeResponse {
     fn from(value: Employee) -> Self {
         Self {
-            unid: value.unid.to_string(),
+            employee_unid: value.unid.to_string(),
             first_name: value.first_name,
             last_name: value.last_name,
             job_title: value.job_title,
