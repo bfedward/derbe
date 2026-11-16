@@ -4,6 +4,20 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- The local database reset script moved from `derbe-backend/` to the repository root, next to `README.md`. It now changes into `derbe-backend` itself to find `.env` and `migrations`, so it runs from the root. Behaviour is unchanged (needs `--yes`, refuses non-local hosts).
+
+Before:
+
+```text
+cd derbe-backend && bash reset_db.sh --yes
+```
+
+After:
+
+```text
+bash reset_db.sh --yes
+```
+
 - Integration tests compile and pass again, and the permission layer is now tested through the real router. `test_helpers.rs` builds the current `AppState` and `app_router`, and gets `seed_employee` (inserts an employee with a role, bcrypt password), `login_client` (logs in via `POST /login`, keeps the session cookie) and `login_as(role)`. The five old `*_controller_it.rs` files log in as Admin and use the current JSON shapes (UUID `employee_unid`, `manager_unid`, no `phone`). New `tests/permissions_it.rs` has 18 tests: 401 without a session, wrong password, deleted employee cannot log in, `/me` per role, Admin-only creates (divisions, locations, leave types), every role can read, Manager creates employees but RegularUser and Demo cannot, no update of someone else, own leave request only, Manager approves a report but not their own leave or a stranger's, rejected cannot return to Pending. `EmployeeRole` derives `Display` (used by the helpers). Seeded employees own one "Seed division" and one "Seed location", so list tests find their row by name.
 
 Before:

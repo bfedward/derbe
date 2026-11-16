@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Drops the local database, recreates it and runs all migrations.
-# Local development only. Run from derbe-backend: bash reset_db.sh --yes
+# Local development only. Run from the repository root: bash reset_db.sh --yes
 set -euo pipefail
+
+# .env and migrations live in derbe-backend, whatever the caller's directory.
+cd "$(dirname "${BASH_SOURCE[0]}")/derbe-backend"
 
 if [[ "${1:-}" != "--yes" ]]; then
     echo "Refusing to reset. Run: bash reset_db.sh --yes"
