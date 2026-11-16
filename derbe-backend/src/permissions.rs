@@ -104,20 +104,6 @@ impl AccessController {
         }
     }
 
-    pub fn authorize_get_leave_request(
-        actor: &AuthenticatedUser,
-        target: &EmployeeAccess,
-    ) -> Result<(), AppError> {
-        Self::authorize_leave_request_core(actor, target, Permission::ViewLeaveRequest)
-    }
-
-    pub fn authorize_get_my_leave_requests(
-        actor: &AuthenticatedUser,
-        target: &EmployeeAccess,
-    ) -> Result<(), AppError> {
-        Self::authorize_leave_request_core(actor, target, Permission::ViewLeaveRequest)
-    }
-
     pub fn authorize_create_leave_request(
         actor: &AuthenticatedUser,
         target: &EmployeeAccess,

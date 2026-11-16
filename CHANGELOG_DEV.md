@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Removed `authorize_get_leave_request` and `authorize_get_my_leave_requests` from `permissions.rs`. No handler called them: the three GET leave request handlers only check the role, so any employee can read any leave request. Behaviour is unchanged. Who may read what is still to decide (see `SUGGESTIONS_W3.md` item 5).
+
 - Added permission matrix tests in `permissions.rs`: one test per role lists every permission it gets, checked against all 24 `Permission` variants. Adding or removing a permission in `has_permission` now fails a test until the expected list is updated on purpose.
 
 - Fixed: a RegularUser could put their own rejected or accepted leave request back to `Pending`. Added `LeaveStatus::can_become` and checked it in `update_leave_request_status` before the permission match. A rejected request is final, an accepted one can only be cancelled, and a request waiting for more info can be resubmitted or decided. `update_leave_request` (editing dates) is unchanged and still to decide.
