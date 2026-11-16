@@ -4,6 +4,25 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `require_auth`, `login`, `me` and `logout` now return `Result<_, AppError>` instead of building `(StatusCode, Json(json!(...)))` six times. New `AppError::Unauthorized(&'static str)` (401) and `AppError::TokenFailure` (500). Cookie reading uses `CookieJar` instead of splitting the `Cookie` header by hand (`extract_session_cookie` is gone), and the cookie name is one `SESSION_COOKIE` constant. Error messages for 401 are unchanged (`no session`, `invalid token`, `employee not found`, `invalid credentials`); a database error is now the standard 500 `AppError::DatabaseQueryError` (it was a custom `db error` body).
+
+Before:
+
+```rust
+let Some(token) = extract_session_cookie(request.headers()) else {
+    tracing::warn!(path, "require_auth: no session cookie");
+    return (StatusCode::UNAUTHORIZED, axum::Json(json!({"error": "no session"}))).into_response();
+};
+```
+
+After:
+
+```rust
+let token = jar
+    .get(SESSION_COOKIE)
+    .ok_or(AppError::Unauthorized("no session"))?;
+```
+
 - `employees.role` is now a Postgres enum `valid_employee_roles` (like `valid_leave_statuses`), and `EmployeeRole` derives `sqlx::Type`. `require_auth` and `me` read the role as `EmployeeRole` directly, so the manual `from_str` parse and its 500 branch are gone. The text `CHECK` constraint on `employees.role` is removed (the type enforces the values). New migration `0005_create_valid_employee_roles_type.sql`; employees, leave statuses and leave requests moved to `0006` to `0008`. Local databases must be recreated (`reset_db.sh`).
 
 Before:

@@ -42,6 +42,12 @@ pub enum AppError {
     #[error("Failed to hash")]
     HashFailure,
 
+    #[error("Failed to create session token")]
+    TokenFailure,
+
+    #[error("{0}")]
+    Unauthorized(&'static str),
+
     #[error("Forbidden")]
     Forbidden,
 }
@@ -53,7 +59,10 @@ impl IntoResponse for AppError {
         }
 
         let status = match &self {
-            Self::DatabaseQueryError(_) | Self::HashFailure => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DatabaseQueryError(_) | Self::HashFailure | Self::TokenFailure => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+            Self::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             Self::EntityUnidNotFound(_, _) => StatusCode::NOT_FOUND,
             Self::EntityNotFound(_, _) => StatusCode::NOT_FOUND,
             Self::RelatedEntity(_) | Self::ConstraintError(_) | Self::DuplicateNamedEntity(_) => {
@@ -67,5 +76,22 @@ impl IntoResponse for AppError {
         };
 
         (status, Json(json!({ "error": self.to_string() }))).into_response()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unauthorized_is_a_401_with_its_message() {
+        let response = AppError::Unauthorized("no session").into_response();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn token_failure_is_a_500() {
+        let response = AppError::TokenFailure.into_response();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 }

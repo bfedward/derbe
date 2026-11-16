@@ -1,8 +1,7 @@
 use axum::{
     extract::{Request, State},
-    http::{header, StatusCode},
     middleware::Next,
-    response::{IntoResponse, Response},
+    response::Response,
     Json,
 };
 use axum_extra::extract::{
@@ -12,11 +11,13 @@ use axum_extra::extract::{
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 use time::Duration;
 use uuid::Uuid;
 
-use crate::{configuration::AppEnvironment, enums::EmployeeRole, http::AppState};
+use crate::{configuration::AppEnvironment, enums::EmployeeRole, error::AppError, http::AppState};
+
+const SESSION_COOKIE: &str = "session";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -49,34 +50,13 @@ struct MeRow {
 
 pub async fn require_auth(
     State(state): State<AppState>,
+    jar: CookieJar,
     mut request: Request,
     next: Next,
-) -> Response {
-    let path = request.uri().path().to_owned();
+) -> Result<Response, AppError> {
+    let claims = session_claims(&jar, &state)?;
 
-    let Some(token) = extract_session_cookie(request.headers()) else {
-        tracing::warn!(path, "require_auth: no session cookie");
-        return (
-            StatusCode::UNAUTHORIZED,
-            axum::Json(json!({"error": "no session"})),
-        )
-            .into_response();
-    };
-
-    let claims = match verify_token(&token, state.jwt_secret.expose_secret()) {
-        Ok(claims) => claims,
-        Err(e) => {
-            tracing::warn!(path, error = %e, "Invalid session token");
-
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({"error": "invalid token"})),
-            )
-                .into_response();
-        }
-    };
-
-    let role = match sqlx::query_scalar!(
+    let role = sqlx::query_scalar!(
         r#"
         SELECT role AS "role!: EmployeeRole"
         FROM employees
@@ -86,33 +66,26 @@ pub async fn require_auth(
         claims.sub
     )
     .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(role)) => role,
-        Ok(None) => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({"error": "employee not found"})),
-            )
-                .into_response();
-        }
-        Err(e) => {
-            tracing::error!("Failed to retrieve employee role: {e}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "internal server error"})),
-            )
-                .into_response();
-        }
-    };
+    .await?
+    .ok_or(AppError::Unauthorized("employee not found"))?;
 
     request.extensions_mut().insert(AuthenticatedUser {
         unid: claims.sub,
         role,
     });
 
-    next.run(request).await
+    Ok(next.run(request).await)
+}
+
+fn session_claims(jar: &CookieJar, state: &AppState) -> Result<Claims, AppError> {
+    let token = jar
+        .get(SESSION_COOKIE)
+        .ok_or(AppError::Unauthorized("no session"))?;
+
+    verify_token(token.value(), state.jwt_secret.expose_secret()).map_err(|e| {
+        tracing::warn!(error = %e, "invalid session token");
+        AppError::Unauthorized("invalid token")
+    })
 }
 
 fn make_token(user_unid: Uuid, state: &AppState) -> Result<String, jsonwebtoken::errors::Error> {
@@ -125,17 +98,6 @@ fn make_token(user_unid: Uuid, state: &AppState) -> Result<String, jsonwebtoken:
         },
         &EncodingKey::from_secret(state.jwt_secret.expose_secret().as_bytes()),
     )
-}
-
-fn extract_session_cookie(headers: &axum::http::HeaderMap) -> Option<String> {
-    let cookie_header = headers.get(header::COOKIE)?.to_str().ok()?;
-    for part in cookie_header.split(';') {
-        let part = part.trim();
-        if let Some(val) = part.strip_prefix("session=") {
-            return Some(val.to_string());
-        }
-    }
-    None
 }
 
 fn verify_token(token: &str, secret: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
@@ -152,56 +114,27 @@ pub async fn login(
     State(state): State<AppState>,
     jar: CookieJar,
     Json(body): Json<LoginRequest>,
-) -> impl IntoResponse {
+) -> Result<(CookieJar, Json<Value>), AppError> {
     let row = sqlx::query_as!(
         LoginRow,
         "SELECT unid, password FROM employees WHERE email = $1 AND deleted_at IS NULL",
         body.email
     )
     .fetch_optional(&state.pool)
-    .await;
-
-    let row = match row {
-        Ok(Some(r)) => r,
-        Ok(None) => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({"error": "invalid credentials"})),
-            )
-                .into_response()
-        }
-        Err(e) => {
-            tracing::error!("auth login db: {e}");
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "db error"})),
-            )
-                .into_response();
-        }
-    };
+    .await?
+    .ok_or(AppError::Unauthorized("invalid credentials"))?;
 
     if !pwhash::unix::verify(&body.password, &row.password) {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(json!({"error": "invalid credentials"})),
-        )
-            .into_response();
+        return Err(AppError::Unauthorized("invalid credentials"));
     }
 
-    let token = match make_token(row.unid, &state) {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("jwt encode: {e}");
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "token error"})),
-            )
-                .into_response();
-        }
-    };
+    let token = make_token(row.unid, &state).map_err(|e| {
+        tracing::error!("jwt encode: {e}");
+        AppError::TokenFailure
+    })?;
 
     let is_prod = state.app_env == AppEnvironment::Production;
-    let cookie = Cookie::build(("session", token))
+    let cookie = Cookie::build((SESSION_COOKIE, token))
         .http_only(true)
         .secure(is_prod)
         .same_site(SameSite::Lax)
@@ -209,64 +142,38 @@ pub async fn login(
         .max_age(Duration::days(30))
         .build();
 
-    (jar.add(cookie), Json(json!({"ok": true}))).into_response()
+    Ok((jar.add(cookie), Json(json!({"ok": true}))))
 }
 
-pub async fn me(State(state): State<AppState>, jar: CookieJar) -> impl IntoResponse {
-    let token = match jar.get("session") {
-        Some(c) => c.value().to_string(),
-        None => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({"error": "no session"})),
-            )
-                .into_response()
-        }
-    };
+pub async fn me(State(state): State<AppState>, jar: CookieJar) -> Result<Json<Value>, AppError> {
+    let claims = session_claims(&jar, &state)?;
 
-    let Ok(claims) = verify_token(&token, state.jwt_secret.expose_secret()) else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(json!({"error": "invalid token"})),
-        )
-            .into_response();
-    };
+    let row = sqlx::query_as!(
+        MeRow,
+        r#"
+        SELECT unid, email, role AS "role!: EmployeeRole"
+        FROM employees
+        WHERE unid = $1
+          AND deleted_at IS NULL
+        "#,
+        claims.sub
+    )
+    .fetch_optional(&state.pool)
+    .await?
+    .ok_or(AppError::Unauthorized("user not found"))?;
 
-    let row = sqlx::query_as!(MeRow, "SELECT unid, email, role AS \"role!: EmployeeRole\" FROM employees WHERE unid = $1 AND deleted_at IS NULL", claims.sub)
-        .fetch_optional(&state.pool)
-        .await;
-
-    match row {
-        Ok(Some(r)) => (
-            StatusCode::OK,
-            Json(json!({
-                "unid": r.unid,
-                "email": r.email,
-                "role": r.role
-            })),
-        )
-            .into_response(),
-        Ok(None) => (
-            StatusCode::UNAUTHORIZED,
-            Json(json!({"error": "user not found"})),
-        )
-            .into_response(),
-        Err(e) => {
-            tracing::error!("Failed to fetch current user: {e}");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "internal server error"})),
-            )
-                .into_response()
-        }
-    }
+    Ok(Json(json!({
+        "unid": row.unid,
+        "email": row.email,
+        "role": row.role
+    })))
 }
 
-pub async fn logout(jar: CookieJar) -> impl IntoResponse {
-    let cookie = Cookie::build(("session", ""))
+pub async fn logout(jar: CookieJar) -> (CookieJar, Json<Value>) {
+    let cookie = Cookie::build((SESSION_COOKIE, ""))
         .http_only(true)
         .path("/")
         .max_age(Duration::seconds(0))
         .build();
-    (jar.add(cookie), Json(json!({"ok": true}))).into_response()
+    (jar.add(cookie), Json(json!({"ok": true})))
 }
