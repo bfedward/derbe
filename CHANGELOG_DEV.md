@@ -4,6 +4,23 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `employees.role` is now a Postgres enum `valid_employee_roles` (like `valid_leave_statuses`), and `EmployeeRole` derives `sqlx::Type`. `require_auth` and `me` read the role as `EmployeeRole` directly, so the manual `from_str` parse and its 500 branch are gone. The text `CHECK` constraint on `employees.role` is removed (the type enforces the values). New migration `0005_create_valid_employee_roles_type.sql`; employees, leave statuses and leave requests moved to `0006` to `0008`. Local databases must be recreated (`reset_db.sh`).
+
+Before:
+
+```rust
+let role = match EmployeeRole::from_str(&role) {
+    Ok(role) => role,
+    Err(e) => { /* 500 "invalid employee role" */ }
+};
+```
+
+After:
+
+```rust
+SELECT role AS "role!: EmployeeRole" FROM employees WHERE unid = $1 AND deleted_at IS NULL
+```
+
 - Fixed: `0005_create_employees.sql` failed on PostgreSQL 17 with a syntax error. `CONSTRAINT x NOT NULL col` as a table constraint only exists from PostgreSQL 18. The six lines were redundant (each column already says `NOT NULL`), so they are removed and the migration now runs on PostgreSQL 17 and 18. Local databases must be recreated (`reset_db.sh`).
 
 Before:

@@ -5,7 +5,7 @@ CREATE TABLE employees (
     job_title VARCHAR NOT NULL,
     email TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "role" text DEFAULT 'RegularUser'::text NOT NULL,
+    "role" valid_employee_roles DEFAULT 'RegularUser' NOT NULL,
     division_id INTEGER NOT NULL REFERENCES divisions(id),
     employment_type VALID_EMPLOYMENT_TYPES NOT NULL,
     location_id INTEGER NOT NULL REFERENCES locations(id),
@@ -22,6 +22,5 @@ CREATE TABLE employees (
 	CONSTRAINT employees_email_change_token_key UNIQUE (email_change_token),
 	CONSTRAINT employees_email_check CHECK ((email = lower(email))),
 	CONSTRAINT employees_pkey PRIMARY KEY (unid),
-	CONSTRAINT employees_role_check CHECK ((role = ANY (ARRAY['Admin'::text, 'Manager'::text, 'RegularUser'::text, 'Demo'::text]))),
     CONSTRAINT employee_cant_manage_self check (manager_unid != unid)
 );

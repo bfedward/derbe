@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use axum::{
     extract::{Request, State},
     http::{header, StatusCode},
@@ -46,7 +44,7 @@ pub struct AuthenticatedUser {
 struct MeRow {
     unid: Uuid,
     email: String,
-    role: String,
+    role: EmployeeRole,
 }
 
 pub async fn require_auth(
@@ -80,7 +78,7 @@ pub async fn require_auth(
 
     let role = match sqlx::query_scalar!(
         r#"
-        SELECT role
+        SELECT role AS "role!: EmployeeRole"
         FROM employees
         WHERE unid = $1
           AND deleted_at IS NULL
@@ -104,19 +102,6 @@ pub async fn require_auth(
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({"error": "internal server error"})),
-            )
-                .into_response();
-        }
-    };
-
-    let role = match EmployeeRole::from_str(&role) {
-        Ok(role) => role,
-        Err(e) => {
-            tracing::error!("Invalid employee role in database: {e}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "invalid employee role"})),
             )
                 .into_response();
         }
@@ -247,7 +232,7 @@ pub async fn me(State(state): State<AppState>, jar: CookieJar) -> impl IntoRespo
             .into_response();
     };
 
-    let row = sqlx::query_as!(MeRow, "SELECT unid, email, role as \"role!\" FROM employees WHERE unid = $1 AND deleted_at IS NULL", claims.sub)
+    let row = sqlx::query_as!(MeRow, "SELECT unid, email, role AS \"role!: EmployeeRole\" FROM employees WHERE unid = $1 AND deleted_at IS NULL", claims.sub)
         .fetch_optional(&state.pool)
         .await;
 

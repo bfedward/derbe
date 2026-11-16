@@ -1,0 +1,1 @@
+CREATE TYPE valid_employee_roles AS ENUM ('Admin', 'Manager', 'RegularUser', 'Demo');
