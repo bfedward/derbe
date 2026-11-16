@@ -617,6 +617,9 @@ After:
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 ```
+||||||| parent of 6e1667e (docs: add SUGGESTIONS_W3 week 3 review)
+=======
+- Added `SUGGESTIONS_W3.md`: week 3 review of `feature/auth` (access controller, leave status transitions, migrations, tests, auth structure).
 
 ## [0.2.0] - 2026-11-07
 
