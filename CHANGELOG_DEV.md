@@ -4,6 +4,23 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `EmployeeRole` derives `sqlx::Type` over the existing `text` column (`#[sqlx(type_name = "TEXT")]`), so `require_auth` and `me` read the role as `EmployeeRole` directly and the manual `from_str` parse with its 500 branch is gone. No Postgres enum on purpose: roles may change over time, and the `CHECK` constraint on `employees.role` is easier to change than a Postgres enum type. An unknown value in the column fails to decode instead of being granted a role. No migration change.
+
+Before:
+
+```rust
+let role = match EmployeeRole::from_str(&role) {
+    Ok(role) => role,
+    Err(e) => { /* 500 "invalid employee role" */ }
+};
+```
+
+After:
+
+```rust
+SELECT role AS "role!: EmployeeRole" FROM employees WHERE unid = $1 AND deleted_at IS NULL
+```
+
 - `authorize_leave_request_core` and `authorize_update_employee` had the same `match` on the role (Admin: yes, Manager: self or a report, RegularUser: self, Demo: no). The rule is now data: `Scope::of(role)` says whose records a role may act on, and one `authorize_on(actor, target, permission)` applies it. A new role fails to compile in `Scope::of` until its scope is decided. Approve and reject keep their own rules (no self-approval). The existing tests pass unchanged.
 
 Before:
@@ -44,23 +61,6 @@ After:
 let token = jar
     .get(SESSION_COOKIE)
     .ok_or(AppError::Unauthorized("no session"))?;
-```
-
-- `employees.role` is now a Postgres enum `valid_employee_roles` (like `valid_leave_statuses`), and `EmployeeRole` derives `sqlx::Type`. `require_auth` and `me` read the role as `EmployeeRole` directly, so the manual `from_str` parse and its 500 branch are gone. The text `CHECK` constraint on `employees.role` is removed (the type enforces the values). New migration `0005_create_valid_employee_roles_type.sql`; employees, leave statuses and leave requests moved to `0006` to `0008`. Local databases must be recreated (`reset_db.sh`).
-
-Before:
-
-```rust
-let role = match EmployeeRole::from_str(&role) {
-    Ok(role) => role,
-    Err(e) => { /* 500 "invalid employee role" */ }
-};
-```
-
-After:
-
-```rust
-SELECT role AS "role!: EmployeeRole" FROM employees WHERE unid = $1 AND deleted_at IS NULL
 ```
 
 - Fixed: `0005_create_employees.sql` failed on PostgreSQL 17 with a syntax error. `CONSTRAINT x NOT NULL col` as a table constraint only exists from PostgreSQL 18. The six lines were redundant (each column already says `NOT NULL`), so they are removed and the migration now runs on PostgreSQL 17 and 18. Local databases must be recreated (`reset_db.sh`).
