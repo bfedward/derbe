@@ -4,6 +4,22 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Sorted `derbe-backend/Cargo.toml` dependencies alphabetically (features too) and relaxed versions to the major (`"1"`, or `"0.8"` for 0.x crates). `Cargo.lock` keeps the exact versions, so builds are unchanged.
+
+Before:
+
+```toml
+serde_json = "1.0.149"
+tokio = { version = "1.49.0", features = ["full"] }
+```
+
+After:
+
+```toml
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+```
+
 ## [0.2.0] - 2026-11-07
 
 ### Frontend naming and structure
