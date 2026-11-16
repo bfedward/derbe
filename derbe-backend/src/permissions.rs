@@ -273,6 +273,105 @@ mod tests {
         }
     }
 
+    const ALL_PERMISSIONS: [Permission; 24] = [
+        Permission::CreateDivision,
+        Permission::ViewDivisions,
+        Permission::UpdateDivision,
+        Permission::DeleteDivision,
+        Permission::CreateLocation,
+        Permission::ViewLocations,
+        Permission::UpdateLocation,
+        Permission::DeleteLocation,
+        Permission::CreateLeaveType,
+        Permission::ViewLeaveTypes,
+        Permission::UpdateLeaveType,
+        Permission::DeleteLeaveType,
+        Permission::CreateLeaveRequest,
+        Permission::ViewLeaveRequests,
+        Permission::ViewLeaveRequest,
+        Permission::UpdateLeaveRequest,
+        Permission::DeleteLeaveRequest,
+        Permission::CreateEmployee,
+        Permission::ViewEmployees,
+        Permission::ViewEmployee,
+        Permission::UpdateEmployee,
+        Permission::DeleteEmployee,
+        Permission::ApproveLeaveRequest,
+        Permission::RejectLeaveRequest,
+    ];
+
+    fn granted(role: EmployeeRole) -> Vec<Permission> {
+        ALL_PERMISSIONS
+            .into_iter()
+            .filter(|permission| role.has_permission(*permission))
+            .collect()
+    }
+
+    #[test]
+    fn admin_has_every_permission() {
+        assert_eq!(granted(EmployeeRole::Admin), ALL_PERMISSIONS.to_vec());
+    }
+
+    #[test]
+    fn manager_permissions() {
+        use Permission::*;
+        assert_eq!(
+            granted(EmployeeRole::Manager),
+            vec![
+                ViewDivisions,
+                ViewLocations,
+                ViewLeaveTypes,
+                CreateLeaveRequest,
+                ViewLeaveRequests,
+                ViewLeaveRequest,
+                UpdateLeaveRequest,
+                DeleteLeaveRequest,
+                CreateEmployee,
+                ViewEmployees,
+                ViewEmployee,
+                UpdateEmployee,
+                ApproveLeaveRequest,
+                RejectLeaveRequest,
+            ]
+        );
+    }
+
+    #[test]
+    fn regular_user_permissions() {
+        use Permission::*;
+        assert_eq!(
+            granted(EmployeeRole::RegularUser),
+            vec![
+                ViewDivisions,
+                ViewLocations,
+                ViewLeaveTypes,
+                CreateLeaveRequest,
+                ViewLeaveRequests,
+                ViewLeaveRequest,
+                UpdateLeaveRequest,
+                DeleteLeaveRequest,
+                ViewEmployees,
+                UpdateEmployee,
+                RejectLeaveRequest,
+            ]
+        );
+    }
+
+    #[test]
+    fn demo_can_only_read() {
+        use Permission::*;
+        assert_eq!(
+            granted(EmployeeRole::Demo),
+            vec![
+                ViewDivisions,
+                ViewLocations,
+                ViewLeaveTypes,
+                ViewLeaveRequests,
+                ViewEmployees,
+            ]
+        );
+    }
+
     #[test]
     fn manager_can_create_leave_for_themselves() {
         let sam = user(EmployeeRole::Manager);
