@@ -9,8 +9,8 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    auth::AuthenticatedUser,
     error::AppError,
+    features::auth::middleware::AuthenticatedUser,
     features::employees::{
         dto::{
             request::{EmployeeCreate, EmployeeUpdate},

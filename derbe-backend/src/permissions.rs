@@ -1,5 +1,5 @@
 use crate::{
-    auth::AuthenticatedUser, enums::EmployeeRole, error::AppError,
+    enums::EmployeeRole, error::AppError, features::auth::middleware::AuthenticatedUser,
     features::employees::model::EmployeeAccess,
 };
 

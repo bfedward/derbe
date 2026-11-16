@@ -6,9 +6,9 @@ use axum::{
 use validator::Validate;
 
 use crate::{
-    auth::AuthenticatedUser,
     enums::{LeaveStatus::Accepted, LeaveStatus::Pending},
     error::AppError,
+    features::auth::middleware::AuthenticatedUser,
     features::{
         employees,
         leave_requests::{

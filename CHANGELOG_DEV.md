@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Moved `src/auth.rs` into `src/features/auth/`, like the other features: `handlers.rs` (login, me, logout), `dto.rs` (`LoginRequest`, `MeResponse`), `model.rs`, `repository.rs` (the three SQL queries), `service.rs` (password check, cookies), `jwt.rs` (`make_token` now takes the secret, so it no longer needs `AppState`; 2 unit tests) and `middleware.rs` (`require_auth`, `AuthenticatedUser`). Behaviour, routes, cookies and JSON shapes are unchanged (`me` still returns `unid`, `email`, `role`). Imports change from `crate::auth::AuthenticatedUser` to `crate::features::auth::middleware::AuthenticatedUser`.
+
 - `EmployeeRole` derives `sqlx::Type` over the existing `text` column (`#[sqlx(type_name = "TEXT")]`), so `require_auth` and `me` read the role as `EmployeeRole` directly and the manual `from_str` parse with its 500 branch is gone. No Postgres enum on purpose: roles may change over time, and the `CHECK` constraint on `employees.role` is easier to change than a Postgres enum type. An unknown value in the column fails to decode instead of being granted a role. No migration change.
 
 Before:

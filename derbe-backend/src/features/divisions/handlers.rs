@@ -6,8 +6,8 @@ use axum::{
 use validator::Validate;
 
 use crate::{
-    auth::AuthenticatedUser,
     error::AppError,
+    features::auth::middleware::AuthenticatedUser,
     features::divisions::{
         dto::{request::DivisionCreate, response::DivisionResponse},
         service,

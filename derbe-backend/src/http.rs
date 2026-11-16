@@ -13,8 +13,11 @@ use tokio::net::TcpListener;
 use tower_http::cors::{AllowCredentials, CorsLayer};
 
 use crate::{
-    auth::{self, login, logout, me},
     configuration::{AppEnvironment, ApplicationSettings, Settings},
+    features::auth::{
+        handlers::{login, logout, me},
+        middleware::require_auth,
+    },
     routes,
 };
 
@@ -63,10 +66,8 @@ pub async fn serve(configuration: Settings) -> Result<(), ServeError> {
 }
 
 pub fn app_router(state: AppState, settings: &ApplicationSettings) -> Router {
-    let protected = routes::router().route_layer(middleware::from_fn_with_state(
-        state.clone(),
-        auth::require_auth,
-    ));
+    let protected =
+        routes::router().route_layer(middleware::from_fn_with_state(state.clone(), require_auth));
 
     let public = Router::new()
         .route("/health", get(health))

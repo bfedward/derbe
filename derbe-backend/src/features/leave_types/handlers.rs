@@ -5,8 +5,8 @@ use axum::{
 };
 
 use crate::{
-    auth::AuthenticatedUser,
     error::AppError,
+    features::auth::middleware::AuthenticatedUser,
     features::leave_types::{
         dto::{request::LeaveTypeCreate, response::LeaveTypeResponse},
         service,
