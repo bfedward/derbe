@@ -4,6 +4,29 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- SQL migrations `0001` to `0007` are reformatted in the pg_dump style used by Rustify. Columns line up in three blocks (name, type, modifiers), types are lowercase (`character varying`, `timestamp with time zone`, `double precision`), tables are schema-qualified (`public.`), enum values sit one per line, and every constraint is named and listed at the end. Foreign keys are now explicit named constraints (`fk_<table>_<column>`) and `!=` became `<>`. Schema semantics are unchanged, and the missing comma before `date_check` in `0007` is fixed. sqlx stores a checksum per migration, so existing local databases must be recreated (`bash reset_db.sh --yes`).
+
+Before:
+
+```sql
+CREATE TABLE locations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    CONSTRAINT unique_location_name UNIQUE (name)
+);
+```
+
+After:
+
+```sql
+CREATE TABLE public.locations (
+    id      serial               NOT NULL,
+    name    character varying    NOT NULL,
+    CONSTRAINT locations_pkey PRIMARY KEY (id),
+    CONSTRAINT unique_location_name UNIQUE (name)
+);
+```
+
 - The local database reset script moved from `derbe-backend/` to the repository root, next to `README.md`. It now changes into `derbe-backend` itself to find `.env` and `migrations`, so it runs from the root. Behaviour is unchanged (needs `--yes`, refuses non-local hosts).
 
 Before:

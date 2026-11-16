@@ -1,1 +1,7 @@
-CREATE TYPE valid_leave_statuses AS ENUM ('Pending', 'MoreInfoReq', 'Cancelled', 'Rejected', 'Accepted');
+CREATE TYPE public.valid_leave_statuses AS ENUM (
+    'Pending',
+    'MoreInfoReq',
+    'Cancelled',
+    'Rejected',
+    'Accepted'
+);
