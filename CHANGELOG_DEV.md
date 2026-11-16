@@ -4,6 +4,21 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Fixed: `0005_create_employees.sql` failed on PostgreSQL 17 with a syntax error. `CONSTRAINT x NOT NULL col` as a table constraint only exists from PostgreSQL 18. The six lines were redundant (each column already says `NOT NULL`), so they are removed and the migration now runs on PostgreSQL 17 and 18. Local databases must be recreated (`reset_db.sh`).
+
+Before:
+
+```sql
+created_at timestamptz DEFAULT now() NOT NULL,
+CONSTRAINT employees_created_at_not_null NOT NULL created_at,
+```
+
+After:
+
+```sql
+created_at timestamptz DEFAULT now() NOT NULL,
+```
+
 - Removed the 8 `Permission` variants that no route uses (`UpdateDivision`, `DeleteDivision`, `UpdateLocation`, `DeleteLocation`, `UpdateLeaveType`, `DeleteLeaveType`, `DeleteLeaveRequest`, `DeleteEmployee`) and the unused `role_accesses` migration (nothing in `src` or `tests` reads that table). Add them back with the route that needs them. The matrix tests now cover 16 permissions. Local databases must be recreated (`reset_db.sh`), as the migration list changed.
 
 - Fixed: a deleted employee could log in and received a session cookie, then got a 401 on every request. `login` now skips soft-deleted employees, like `require_auth` and `me` already do.

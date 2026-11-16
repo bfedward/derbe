@@ -18,16 +18,10 @@ CREATE TABLE employees (
 	email_change_token_expires_at timestamptz NULL,
 	created_at timestamptz DEFAULT now() NOT NULL,
 	updated_at timestamptz DEFAULT now() NOT NULL,
-    CONSTRAINT employees_created_at_not_null NOT NULL created_at,
 	CONSTRAINT employees_email_change_pending_check CHECK (((email_change_pending IS NULL) OR (email_change_pending = lower(email_change_pending)))),
 	CONSTRAINT employees_email_change_token_key UNIQUE (email_change_token),
 	CONSTRAINT employees_email_check CHECK ((email = lower(email))),
-	CONSTRAINT employees_email_not_null NOT NULL email,
-	CONSTRAINT employees_password_not_null NOT NULL password,
 	CONSTRAINT employees_pkey PRIMARY KEY (unid),
 	CONSTRAINT employees_role_check CHECK ((role = ANY (ARRAY['Admin'::text, 'Manager'::text, 'RegularUser'::text, 'Demo'::text]))),
-	CONSTRAINT employees_role_not_null NOT NULL role,
-	CONSTRAINT employees_unid_not_null NOT NULL unid,
-	CONSTRAINT employees_updated_at_not_null NOT NULL updated_at,
     CONSTRAINT employee_cant_manage_self check (manager_unid != unid)
 );
