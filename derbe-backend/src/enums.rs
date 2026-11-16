@@ -14,7 +14,18 @@ pub enum EmploymentType {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, sqlx::Type, TS, EnumString,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    sqlx::Type,
+    TS,
+    EnumString,
+    Display,
 )]
 #[sqlx(type_name = "TEXT")]
 #[ts(export)]

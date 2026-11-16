@@ -5,10 +5,11 @@ mod test_helpers;
 #[tokio::test]
 async fn create_leave_request_fails_with_unknown_employee() {
     let (app, config) = test_helpers::spawn_app().await;
-    let client = reqwest::Client::new();
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_backend::enums::EmployeeRole::Admin).await;
 
     let body = serde_json::json!({
-        "employee_unid": 0,
+        "employee_unid": uuid::Uuid::nil(),
         "leave_type_id": 1,
         "leave_status": "Pending",
         "values": serde_json::json!({
@@ -42,7 +43,10 @@ async fn create_leave_request_fails_with_unknown_employee() {
     // Attempt to parse the response as JSON
     let error_message: serde_json::Value =
         serde_json::from_str(&response_text).expect("Failed to parse JSON");
-    assert_eq!(error_message["error"], "Employee with id 0 not found!");
+    assert_eq!(
+        error_message["error"],
+        format!("Employee with id {} not found!", uuid::Uuid::nil())
+    );
 
     test_helpers::cleanup_test_app(&config.database, app).await;
 }

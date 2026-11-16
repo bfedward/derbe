@@ -1,11 +1,15 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
 use derbe_backend::{
     configuration::{get_configuration, DatabaseSettings, Settings},
+    enums::EmployeeRole,
     http::{app_router, AppState},
 };
-use reqwest::{Client, Response, StatusCode};
-use secrecy::ExposeSecret;
+use reqwest::{
+    header::{HeaderMap, HeaderValue, COOKIE, SET_COOKIE},
+    Client, Response, StatusCode,
+};
+use secrecy::{ExposeSecret, SecretBox};
 use serde_json::Value;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use tokio::{
@@ -30,8 +34,12 @@ pub async fn spawn_app() -> (TestApp, Settings) {
 
     let db = configure_database(&configuration.database).await;
 
-    let ctx = AppState { pool: db };
-    let app = app_router(ctx.clone());
+    let ctx = AppState {
+        pool: db,
+        jwt_secret: Arc::new(SecretBox::new(Box::new("test-secret".to_string()))),
+        app_env: configuration.application.app_env,
+    };
+    let app = app_router(ctx.clone(), &configuration.application);
 
     // Create a shutdown channel
     let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
@@ -53,6 +61,109 @@ pub async fn spawn_app() -> (TestApp, Settings) {
         },
         configuration,
     )
+}
+
+const TEST_PASSWORD: &str = "test-password";
+
+pub struct SeededUser {
+    pub unid: Uuid,
+    pub email: String,
+}
+
+/// Inserts an employee with the given role straight into the database.
+/// Every seeded employee uses `TEST_PASSWORD`.
+pub async fn seed_employee(
+    app: &TestApp,
+    first_name: &str,
+    role: EmployeeRole,
+    manager_unid: Option<Uuid>,
+) -> SeededUser {
+    let division_id = sqlx::query_scalar::<_, i32>(
+        "INSERT INTO divisions (name) VALUES ('Seed division') ON CONFLICT DO NOTHING RETURNING id",
+    )
+    .fetch_optional(&app.ctx.pool)
+    .await
+    .expect("Failed to seed division");
+    let division_id = match division_id {
+        Some(id) => id,
+        None => sqlx::query_scalar("SELECT id FROM divisions WHERE name = 'Seed division'")
+            .fetch_one(&app.ctx.pool)
+            .await
+            .expect("Failed to read seeded division"),
+    };
+
+    let location_id = sqlx::query_scalar::<_, i32>(
+        "INSERT INTO locations (name) VALUES ('Seed location') ON CONFLICT DO NOTHING RETURNING id",
+    )
+    .fetch_optional(&app.ctx.pool)
+    .await
+    .expect("Failed to seed location");
+    let location_id = match location_id {
+        Some(id) => id,
+        None => sqlx::query_scalar("SELECT id FROM locations WHERE name = 'Seed location'")
+            .fetch_one(&app.ctx.pool)
+            .await
+            .expect("Failed to read seeded location"),
+    };
+
+    let email = format!("{}@derbe.test", first_name.to_lowercase());
+    let password = pwhash::bcrypt::hash(TEST_PASSWORD).expect("Failed to hash the password");
+
+    let unid = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO employees
+            (first_name, last_name, job_title, email, password, role,
+             division_id, employment_type, location_id, manager_unid)
+        VALUES ($1, 'Testerson', 'Tester', $2, $3, $4, $5, 'Permanent', $6, $7)
+        RETURNING unid
+        "#,
+    )
+    .bind(first_name)
+    .bind(&email)
+    .bind(password)
+    .bind(role.to_string())
+    .bind(division_id)
+    .bind(location_id)
+    .bind(manager_unid)
+    .fetch_one(&app.ctx.pool)
+    .await
+    .expect("Failed to seed employee");
+
+    SeededUser { unid, email }
+}
+
+/// A client that sends the session cookie of the given seeded user.
+pub async fn login_client(app: &TestApp, user: &SeededUser) -> Client {
+    let response = Client::new()
+        .post(format!("{}/login", app.address))
+        .json(&serde_json::json!({ "email": user.email, "password": TEST_PASSWORD }))
+        .send()
+        .await
+        .expect("Failed to log in");
+
+    assert_eq!(response.status(), StatusCode::OK, "login failed");
+
+    let set_cookie = response
+        .headers()
+        .get(SET_COOKIE)
+        .expect("login did not set a cookie")
+        .to_str()
+        .unwrap();
+    let session = set_cookie.split(';').next().unwrap();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(COOKIE, HeaderValue::from_str(session).unwrap());
+    Client::builder()
+        .default_headers(headers)
+        .build()
+        .expect("Failed to build the client")
+}
+
+/// Seeds an employee with this role and returns them with a logged in client.
+pub async fn login_as(app: &TestApp, role: EmployeeRole) -> (SeededUser, Client) {
+    let user = seed_employee(app, &format!("{role}"), role, None).await;
+    let client = login_client(app, &user).await;
+    (user, client)
 }
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
@@ -180,9 +291,8 @@ pub async fn create_employee(
         "division_id": division["id"],
         "employment_type": "Permanent",
         "location_id": location["id"],
-        "manager_id": None::<i32>,
-        "email": "test@derbe.com",
-        "phone": None::<String>
+        "manager_unid": None::<String>,
+        "email": "test@derbe.com"
     });
 
     let response = do_post(
@@ -195,7 +305,8 @@ pub async fn create_employee(
 
     assert_eq!(response.status(), StatusCode::CREATED);
 
-    get_response_body_as_json(response).await
+    // The response also carries `temporary_password`; callers want the employee.
+    get_response_body_as_json(response).await["employee"].take()
 }
 
 pub async fn create_leave_type(name: &str, client: &Client, app: &TestApp) -> serde_json::Value {

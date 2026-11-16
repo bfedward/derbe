@@ -4,6 +4,24 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Integration tests compile and pass again, and the permission layer is now tested through the real router. `test_helpers.rs` builds the current `AppState` and `app_router`, and gets `seed_employee` (inserts an employee with a role, bcrypt password), `login_client` (logs in via `POST /login`, keeps the session cookie) and `login_as(role)`. The five old `*_controller_it.rs` files log in as Admin and use the current JSON shapes (UUID `employee_unid`, `manager_unid`, no `phone`). New `tests/permissions_it.rs` has 18 tests: 401 without a session, wrong password, deleted employee cannot log in, `/me` per role, Admin-only creates (divisions, locations, leave types), every role can read, Manager creates employees but RegularUser and Demo cannot, no update of someone else, own leave request only, Manager approves a report but not their own leave or a stranger's, rejected cannot return to Pending. `EmployeeRole` derives `Display` (used by the helpers). Seeded employees own one "Seed division" and one "Seed location", so list tests find their row by name.
+
+Before:
+
+```rust
+let ctx = AppState { pool: db };
+let app = app_router(ctx.clone());
+let client = reqwest::Client::new();
+```
+
+After:
+
+```rust
+let ctx = AppState { pool: db, jwt_secret, app_env: configuration.application.app_env };
+let app = app_router(ctx.clone(), &configuration.application);
+let (_admin, client) = test_helpers::login_as(&app, EmployeeRole::Admin).await;
+```
+
 - `access_control.rs` gets `ALL_ROLES`, replacing the four-role list repeated in each `permission.rs`, and `authorize` / `authorize_on` now log a `warn` with the user, role, permission (and target) when they deny, so a 403 can be explained from the logs. `Permission` now requires `Debug`. The 403 response body is unchanged.
 
 Before:
