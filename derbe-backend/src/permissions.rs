@@ -7,30 +7,22 @@ use crate::{
 pub enum Permission {
     CreateDivision,
     ViewDivisions,
-    UpdateDivision,
-    DeleteDivision,
 
     CreateLocation,
     ViewLocations,
-    UpdateLocation,
-    DeleteLocation,
 
     CreateLeaveType,
     ViewLeaveTypes,
-    UpdateLeaveType,
-    DeleteLeaveType,
 
     CreateLeaveRequest,
     ViewLeaveRequests,
     ViewLeaveRequest,
     UpdateLeaveRequest,
-    DeleteLeaveRequest,
 
     CreateEmployee,
     ViewEmployees,
     ViewEmployee,
     UpdateEmployee,
-    DeleteEmployee,
 
     ApproveLeaveRequest,
     RejectLeaveRequest,
@@ -54,7 +46,6 @@ impl Permissions for EmployeeRole {
                     | Permission::ViewLeaveRequest
                     | Permission::ViewLeaveRequests
                     | Permission::UpdateLeaveRequest
-                    | Permission::DeleteLeaveRequest
                     | Permission::CreateEmployee
                     | Permission::ViewEmployees
                     | Permission::ViewEmployee
@@ -74,7 +65,6 @@ impl Permissions for EmployeeRole {
                     | Permission::ViewLeaveRequest
                     | Permission::ViewLeaveRequests
                     | Permission::UpdateLeaveRequest
-                    | Permission::DeleteLeaveRequest
                     | Permission::RejectLeaveRequest
             ),
 
@@ -259,29 +249,21 @@ mod tests {
         }
     }
 
-    const ALL_PERMISSIONS: [Permission; 24] = [
+    const ALL_PERMISSIONS: [Permission; 16] = [
         Permission::CreateDivision,
         Permission::ViewDivisions,
-        Permission::UpdateDivision,
-        Permission::DeleteDivision,
         Permission::CreateLocation,
         Permission::ViewLocations,
-        Permission::UpdateLocation,
-        Permission::DeleteLocation,
         Permission::CreateLeaveType,
         Permission::ViewLeaveTypes,
-        Permission::UpdateLeaveType,
-        Permission::DeleteLeaveType,
         Permission::CreateLeaveRequest,
         Permission::ViewLeaveRequests,
         Permission::ViewLeaveRequest,
         Permission::UpdateLeaveRequest,
-        Permission::DeleteLeaveRequest,
         Permission::CreateEmployee,
         Permission::ViewEmployees,
         Permission::ViewEmployee,
         Permission::UpdateEmployee,
-        Permission::DeleteEmployee,
         Permission::ApproveLeaveRequest,
         Permission::RejectLeaveRequest,
     ];
@@ -311,7 +293,6 @@ mod tests {
                 ViewLeaveRequests,
                 ViewLeaveRequest,
                 UpdateLeaveRequest,
-                DeleteLeaveRequest,
                 CreateEmployee,
                 ViewEmployees,
                 ViewEmployee,
@@ -335,7 +316,6 @@ mod tests {
                 ViewLeaveRequests,
                 ViewLeaveRequest,
                 UpdateLeaveRequest,
-                DeleteLeaveRequest,
                 ViewEmployees,
                 UpdateEmployee,
                 RejectLeaveRequest,

@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Removed the 8 `Permission` variants that no route uses (`UpdateDivision`, `DeleteDivision`, `UpdateLocation`, `DeleteLocation`, `UpdateLeaveType`, `DeleteLeaveType`, `DeleteLeaveRequest`, `DeleteEmployee`) and the unused `role_accesses` migration (nothing in `src` or `tests` reads that table). Add them back with the route that needs them. The matrix tests now cover 16 permissions. Local databases must be recreated (`reset_db.sh`), as the migration list changed.
+
 - Fixed: a deleted employee could log in and received a session cookie, then got a 401 on every request. `login` now skips soft-deleted employees, like `require_auth` and `me` already do.
 
 Before:
