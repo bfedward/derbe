@@ -4,6 +4,29 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `authorize_leave_request_core` and `authorize_update_employee` had the same `match` on the role (Admin: yes, Manager: self or a report, RegularUser: self, Demo: no). The rule is now data: `Scope::of(role)` says whose records a role may act on, and one `authorize_on(actor, target, permission)` applies it. A new role fails to compile in `Scope::of` until its scope is decided. Approve and reject keep their own rules (no self-approval). The existing tests pass unchanged.
+
+Before:
+
+```rust
+EmployeeRole::Manager => {
+    if employee.unid == actor.unid || employee.manager_unid == Some(actor.unid) {
+        Ok(())
+    } else {
+        Err(AppError::Forbidden)
+    }
+}
+// ... same match again in authorize_leave_request_core
+```
+
+After:
+
+```rust
+pub fn authorize_update_employee(actor: &AuthenticatedUser, employee: &EmployeeAccess) -> Result<(), AppError> {
+    Self::authorize_on(actor, employee, Permission::UpdateEmployee)
+}
+```
+
 - `require_auth`, `login`, `me` and `logout` now return `Result<_, AppError>` instead of building `(StatusCode, Json(json!(...)))` six times. New `AppError::Unauthorized(&'static str)` (401) and `AppError::TokenFailure` (500). Cookie reading uses `CookieJar` instead of splitting the `Cookie` header by hand (`extract_session_cookie` is gone), and the cookie name is one `SESSION_COOKIE` constant. Error messages for 401 are unchanged (`no session`, `invalid token`, `employee not found`, `invalid credentials`); a database error is now the standard 500 `AppError::DatabaseQueryError` (it was a custom `db error` body).
 
 Before:

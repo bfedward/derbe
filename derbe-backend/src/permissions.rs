@@ -80,6 +80,37 @@ impl Permissions for EmployeeRole {
     }
 }
 
+/// Whose records a role may act on.
+#[derive(Clone, Copy)]
+enum Scope {
+    Everyone,
+    SelfAndReports,
+    SelfOnly,
+    Nobody,
+}
+
+impl Scope {
+    fn of(role: EmployeeRole) -> Self {
+        match role {
+            EmployeeRole::Admin => Self::Everyone,
+            EmployeeRole::Manager => Self::SelfAndReports,
+            EmployeeRole::RegularUser => Self::SelfOnly,
+            EmployeeRole::Demo => Self::Nobody,
+        }
+    }
+
+    fn covers(self, actor: &AuthenticatedUser, target: &EmployeeAccess) -> bool {
+        match self {
+            Self::Everyone => true,
+            Self::SelfAndReports => {
+                target.unid == actor.unid || target.manager_unid == Some(actor.unid)
+            }
+            Self::SelfOnly => target.unid == actor.unid,
+            Self::Nobody => false,
+        }
+    }
+}
+
 pub struct AccessController;
 
 impl AccessController {
@@ -98,45 +129,25 @@ impl AccessController {
         actor: &AuthenticatedUser,
         target: &EmployeeAccess,
     ) -> Result<(), AppError> {
-        Self::authorize_leave_request_core(actor, target, Permission::CreateLeaveRequest)
+        Self::authorize_on(actor, target, Permission::CreateLeaveRequest)
     }
 
     pub fn authorize_update_leave_request(
         actor: &AuthenticatedUser,
         target: &EmployeeAccess,
     ) -> Result<(), AppError> {
-        Self::authorize_leave_request_core(actor, target, Permission::UpdateLeaveRequest)
+        Self::authorize_on(actor, target, Permission::UpdateLeaveRequest)
     }
 
-    fn authorize_leave_request_core(
+    fn authorize_on(
         actor: &AuthenticatedUser,
         target: &EmployeeAccess,
         permission: Permission,
     ) -> Result<(), AppError> {
-        if !actor.role.has_permission(permission) {
-            return Err(AppError::Forbidden);
-        }
-
-        match actor.role {
-            EmployeeRole::Admin => Ok(()),
-
-            EmployeeRole::Manager => {
-                if target.unid == actor.unid || target.manager_unid == Some(actor.unid) {
-                    Ok(())
-                } else {
-                    Err(AppError::Forbidden)
-                }
-            }
-
-            EmployeeRole::RegularUser => {
-                if target.unid == actor.unid {
-                    Ok(())
-                } else {
-                    Err(AppError::Forbidden)
-                }
-            }
-
-            EmployeeRole::Demo => Err(AppError::Forbidden),
+        if actor.role.has_permission(permission) && Scope::of(actor.role).covers(actor, target) {
+            Ok(())
+        } else {
+            Err(AppError::Forbidden)
         }
     }
 
@@ -200,32 +211,7 @@ impl AccessController {
         actor: &AuthenticatedUser,
         employee: &EmployeeAccess,
     ) -> Result<(), AppError> {
-        if !actor.role.has_permission(Permission::UpdateEmployee) {
-            return Err(AppError::Forbidden);
-        }
-
-        match actor.role {
-            EmployeeRole::Admin => Ok(()),
-
-            EmployeeRole::Manager => {
-                if employee.unid == actor.unid || employee.manager_unid == Some(actor.unid) {
-                    Ok(())
-                } else {
-                    Err(AppError::Forbidden)
-                }
-            }
-
-            // RegularUser can update themselves
-            EmployeeRole::RegularUser => {
-                if actor.unid == employee.unid {
-                    Ok(())
-                } else {
-                    Err(AppError::Forbidden)
-                }
-            }
-
-            _ => Err(AppError::Forbidden),
-        }
+        Self::authorize_on(actor, employee, Permission::UpdateEmployee)
     }
 }
 
