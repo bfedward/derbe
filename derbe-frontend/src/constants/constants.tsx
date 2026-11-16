@@ -1,4 +1,5 @@
 import type { EmploymentType } from "@/bindings/EmploymentType";
+import type { OthersDaysVisibility } from "@/bindings/OthersDaysVisibility";
 import type { HalfDaySelection } from "@/lib/leave-requests";
 
 export const EMPTY_VALUE = "N/A";
@@ -21,8 +22,15 @@ export const HALF_DAY_OPTIONS: { value: HalfDaySelection; label: string }[] = [
 
 export const LEAVE_TYPE_FLAGS = [
   ["can_book_in_future", "Can book in future?"],
-  ["show_in_others_days", "Show in other days?"],
-  ["default_in_others_days", "Default in other days?"],
   ["default_in_leave_request", "Default in leave request?"],
   ["show_in_approve_days", "Show in approve days?"],
 ] as const;
+
+export const OTHERS_DAYS_VISIBILITY_OPTIONS: {
+  value: OthersDaysVisibility;
+  label: string;
+}[] = [
+  { value: "Hidden", label: "Hidden" },
+  { value: "Shown", label: "Shown" },
+  { value: "ShownByDefault", label: "Shown by default" },
+];

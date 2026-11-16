@@ -222,8 +222,7 @@ async fn only_admin_can_create_leave_types() {
                 "default_quota": 10.0,
                 "colour": "#FFFFFF",
                 "can_book_in_future": true,
-                "show_in_others_days": true,
-                "default_in_others_days": true,
+                "others_days_visibility": "ShownByDefault",
                 "default_in_leave_request": true,
                 "show_in_approve_days": true
             }))

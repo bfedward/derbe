@@ -46,8 +46,7 @@ async fn cannot_create_leave_types_with_duplicate_names() {
         "default_quota": Some(10.0),
         "colour": "#FFFFFF",
         "can_book_in_future": true,
-        "show_in_others_days": true,
-        "default_in_others_days": true,
+        "others_days_visibility": "ShownByDefault",
         "default_in_leave_request": true,
         "show_in_approve_days": true
     });
@@ -86,8 +85,7 @@ async fn cannot_create_leave_types_with_negative_default_quota() {
         "default_quota": Some(-10.0),
         "colour": "#FFFFFF",
         "can_book_in_future": true,
-        "show_in_others_days": true,
-        "default_in_others_days": true,
+        "others_days_visibility": "ShownByDefault",
         "default_in_leave_request": true,
         "show_in_approve_days": true
     });
@@ -209,12 +207,8 @@ async fn get_leave_type() {
         create_response["can_book_in_future"]
     );
     assert_eq!(
-        response_text["show_in_others_days"],
-        create_response["show_in_others_days"]
-    );
-    assert_eq!(
-        response_text["default_in_others_days"],
-        create_response["default_in_others_days"]
+        response_text["others_days_visibility"],
+        create_response["others_days_visibility"]
     );
     assert_eq!(
         response_text["default_in_leave_request"],

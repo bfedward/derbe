@@ -1,4 +1,5 @@
 use crate::features::leave_types::dto::request::{LeaveTypeCreate, LeaveTypeUpdate};
+use crate::features::leave_types::model::OthersDaysVisibility;
 
 use crate::{
     error::AppError, features::leave_types::dto::response::LeaveTypeResponse, http::AppState,
@@ -9,7 +10,7 @@ pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveTypeResponse, App
             LeaveTypeResponse,
             r#"
             SELECT id, name, default_quota, colour, can_book_in_future, 
-                show_in_others_days, default_in_others_days, default_in_leave_request, show_in_approve_days
+                others_days_visibility AS "others_days_visibility: OthersDaysVisibility", default_in_leave_request, show_in_approve_days
             FROM leave_types
             WHERE id = $1
             "#,
@@ -24,7 +25,7 @@ pub async fn list(ctx: &AppState) -> Result<Vec<LeaveTypeResponse>, AppError> {
             LeaveTypeResponse,
             r#"
             SELECT id, name, default_quota, colour, can_book_in_future, 
-                show_in_others_days, default_in_others_days, default_in_leave_request, show_in_approve_days
+                others_days_visibility AS "others_days_visibility: OthersDaysVisibility", default_in_leave_request, show_in_approve_days
             FROM leave_types
             "#,
         )
@@ -40,18 +41,16 @@ pub async fn create(dto: LeaveTypeCreate, ctx: &AppState) -> Result<LeaveTypeRes
                                     default_quota, 
                                     colour,
                                     can_book_in_future, 
-                                    show_in_others_days, 
-                                    default_in_others_days, 
+                                    others_days_visibility, 
                                     default_in_leave_request, 
                                     show_in_approve_days)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id, 
                         name, 
                         default_quota,
                         colour,
                         can_book_in_future, 
-                        show_in_others_days, 
-                        default_in_others_days, 
+                        others_days_visibility AS "others_days_visibility: OthersDaysVisibility", 
                         default_in_leave_request, 
                         show_in_approve_days
             "#,
@@ -59,8 +58,7 @@ pub async fn create(dto: LeaveTypeCreate, ctx: &AppState) -> Result<LeaveTypeRes
         dto.default_quota,
         dto.colour,
         dto.can_book_in_future,
-        dto.show_in_others_days,
-        dto.default_in_others_days,
+        dto.others_days_visibility as OthersDaysVisibility,
         dto.default_in_leave_request,
         dto.show_in_approve_days
     )
@@ -99,18 +97,16 @@ pub async fn update(
                 default_quota = $2,
                 colour = $3,
                 can_book_in_future = $4,
-                show_in_others_days = $5,
-                default_in_others_days = $6,
-                default_in_leave_request = $7,
-                show_in_approve_days = $8
-            WHERE id = $9
+                others_days_visibility = $5,
+                default_in_leave_request = $6,
+                show_in_approve_days = $7
+            WHERE id = $8
             RETURNING id, 
                 name, 
                 default_quota, 
                 colour,
                 can_book_in_future, 
-                show_in_others_days, 
-                default_in_others_days, 
+                others_days_visibility AS "others_days_visibility: OthersDaysVisibility", 
                 default_in_leave_request, 
                 show_in_approve_days
             "#,
@@ -118,8 +114,7 @@ pub async fn update(
         dto.default_quota,
         dto.colour,
         dto.can_book_in_future,
-        dto.show_in_others_days,
-        dto.default_in_others_days,
+        dto.others_days_visibility as OthersDaysVisibility,
         dto.default_in_leave_request,
         dto.show_in_approve_days,
         id

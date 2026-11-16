@@ -20,9 +20,17 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   DEFAULT_LEAVE_COLOUR,
   DEFAULT_LEAVE_TYPE_QUOTA,
   LEAVE_TYPE_FLAGS,
+  OTHERS_DAYS_VISIBILITY_OPTIONS,
 } from "@/constants/constants";
 import { derbeKeys } from "@/query-keys";
 
@@ -31,8 +39,7 @@ const leaveTypeFormSchema = z.object({
   default_quota: z.number().min(DEFAULT_LEAVE_TYPE_QUOTA).nullable(),
   colour: z.string().regex(/^#[\da-f]{6}$/i, "Choose a valid colour."),
   can_book_in_future: z.boolean(),
-  show_in_others_days: z.boolean(),
-  default_in_others_days: z.boolean(),
+  others_days_visibility: z.enum(["Hidden", "Shown", "ShownByDefault"]),
   default_in_leave_request: z.boolean(),
   show_in_approve_days: z.boolean(),
 });
@@ -49,8 +56,7 @@ export function NewLeaveTypePage() {
       default_quota: null,
       colour: DEFAULT_LEAVE_COLOUR,
       can_book_in_future: false,
-      show_in_others_days: false,
-      default_in_others_days: false,
+      others_days_visibility: "Hidden",
       default_in_leave_request: false,
       show_in_approve_days: false,
     },
@@ -122,6 +128,30 @@ export function NewLeaveTypePage() {
                       </FormControl>
                       <span className="text-sm text-muted-foreground">{field.value}</span>
                     </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <RHFField
+                control={form.control}
+                name="others_days_visibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Visibility in other days</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {OTHERS_DAYS_VISIBILITY_OPTIONS.map(({ value, label }) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

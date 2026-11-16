@@ -315,8 +315,7 @@ pub async fn create_leave_type(name: &str, client: &Client, app: &TestApp) -> se
         "default_quota": Some(10.0),
         "colour": "#FFFFFF",
         "can_book_in_future": true,
-        "show_in_others_days": true,
-        "default_in_others_days": true,
+        "others_days_visibility": "ShownByDefault",
         "default_in_leave_request": true,
         "show_in_approve_days": true
     });

@@ -4,6 +4,21 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `leave_types` replaces the two dependent booleans `show_in_others_days` and `default_in_others_days` with one enum `others_days_visibility` (`Hidden`, `Shown`, `ShownByDefault`). The old pair allowed the invalid state "default but not shown". The enum is a Postgres type (`valid_others_days_visibilities`, created in migration `0001`), a Rust enum in `features/leave_types/model.rs`, and a generated TypeScript binding. The create form uses a select instead of two checkboxes. The three independent flags (`can_book_in_future`, `default_in_leave_request`, `show_in_approve_days`) stay booleans. This changes the JSON API and `0001`, so local DBs must be recreated with `bash reset_db.sh --yes` from the repo root.
+
+Before:
+
+```rust
+pub show_in_others_days: bool,
+pub default_in_others_days: bool,
+```
+
+After:
+
+```rust
+pub others_days_visibility: OthersDaysVisibility,
+```
+
 - `divisions`, `leave_types` and `locations` query their `*Response` DTO directly. The `Division`, `LeaveType` and `Location` models and their `From` impls are removed, because they were field-for-field copies of the DTOs. Their `model.rs` files are deleted. JSON and TypeScript bindings are unchanged.
 
 Before:
