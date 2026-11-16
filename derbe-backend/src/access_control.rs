@@ -6,7 +6,14 @@ use crate::{
 
 /// An action a feature protects. Each feature owns its own enum of permissions
 /// and lists, for every permission, the roles that may do it.
-pub trait Permission: Copy {
+pub const ALL_ROLES: &[EmployeeRole] = &[
+    EmployeeRole::Admin,
+    EmployeeRole::Manager,
+    EmployeeRole::RegularUser,
+    EmployeeRole::Demo,
+];
+
+pub trait Permission: Copy + std::fmt::Debug {
     fn roles_required(self) -> &'static [EmployeeRole];
 
     fn is_granted_to(self, role: EmployeeRole) -> bool {
@@ -18,6 +25,7 @@ pub fn authorize(user: &AuthenticatedUser, permission: impl Permission) -> Resul
     if permission.is_granted_to(user.role) {
         Ok(())
     } else {
+        tracing::warn!(user = %user.unid, role = ?user.role, ?permission, "permission denied");
         Err(AppError::Forbidden)
     }
 }
@@ -62,6 +70,13 @@ pub fn authorize_on(
     if permission.is_granted_to(actor.role) && Scope::of(actor.role).covers(actor, target) {
         Ok(())
     } else {
+        tracing::warn!(
+            user = %actor.unid,
+            role = ?actor.role,
+            ?permission,
+            target = %target.unid,
+            "permission denied"
+        );
         Err(AppError::Forbidden)
     }
 }
@@ -72,17 +87,12 @@ mod tests {
 
     use super::*;
 
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Debug)]
     struct AnyoneCan;
 
     impl Permission for AnyoneCan {
         fn roles_required(self) -> &'static [EmployeeRole] {
-            &[
-                EmployeeRole::Admin,
-                EmployeeRole::Manager,
-                EmployeeRole::RegularUser,
-                EmployeeRole::Demo,
-            ]
+            ALL_ROLES
         }
     }
 
@@ -141,7 +151,7 @@ mod tests {
 
     #[test]
     fn scope_never_widens_a_role_that_lacks_the_permission() {
-        #[derive(Clone, Copy)]
+        #[derive(Clone, Copy, Debug)]
         struct AdminOnly;
 
         impl Permission for AdminOnly {

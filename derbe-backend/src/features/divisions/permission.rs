@@ -1,4 +1,7 @@
-use crate::{access_control::Permission, enums::EmployeeRole};
+use crate::{
+    access_control::{Permission, ALL_ROLES},
+    enums::EmployeeRole,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DivisionPermission {
@@ -12,7 +15,7 @@ impl Permission for DivisionPermission {
 
         match self {
             Self::Create => &[Admin],
-            Self::View => &[Admin, Manager, RegularUser, Demo],
+            Self::View => ALL_ROLES,
         }
     }
 }
@@ -31,12 +34,7 @@ mod tests {
 
     #[test]
     fn every_role_can_view() {
-        for role in [
-            EmployeeRole::Admin,
-            EmployeeRole::Manager,
-            EmployeeRole::RegularUser,
-            EmployeeRole::Demo,
-        ] {
+        for role in ALL_ROLES.iter().copied() {
             assert!(DivisionPermission::View.is_granted_to(role));
         }
     }

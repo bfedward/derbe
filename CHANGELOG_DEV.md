@@ -4,6 +4,20 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `access_control.rs` gets `ALL_ROLES`, replacing the four-role list repeated in each `permission.rs`, and `authorize` / `authorize_on` now log a `warn` with the user, role, permission (and target) when they deny, so a 403 can be explained from the logs. `Permission` now requires `Debug`. The 403 response body is unchanged.
+
+Before:
+
+```rust
+Self::View => &[Admin, Manager, RegularUser, Demo],
+```
+
+After:
+
+```rust
+Self::View => ALL_ROLES,
+```
+
 - Employees and leave requests get their own `permission.rs` too (`EmployeePermission`, `LeaveRequestPermission`), and the central `permissions.rs` with `AccessController` and the `Permissions` trait is deleted. The `Scope` rule moved to `access_control.rs` as `authorize_on(actor, target, permission)`, a free function instead of a method on an empty struct, with its own tests. Approve and reject keep their rules in `leave_requests/permission.rs` as `authorize_approve` and `authorize_reject`. The 16-permission matrix test became one `roles_per_permission` test per feature, so a permission change fails a test next to the code. Role access is unchanged.
 
 Before:

@@ -1,6 +1,9 @@
 use crate::{
-    access_control::Permission, enums::EmployeeRole, error::AppError,
-    features::auth::middleware::AuthenticatedUser, features::employees::model::EmployeeAccess,
+    access_control::{Permission, ALL_ROLES},
+    enums::EmployeeRole,
+    error::AppError,
+    features::auth::middleware::AuthenticatedUser,
+    features::employees::model::EmployeeAccess,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -18,7 +21,7 @@ impl Permission for LeaveRequestPermission {
         use EmployeeRole::*;
 
         match self {
-            Self::List => &[Admin, Manager, RegularUser, Demo],
+            Self::List => ALL_ROLES,
             Self::View => &[Admin, Manager, RegularUser],
             // Whose leave requests a role may create or update is decided by its scope.
             Self::Create => &[Admin, Manager, RegularUser],
@@ -91,7 +94,7 @@ mod tests {
     fn roles_per_permission() {
         use EmployeeRole::*;
         use LeaveRequestPermission::*;
-        assert_eq!(List.roles_required(), &[Admin, Manager, RegularUser, Demo]);
+        assert_eq!(List.roles_required(), ALL_ROLES);
         assert_eq!(View.roles_required(), &[Admin, Manager, RegularUser]);
         assert_eq!(Create.roles_required(), &[Admin, Manager, RegularUser]);
         assert_eq!(Update.roles_required(), &[Admin, Manager, RegularUser]);

@@ -1,4 +1,7 @@
-use crate::{access_control::Permission, enums::EmployeeRole};
+use crate::{
+    access_control::{Permission, ALL_ROLES},
+    enums::EmployeeRole,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EmployeePermission {
@@ -13,7 +16,7 @@ impl Permission for EmployeePermission {
         use EmployeeRole::*;
 
         match self {
-            Self::List => &[Admin, Manager, RegularUser, Demo],
+            Self::List => ALL_ROLES,
             Self::View => &[Admin, Manager],
             Self::Create => &[Admin, Manager],
             // Which employees a role may update is decided by its scope.
@@ -29,10 +32,7 @@ mod tests {
     #[test]
     fn roles_per_permission() {
         use EmployeeRole::*;
-        assert_eq!(
-            EmployeePermission::List.roles_required(),
-            &[Admin, Manager, RegularUser, Demo]
-        );
+        assert_eq!(EmployeePermission::List.roles_required(), ALL_ROLES);
         assert_eq!(EmployeePermission::View.roles_required(), &[Admin, Manager]);
         assert_eq!(
             EmployeePermission::Create.roles_required(),
