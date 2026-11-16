@@ -6,6 +6,7 @@ use axum::{
 use validator::Validate;
 
 use crate::{
+    access_control::{authorize, authorize_on},
     enums::{LeaveStatus::Accepted, LeaveStatus::Pending},
     error::AppError,
     features::auth::middleware::AuthenticatedUser,
@@ -19,11 +20,11 @@ use crate::{
                 },
                 response::{AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse},
             },
+            permission::{authorize_approve, authorize_reject, LeaveRequestPermission},
             service,
         },
     },
     http::AppState,
-    permissions::{AccessController, Permission},
 };
 
 pub async fn get_my_leave(
@@ -31,7 +32,7 @@ pub async fn get_my_leave(
     State(state): State<AppState>,
     Json(input): Json<MyLeaveRequest>,
 ) -> Result<Json<Vec<MyLeaveResponse>>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewLeaveRequests)?;
+    authorize(&user, LeaveRequestPermission::List)?;
     let leaves = service::get_my_leave(user.unid, input, &state).await?;
     Ok(Json(leaves))
 }
@@ -41,7 +42,7 @@ pub async fn get_all_leave(
     State(state): State<AppState>,
     Json(input): Json<AllLeaveRequest>,
 ) -> Result<Json<Vec<AllLeaveResponse>>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewLeaveRequests)?;
+    authorize(&user, LeaveRequestPermission::List)?;
     let leaves = service::get_all_leave(input, &state).await?;
     Ok(Json(leaves))
 }
@@ -51,7 +52,7 @@ pub async fn get_leave_request(
     State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewLeaveRequest)?;
+    authorize(&user, LeaveRequestPermission::View)?;
     let leave_request = service::get_by_id(id, &state).await?;
     Ok(Json(leave_request.into()))
 }
@@ -62,7 +63,7 @@ pub async fn create_leave_request(
     Json(input): Json<LeaveRequestCreate>,
 ) -> Result<(StatusCode, Json<LeaveRequestResponse>), AppError> {
     let target = employees::service::get_access_by_id(input.employee_unid, &state).await?;
-    AccessController::authorize_create_leave_request(&user, &target)?;
+    authorize_on(&user, &target, LeaveRequestPermission::Create)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
@@ -78,7 +79,7 @@ pub async fn update_leave_request(
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
     let leave_request = service::get_by_id(id, &state).await?;
     let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
-    AccessController::authorize_update_leave_request(&user, &target)?;
+    authorize_on(&user, &target, LeaveRequestPermission::Update)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
@@ -102,9 +103,9 @@ pub async fn update_leave_request_status(
     let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
 
     match input.leave_status {
-        Pending => AccessController::authorize_update_leave_request(&user, &target)?,
-        Accepted => AccessController::authorize_approve_leave_request(&user, &target)?,
-        _ => AccessController::authorize_reject_leave_request(&user, &target)?,
+        Pending => authorize_on(&user, &target, LeaveRequestPermission::Update)?,
+        Accepted => authorize_approve(&user, &target)?,
+        _ => authorize_reject(&user, &target)?,
     }
 
     let leave_request = service::update_leave_request_status(id, input, &state).await?;

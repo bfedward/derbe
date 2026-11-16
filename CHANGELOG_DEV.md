@@ -4,6 +4,22 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Employees and leave requests get their own `permission.rs` too (`EmployeePermission`, `LeaveRequestPermission`), and the central `permissions.rs` with `AccessController` and the `Permissions` trait is deleted. The `Scope` rule moved to `access_control.rs` as `authorize_on(actor, target, permission)`, a free function instead of a method on an empty struct, with its own tests. Approve and reject keep their rules in `leave_requests/permission.rs` as `authorize_approve` and `authorize_reject`. The 16-permission matrix test became one `roles_per_permission` test per feature, so a permission change fails a test next to the code. Role access is unchanged.
+
+Before:
+
+```rust
+AccessController::authorize_update_employee(&user, &employee)?;
+AccessController::authorize_approve_leave_request(&user, &target)?;
+```
+
+After:
+
+```rust
+authorize_on(&user, &employee, EmployeePermission::Update)?;
+authorize_approve(&user, &target)?;
+```
+
 - Permissions move next to the feature that uses them. New `access_control.rs` holds the `Permission` trait (`roles_required()` says which roles may do an action) and `authorize(&user, permission)`. Divisions, locations and leave types each get a `permission.rs` with their own enum, and each role is listed explicitly (Admin included, no `Admin => true` shortcut, so adding a role never grants anything by accident). Role access is unchanged. Employees and leave requests follow in the next commits, then the central `permissions.rs` goes away.
 
 Before:

@@ -9,8 +9,10 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
+    access_control::{authorize, authorize_on},
     error::AppError,
     features::auth::middleware::AuthenticatedUser,
+    features::employees::permission::EmployeePermission,
     features::employees::{
         dto::{
             request::{EmployeeCreate, EmployeeUpdate},
@@ -19,14 +21,13 @@ use crate::{
         service,
     },
     http::AppState,
-    permissions::{AccessController, Permission},
 };
 
 pub async fn list_employees(
     Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<EmployeeResponse>>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewEmployees)?;
+    authorize(&user, EmployeePermission::List)?;
     let employees = service::list(&state).await?;
     Ok(Json(
         employees.into_iter().map(EmployeeResponse::from).collect(),
@@ -37,7 +38,7 @@ pub async fn get_employee_details_table(
     Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<EmployeeDetailsResponse>>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewEmployees)?;
+    authorize(&user, EmployeePermission::List)?;
     let employees = service::get_employee_details_table(&state).await?;
     Ok(Json(employees))
 }
@@ -47,7 +48,7 @@ pub async fn get_employee(
     State(state): State<AppState>,
     Path(unid): Path<String>,
 ) -> Result<Json<EmployeeResponse>, AppError> {
-    AccessController::authorize(&user.role, Permission::ViewEmployee)?;
+    authorize(&user, EmployeePermission::View)?;
     let unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
     let employee = service::get_by_id(unid, &state).await?;
     Ok(Json(employee.into()))
@@ -58,7 +59,7 @@ pub async fn create_employee(
     State(state): State<AppState>,
     Json(input): Json<EmployeeCreate>,
 ) -> Result<(StatusCode, Json<CreatedEmployeeResponse>), AppError> {
-    AccessController::authorize(&user.role, Permission::CreateEmployee)?;
+    authorize(&user, EmployeePermission::Create)?;
 
     input
         .validate()
@@ -77,7 +78,7 @@ pub async fn update_employee(
 ) -> Result<Json<EmployeeResponse>, AppError> {
     let employee_unid = Uuid::from_str(&unid).map_err(|_| AppError::InvalidUuid(unid))?;
     let employee = service::get_access_by_id(employee_unid, &state).await?;
-    AccessController::authorize_update_employee(&user, &employee)?;
+    authorize_on(&user, &employee, EmployeePermission::Update)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
