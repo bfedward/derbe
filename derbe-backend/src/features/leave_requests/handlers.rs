@@ -93,6 +93,12 @@ pub async fn update_leave_request_status(
     Json(input): Json<LeaveRequestStatusUpdate>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
     let leave_request = service::get_by_id(id, &state).await?;
+    if !leave_request.leave_status.can_become(input.leave_status) {
+        return Err(AppError::ValidationFailed(format!(
+            "cannot change a {} leave request to {}",
+            leave_request.leave_status, input.leave_status
+        )));
+    }
     let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
 
     match input.leave_status {

@@ -4,6 +4,28 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Fixed: a RegularUser could put their own rejected or accepted leave request back to `Pending`. Added `LeaveStatus::can_become` and checked it in `update_leave_request_status` before the permission match. A rejected request is final, an accepted one can only be cancelled, and a request waiting for more info can be resubmitted or decided. `update_leave_request` (editing dates) is unchanged and still to decide.
+
+Before:
+
+```rust
+let leave_request = service::get_by_id(id, &state).await?;
+let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
+```
+
+After:
+
+```rust
+let leave_request = service::get_by_id(id, &state).await?;
+if !leave_request.leave_status.can_become(input.leave_status) {
+    return Err(AppError::ValidationFailed(format!(
+        "cannot change a {} leave request to {}",
+        leave_request.leave_status, input.leave_status
+    )));
+}
+let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
+```
+
 - Fixed: a Manager could not create or update their own leave request, or update their own employee record. The `Manager` arm only checked the target's manager. Approving stays restricted: a Manager cannot approve their own leave. Added unit tests for these cases in `permissions.rs`.
 
 Before:

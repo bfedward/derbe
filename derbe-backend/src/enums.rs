@@ -55,6 +55,19 @@ pub enum HalfDayOptions {
     BothHalfDays,
 }
 
+impl LeaveStatus {
+    /// A decided request (`Rejected`) is final, and `Accepted` can only be cancelled.
+    pub const fn can_become(self, next: Self) -> bool {
+        use LeaveStatus::{Accepted, Cancelled, MoreInfoReq, Pending, Rejected};
+        matches!(
+            (self, next),
+            (Pending, Accepted | Rejected | Cancelled | MoreInfoReq)
+                | (MoreInfoReq, Pending | Accepted | Rejected | Cancelled)
+                | (Accepted, Cancelled)
+        )
+    }
+}
+
 impl HalfDayOptions {
     pub const fn from_bools(half_days: (bool, bool)) -> Self {
         match half_days {
@@ -94,6 +107,33 @@ impl HalfDayOptions {
 #[cfg(test)]
 mod tests {
     use super::{EmploymentType, HalfDayOptions, LeaveStatus};
+
+    #[test]
+    fn a_decided_request_cannot_go_back_to_pending() {
+        assert!(!LeaveStatus::Rejected.can_become(LeaveStatus::Pending));
+        assert!(!LeaveStatus::Accepted.can_become(LeaveStatus::Pending));
+        assert!(!LeaveStatus::Cancelled.can_become(LeaveStatus::Pending));
+    }
+
+    #[test]
+    fn a_pending_request_can_be_decided() {
+        assert!(LeaveStatus::Pending.can_become(LeaveStatus::Accepted));
+        assert!(LeaveStatus::Pending.can_become(LeaveStatus::Rejected));
+        assert!(LeaveStatus::Pending.can_become(LeaveStatus::MoreInfoReq));
+    }
+
+    #[test]
+    fn a_request_waiting_for_info_can_be_decided_or_resubmitted() {
+        assert!(LeaveStatus::MoreInfoReq.can_become(LeaveStatus::Pending));
+        assert!(LeaveStatus::MoreInfoReq.can_become(LeaveStatus::Accepted));
+        assert!(LeaveStatus::MoreInfoReq.can_become(LeaveStatus::Rejected));
+    }
+
+    #[test]
+    fn an_accepted_request_can_only_be_cancelled() {
+        assert!(LeaveStatus::Accepted.can_become(LeaveStatus::Cancelled));
+        assert!(!LeaveStatus::Accepted.can_become(LeaveStatus::Rejected));
+    }
 
     #[test]
     fn enum_display_keeps_existing_api_labels() {
