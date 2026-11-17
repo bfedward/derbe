@@ -1,0 +1,150 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  DEPLOY_DIR: derbe
+  SERVER_USER: ${{ vars.SERVER_USER || 'deploy' }}
+
+jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  build:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      matrix:
+        image: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.PROD_DOCKER_USERNAME }}
+          password: ${{ secrets.PROD_DOCKER_PASSWORD }}
+      - name: Build and push ${{ matrix.image }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.image }}
+          push: true
+          tags: |
+            ${{ secrets.PROD_DOCKER_USERNAME }}/${{ vars.PROD_DOCKER_REPOSITORY }}:${{ matrix.image }}-${{ github.sha }}
+            ${{ secrets.PROD_DOCKER_USERNAME }}/${{ vars.PROD_DOCKER_REPOSITORY }}:${{ matrix.image }}-latest
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH with a pinned host key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_IP: ${{ vars.SERVER_IP }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<SSHCONF
+          Host derbe
+            HostName $SERVER_IP
+            User $SERVER_USER
+            IdentityFile ~/.ssh/id_ed25519
+            StrictHostKeyChecking yes
+            BatchMode yes
+          SSHCONF
+          sed -i 's/^ *//' ~/.ssh/config
+
+      - name: Copy deploy files
+        env:
+          DERBE_DOMAIN: ${{ vars.DERBE_DOMAIN }}
+        run: |
+          ssh derbe "mkdir -p ~/$DEPLOY_DIR"
+          sed "s/__DERBE_DOMAIN__/$DERBE_DOMAIN/g" nginx.prod.conf > /tmp/nginx.prod.conf
+          sed "s/__DERBE_DOMAIN__/$DERBE_DOMAIN/g" nginx.prod.bootstrap.conf > /tmp/nginx.prod.bootstrap.conf
+          scp docker-compose.prod.yml /tmp/nginx.prod.conf /tmp/nginx.prod.bootstrap.conf scripts/backup-db.sh "derbe:~/$DEPLOY_DIR/"
+
+      - name: Write server .env (secrets over stdin)
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DOCKER_USERNAME: ${{ secrets.PROD_DOCKER_USERNAME }}
+          DOCKER_REPOSITORY: ${{ vars.PROD_DOCKER_REPOSITORY }}
+          DERBE_DOMAIN: ${{ vars.DERBE_DOMAIN }}
+        run: |
+          {
+            echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD"
+            echo "JWT_SECRET=$JWT_SECRET"
+            echo "DOCKER_USERNAME=$DOCKER_USERNAME"
+            echo "DOCKER_REPOSITORY=$DOCKER_REPOSITORY"
+            echo "DERBE_DOMAIN=$DERBE_DOMAIN"
+            echo "BACKEND_IMAGE_TAG=backend-$GITHUB_SHA"
+            echo "FRONTEND_IMAGE_TAG=frontend-$GITHUB_SHA"
+          } | ssh derbe "umask 077 && cat > ~/$DEPLOY_DIR/.env.new"
+
+      - name: Pull, swap containers, wire nginx and TLS
+        env:
+          DOCKER_PASSWORD: ${{ secrets.PROD_DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.PROD_DOCKER_USERNAME }}
+          DERBE_DOMAIN: ${{ vars.DERBE_DOMAIN }}
+          LETSENCRYPT_EMAIL: ${{ vars.LETSENCRYPT_EMAIL }}
+        run: |
+          printf '%s' "$DOCKER_PASSWORD" | ssh derbe "docker login -u '$DOCKER_USERNAME' --password-stdin"
+          ssh derbe bash -s -- "$DEPLOY_DIR" "$DERBE_DOMAIN" "$LETSENCRYPT_EMAIL" <<'REMOTE'
+          set -euo pipefail
+          deploy_dir="$HOME/$1"; domain="$2"; email="$3"
+          cd "$deploy_dir"
+
+          # Keep the previous env so a rollback is one command.
+          [ -f .env ] && cp .env .env.previous
+          mv .env.new .env
+
+          # Pull first, swap after: no downtime window while images download.
+          docker compose -f docker-compose.prod.yml --env-file .env pull backend frontend
+          docker compose -f docker-compose.prod.yml --env-file .env up -d db
+          docker compose -f docker-compose.prod.yml --env-file .env up -d --no-deps backend frontend
+
+          # First run: HTTP only config, then certbot, then final TLS config.
+          cert="/etc/letsencrypt/live/$domain/fullchain.pem"
+          if ! sudo test -f "$cert"; then
+            ln -sf "$deploy_dir/nginx.prod.bootstrap.conf" "$deploy_dir/nginx.active.conf"
+            sudo nginx -t && sudo systemctl reload nginx
+            sudo certbot certonly --nginx -d "$domain" -m "$email" --agree-tos --non-interactive
+          fi
+          ln -sf "$deploy_dir/nginx.prod.conf" "$deploy_dir/nginx.active.conf"
+          sudo nginx -t && sudo systemctl reload nginx
+
+          # Only dangling layers. Never -a: tagged images stay for rollback.
+          docker image prune -f
+          REMOTE
+
+      - name: Smoke test
+        env:
+          DERBE_DOMAIN: ${{ vars.DERBE_DOMAIN }}
+        run: |
+          for attempt in $(seq 1 12); do
+            if curl -fsS "https://$DERBE_DOMAIN/api/health" >/dev/null && curl -fsS "https://$DERBE_DOMAIN/" >/dev/null; then
+              echo "healthy after $attempt attempt(s)"
+              exit 0
+            fi
+            echo "attempt $attempt failed, retrying in 10s"
+            sleep 10
+          done
+          ssh derbe "cd ~/$DEPLOY_DIR && docker compose -f docker-compose.prod.yml --env-file .env ps && docker compose -f docker-compose.prod.yml --env-file .env logs --tail 80 backend"
+          exit 1

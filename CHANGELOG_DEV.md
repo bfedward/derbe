@@ -4,6 +4,28 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Production deployment added, see `DEPLOYMENT.md`. Two images (`Dockerfile.backend` with cargo-chef, `Dockerfile.frontend` with nginx-unprivileged), `docker-compose.prod.yml` with `${VAR:?}` guards, host nginx templates (`nginx.prod.conf`, `nginx.prod.bootstrap.conf`) and a manual `deploy.yml` workflow for a Hetzner VPS with certbot. `quality.yml` runs on every PR and is reused by the deploy. `audit.yml`, `cleanup-caches.yml` and `dependabot.yml` added. `scripts/` has `deploy_prod.sh`, `setup_server.sh` and `backup-db.sh`. `rust-toolchain.toml` pins 1.99.1.
+- Backend is now deployable from env only. `get_configuration` splits `DERBE_APPLICATION__CORS_ORIGINS` on commas into a list, and `serve` runs `sqlx::migrate!` at startup (new `ServeError::Migration`), so a fresh container on an empty database comes up without a manual migration step. `derbe-backend/.sqlx` is committed for `SQLX_OFFLINE=true` builds.
+
+Before:
+
+```rust
+// Environment::with_prefix("DERBE").separator("__")  (a list could not be set from an env var)
+// serve(): connect the pool, then start the server (migrations were a manual step)
+```
+
+After:
+
+```rust
+Environment::with_prefix(ENV_PREFIX)
+    .prefix_separator(ENV_PREFIX_SEPARATOR)
+    .separator(ENV_NESTING_SEPARATOR)
+    .list_separator(ENV_LIST_SEPARATOR)
+    .with_list_parse_key(CORS_ORIGINS_KEY)
+    .try_parsing(true)
+// serve(): sqlx::migrate!("./migrations").run(&pool).await?;
+```
+
 - Name uniqueness for divisions, leave types and locations is enforced by the database only. Migrations `0001`, `0002` and `0003` replace `UNIQUE (name)` with a unique index on `lower(name)`, so "Sales" and "sales" conflict. The check-then-insert `ensure_name_available` (racy, and case sensitive) is removed. `AppError::duplicate_name_or_db` maps a unique violation to `DuplicateNamedEntity` (409) and other errors to `DatabaseQueryError`. Local DBs must be recreated with `bash reset_db.sh --yes` from the repo root.
 
 Before:

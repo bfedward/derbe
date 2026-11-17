@@ -1,0 +1,23 @@
+name: Cleanup caches
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete caches of the closed pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: refs/pull/${{ github.event.pull_request.number }}/merge
+        run: |
+          gh cache list --repo "$GITHUB_REPOSITORY" --ref "$BRANCH" --limit 100 --json id --jq '.[].id' |
+            while read -r cache_id; do
+              gh cache delete "$cache_id" --repo "$GITHUB_REPOSITORY"
+            done

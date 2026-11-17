@@ -1,0 +1,89 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                lr.id AS \"leave_request_id\", \n                lt.name AS \"leave_type\",\n                lr.leave_status AS \"leave_status!: LeaveStatus\", \n                lr.date_from,\n                lr.date_to,\n                lr.total_duration\n            FROM\n                leave_requests lr\n            JOIN\n                leave_types lt ON lr.leave_type_id = lt.id\n            WHERE\n                employee_unid = $1\n                AND leave_type_id = ANY($2)\n                AND leave_status = ANY($3)\n                AND date_from BETWEEN $4 AND $5 \n                AND date_to BETWEEN $4 AND $5\n            ORDER BY lr.date_from DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "leave_request_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "leave_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "leave_status!: LeaveStatus",
+        "type_info": {
+          "Custom": {
+            "name": "valid_leave_statuses",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "MoreInfoReq",
+                "Cancelled",
+                "Rejected",
+                "Accepted"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "date_from",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 4,
+        "name": "date_to",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 5,
+        "name": "total_duration",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4Array",
+        {
+          "Custom": {
+            "name": "valid_leave_statuses[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "valid_leave_statuses",
+                  "kind": {
+                    "Enum": [
+                      "Pending",
+                      "MoreInfoReq",
+                      "Cancelled",
+                      "Rejected",
+                      "Accepted"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Date",
+        "Date"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "389b84f9cf00ce8e8131e2c9c3d5232b1a5075c32124f11fa4018564bcf0cc8c"
+}

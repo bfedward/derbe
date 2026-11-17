@@ -1,0 +1,93 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE leave_types\n            SET name = $1,\n                default_quota = $2,\n                colour = $3,\n                can_book_in_future = $4,\n                others_days_visibility = $5,\n                default_in_leave_request = $6,\n                show_in_approve_days = $7\n            WHERE id = $8\n            RETURNING id, \n                name, \n                default_quota, \n                colour,\n                can_book_in_future, \n                others_days_visibility AS \"others_days_visibility: OthersDaysVisibility\", \n                default_in_leave_request, \n                show_in_approve_days\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "default_quota",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "colour",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "can_book_in_future",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "others_days_visibility: OthersDaysVisibility",
+        "type_info": {
+          "Custom": {
+            "name": "valid_others_days_visibilities",
+            "kind": {
+              "Enum": [
+                "Hidden",
+                "Shown",
+                "ShownByDefault"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "default_in_leave_request",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "show_in_approve_days",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Float8",
+        "Varchar",
+        "Bool",
+        {
+          "Custom": {
+            "name": "valid_others_days_visibilities",
+            "kind": {
+              "Enum": [
+                "Hidden",
+                "Shown",
+                "ShownByDefault"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Bool",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "19218e7a726fb926744aaa6604a7811180356c678b5a76dde57abc2b0df8ab0b"
+}

@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                CONCAT(e.first_name, ' ', e.last_name) AS employee_name, \n                lr.date_from, \n                lr.date_to, \n                lr.first_day_half, \n                lr.last_day_half,\n                lt.colour\n            FROM leave_requests lr\n            JOIN employees e ON lr.employee_unid = e.unid\n            JOIN leave_types lt ON lr.leave_type_id = lt.id\n            WHERE lr.leave_status = 'Accepted'\n            AND lr.date_from >= $1\n            AND lr.date_to <= $2\n            ORDER BY e.last_name, e.first_name, lr.date_from DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "employee_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "date_from",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 2,
+        "name": "date_to",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 3,
+        "name": "first_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "last_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "colour",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Date",
+        "Date"
+      ]
+    },
+    "nullable": [
+      null,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "05b320b6a6820338868db38c46f50dd8dd706c86eb28e600278b2d64c4a79b05"
+}

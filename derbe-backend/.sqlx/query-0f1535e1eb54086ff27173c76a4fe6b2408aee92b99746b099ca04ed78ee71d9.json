@@ -1,0 +1,101 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n             SELECT id, \n                     employee_unid, \n                     leave_type_id, \n                     leave_status AS \"leave_status!: LeaveStatus\", \n                     date_from,\n                     date_to,\n                     first_day_half, \n                     last_day_half, \n                     total_duration,\n                     date_requested,\n                     date_finalised,\n                     notes\n             FROM leave_requests\n             WHERE id = $1\n             ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "employee_unid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "leave_type_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "leave_status!: LeaveStatus",
+        "type_info": {
+          "Custom": {
+            "name": "valid_leave_statuses",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "MoreInfoReq",
+                "Cancelled",
+                "Rejected",
+                "Accepted"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "date_from",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 5,
+        "name": "date_to",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 6,
+        "name": "first_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "total_duration",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 9,
+        "name": "date_requested",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "date_finalised",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "notes",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "0f1535e1eb54086ff27173c76a4fe6b2408aee92b99746b099ca04ed78ee71d9"
+}

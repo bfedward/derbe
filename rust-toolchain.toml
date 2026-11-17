@@ -1,0 +1,5 @@
+# Pin lint and formatter behavior so local runs, CI and the Docker build agree.
+[toolchain]
+channel = "1.99.1"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

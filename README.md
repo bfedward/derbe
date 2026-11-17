@@ -288,6 +288,10 @@ derbe-frontend/src/bindings
 
 Do not edit generated binding files manually.
 
+## Deployment
+
+Production runs on a Hetzner VPS with Docker Compose, nginx and certbot. See [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Architecture
 
 ```text

@@ -1,0 +1,117 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE leave_requests\n            SET leave_status = $1,\n                date_finalised = $2,\n                notes = $3\n            WHERE id = $4\n            RETURNING id, \n                employee_unid, \n                leave_type_id, \n                leave_status AS \"leave_status!: LeaveStatus\", \n                date_from, \n                date_to,\n                first_day_half, \n                last_day_half, \n                total_duration,\n                date_requested,\n                date_finalised,\n                notes\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "employee_unid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "leave_type_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "leave_status!: LeaveStatus",
+        "type_info": {
+          "Custom": {
+            "name": "valid_leave_statuses",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "MoreInfoReq",
+                "Cancelled",
+                "Rejected",
+                "Accepted"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "date_from",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 5,
+        "name": "date_to",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 6,
+        "name": "first_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "total_duration",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 9,
+        "name": "date_requested",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "date_finalised",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "notes",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "valid_leave_statuses",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "MoreInfoReq",
+                "Cancelled",
+                "Rejected",
+                "Accepted"
+              ]
+            }
+          }
+        },
+        "Timestamptz",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "a86f4457377e5decec99ac3922b8d1855a1d64d10503e00ff8b92f40815074a8"
+}

@@ -1,0 +1,98 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO employees (first_name, \n                                    last_name, \n                                    job_title, \n                                    division_id, \n                                    employment_type, \n                                    location_id, \n                                    manager_unid, \n                                    email,\n                                    password)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            RETURNING unid AS employee_unid, \n                        first_name, \n                        last_name, \n                        job_title, \n                        division_id, \n                        employment_type AS \"employment_type!: EmploymentType\", \n                        location_id, \n                        manager_unid, \n                        email\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "employee_unid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "first_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "last_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "job_title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "division_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "employment_type!: EmploymentType",
+        "type_info": {
+          "Custom": {
+            "name": "valid_employment_types",
+            "kind": {
+              "Enum": [
+                "Permanent",
+                "Contract"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "location_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "manager_unid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "email",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Int4",
+        {
+          "Custom": {
+            "name": "valid_employment_types",
+            "kind": {
+              "Enum": [
+                "Permanent",
+                "Contract"
+              ]
+            }
+          }
+        },
+        "Int4",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "2679711ad5b77fc0fe9ae9dc45522d01a54365a69c65dffe3dee5858c15fde11"
+}

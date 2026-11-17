@@ -33,6 +33,9 @@ pub enum ServeError {
     #[error("failed to connect to PostgreSQL")]
     Database(#[from] sqlx::Error),
 
+    #[error("failed to run database migrations")]
+    Migration(#[from] sqlx::migrate::MigrateError),
+
     #[error("failed to bind HTTP listener")]
     Listener(#[source] std::io::Error),
 
@@ -45,6 +48,9 @@ pub async fn serve(configuration: Settings) -> Result<(), ServeError> {
         .max_connections(5)
         .connect(configuration.database.connection_string().expose_secret())
         .await?;
+
+    // Embedded at compile time, so the container needs no sqlx-cli to start on an empty database.
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     let app_env = configuration.application.app_env;
 

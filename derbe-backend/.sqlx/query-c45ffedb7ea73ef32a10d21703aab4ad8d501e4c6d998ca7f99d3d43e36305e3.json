@@ -1,0 +1,92 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO leave_types (name, \n                                    default_quota, \n                                    colour,\n                                    can_book_in_future, \n                                    others_days_visibility, \n                                    default_in_leave_request, \n                                    show_in_approve_days)\n            VALUES ($1, $2, $3, $4, $5, $6, $7)\n            RETURNING id, \n                        name, \n                        default_quota,\n                        colour,\n                        can_book_in_future, \n                        others_days_visibility AS \"others_days_visibility: OthersDaysVisibility\", \n                        default_in_leave_request, \n                        show_in_approve_days\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "default_quota",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "colour",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "can_book_in_future",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "others_days_visibility: OthersDaysVisibility",
+        "type_info": {
+          "Custom": {
+            "name": "valid_others_days_visibilities",
+            "kind": {
+              "Enum": [
+                "Hidden",
+                "Shown",
+                "ShownByDefault"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "default_in_leave_request",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "show_in_approve_days",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Float8",
+        "Varchar",
+        "Bool",
+        {
+          "Custom": {
+            "name": "valid_others_days_visibilities",
+            "kind": {
+              "Enum": [
+                "Hidden",
+                "Shown",
+                "ShownByDefault"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c45ffedb7ea73ef32a10d21703aab4ad8d501e4c6d998ca7f99d3d43e36305e3"
+}

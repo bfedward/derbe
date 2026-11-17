@@ -1,0 +1,110 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE leave_requests\n            SET employee_unid = $1,\n                leave_type_id = $2,\n                date_from = $3,\n                date_to = $4,\n                first_day_half = $5,\n                last_day_half = $6,\n                total_duration = $7,\n                date_requested = $8,\n                notes = $9\n            WHERE id = $10\n            RETURNING id, \n                employee_unid, \n                leave_type_id, \n                leave_status AS \"leave_status!: LeaveStatus\", \n                date_from, \n                date_to,\n                first_day_half, \n                last_day_half, \n                total_duration,\n                date_requested,\n                date_finalised,\n                notes\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "employee_unid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "leave_type_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "leave_status!: LeaveStatus",
+        "type_info": {
+          "Custom": {
+            "name": "valid_leave_statuses",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "MoreInfoReq",
+                "Cancelled",
+                "Rejected",
+                "Accepted"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "date_from",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 5,
+        "name": "date_to",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 6,
+        "name": "first_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "total_duration",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 9,
+        "name": "date_requested",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "date_finalised",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "notes",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        "Date",
+        "Date",
+        "Bool",
+        "Bool",
+        "Float8",
+        "Timestamptz",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "97502b68bd442981df2c51a07b9ae4912b057234bc2b51175a74c0611f440c66"
+}

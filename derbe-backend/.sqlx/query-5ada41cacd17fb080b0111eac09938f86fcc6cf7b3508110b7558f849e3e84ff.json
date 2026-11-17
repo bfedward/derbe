@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT ((SELECT COUNT(*) FROM employees WHERE manager_unid = $1) +\n            (SELECT COUNT(*) FROM leave_requests WHERE employee_unid = $1)) AS count\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "5ada41cacd17fb080b0111eac09938f86fcc6cf7b3508110b7558f849e3e84ff"
+}

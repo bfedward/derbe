@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:18
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-derbe}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is empty or missing in ~/derbe/.env}
+      POSTGRES_DB: ${POSTGRES_DATABASE:-derbe}
+    volumes:
+      # Postgres 18 images keep data in a versioned subdirectory of /var/lib/postgresql.
+      - derbe_db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-derbe} -d ${POSTGRES_DATABASE:-derbe}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: &log_rotation
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  backend:
+    image: ${DOCKER_USERNAME:?DOCKER_USERNAME is empty or missing}/${DOCKER_REPOSITORY:?DOCKER_REPOSITORY is empty or missing}:${BACKEND_IMAGE_TAG:-backend-latest}
+    restart: always
+    environment:
+      RUST_LOG: info
+      DERBE_APPLICATION__APPLICATION_HOST: 0.0.0.0
+      DERBE_APPLICATION__APPLICATION_PORT: 8001
+      DERBE_APPLICATION__APP_ENV: Production
+      DERBE_APPLICATION__CORS_ORIGINS: https://${DERBE_DOMAIN:?DERBE_DOMAIN is empty or missing in ~/derbe/.env}
+      DERBE_DATABASE__HOST: db
+      DERBE_DATABASE__PORT: 5432
+      DERBE_DATABASE__USERNAME: ${POSTGRES_USER:-derbe}
+      DERBE_DATABASE__PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is empty or missing in ~/derbe/.env}
+      DERBE_DATABASE__DATABASE_NAME: ${POSTGRES_DATABASE:-derbe}
+      DERBE_AUTH__JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is empty or missing in ~/derbe/.env}
+    ports:
+      # 127.0.0.1 only: host nginx proxies /api/, nothing is reachable directly from the internet.
+      - "127.0.0.1:8001:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8001/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging: *log_rotation
+
+  frontend:
+    image: ${DOCKER_USERNAME:?DOCKER_USERNAME is empty or missing}/${DOCKER_REPOSITORY:?DOCKER_REPOSITORY is empty or missing}:${FRONTEND_IMAGE_TAG:-frontend-latest}
+    restart: always
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging: *log_rotation
+
+volumes:
+  derbe_db:

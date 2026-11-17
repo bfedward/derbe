@@ -1,0 +1,124 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO leave_requests (employee_unid, \n                                        leave_type_id, \n                                        leave_status,\n                                        date_from, \n                                        date_to,\n                                        first_day_half, \n                                        last_day_half,\n                                        total_duration,\n                                        date_requested,\n                                        date_finalised,\n                                        notes)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n            RETURNING id, \n                        employee_unid, \n                        leave_type_id, \n                        leave_status AS \"leave_status!: LeaveStatus\", \n                        date_from, \n                        date_to,\n                        first_day_half, \n                        last_day_half, \n                        total_duration,\n                        date_requested,\n                        date_finalised,\n                        notes\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "employee_unid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "leave_type_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "leave_status!: LeaveStatus",
+        "type_info": {
+          "Custom": {
+            "name": "valid_leave_statuses",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "MoreInfoReq",
+                "Cancelled",
+                "Rejected",
+                "Accepted"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "date_from",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 5,
+        "name": "date_to",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 6,
+        "name": "first_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_day_half",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "total_duration",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 9,
+        "name": "date_requested",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "date_finalised",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "notes",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        {
+          "Custom": {
+            "name": "valid_leave_statuses",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "MoreInfoReq",
+                "Cancelled",
+                "Rejected",
+                "Accepted"
+              ]
+            }
+          }
+        },
+        "Date",
+        "Date",
+        "Bool",
+        "Bool",
+        "Float8",
+        "Timestamptz",
+        "Timestamptz",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "e519a063a19d60a38b22c479a66f62186270da5f3c7a141cd3cd2d3fe4e2e22a"
+}
