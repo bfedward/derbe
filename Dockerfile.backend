@@ -2,7 +2,7 @@
 # derbe-backend: axum + sqlx API. Builds with SQLX_OFFLINE=true, so derbe-backend/.sqlx must be current
 # (`cd derbe-backend && cargo sqlx prepare -- --all-targets`).
 
-FROM lukemathwalker/cargo-chef:latest-rust-1.99.1-bookworm AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.100.0-bookworm AS chef
 WORKDIR /app
 
 FROM chef AS planner
