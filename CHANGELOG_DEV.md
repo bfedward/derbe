@@ -4,6 +4,24 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- `scripts/deploy_prod.sh` now fails fast on the developer machine: it runs the `quality.yml` gates locally (fmt, biome, knip, clippy, tests, bindings, build) before asking for confirmation, pushes a `deploy_YYYYMMDD_HHMMSS` tag, and watches the run that matches the deployed commit instead of the latest run. `--skip-checks` bypasses the local gates. Added the missing shebang.
+
+Before:
+
+```bash
+gh workflow run deploy.yml --ref main
+sleep 5
+run_id="$(gh run list --workflow deploy.yml --limit 1 ...)"  # could pick an older run
+```
+
+After:
+
+```bash
+git tag "$tag" && git push origin "$tag"
+gh workflow run deploy.yml --ref main
+gh run list --workflow deploy.yml --event workflow_dispatch --commit "$sha" ...  # polled until found
+```
+
 - Removed the `MeResponse` DTO and its `From<CurrentUser>` impl in `auth`: both structs had identical fields, so `GET /me` now serializes `CurrentUser` directly. `LeaveRequestResponse.employee_unid` is now a `Uuid` instead of a `String` (the JSON and the generated TS type are unchanged), enabled by the `uuid-impl` feature of `ts-rs`.
 
 Before:

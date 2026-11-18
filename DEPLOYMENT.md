@@ -69,7 +69,8 @@ The Docker Hub repository can be private. Both images live in it, tagged `backen
 scripts/deploy_prod.sh
 ```
 
-It checks you are on a clean, pushed `main`, asks for confirmation, runs the `Deploy` workflow and watches it.
+It checks you are on a clean, pushed `main`, then runs the same gates as `quality.yml` on your machine (fmt, biome, knip, clippy, tests, bindings, build) so a broken commit fails in seconds instead of after a CI round trip. It needs PostgreSQL on `127.0.0.1:5432` for the integration tests. Then it asks for confirmation, pushes a `deploy_YYYYMMDD_HHMMSS` tag, runs the `Deploy` workflow and watches that run. CI runs the gates again as the authoritative check.
+`scripts/deploy_prod.sh --skip-checks` skips the local gates (hotfix when your machine cannot run them).
 Or use GitHub: Actions > Deploy > Run workflow.
 
 Pipeline:
