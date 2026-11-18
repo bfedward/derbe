@@ -17,7 +17,7 @@
     "check:quality": "pnpm typecheck && pnpm lint && pnpm knip"
   },
   "devDependencies": {
-    "concurrently": "9.2.4",
+    "concurrently": "10.0.7",
     "wait-on": "9.1.0"
   }
 }
