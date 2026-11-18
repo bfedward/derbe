@@ -321,7 +321,7 @@ rust_job() {
 if [ "$SKIP_ALL" = "true" ]; then
     echo "⏭️  Skipping typos (--skip-all)"
 else
-    start_job typos timed typos . typos derbe-backend/src derbe-frontend/src
+    start_job typos timed typos typos . typos derbe-backend/src derbe-frontend/src
 fi
 
 if [ "$SKIP_ALL" = "true" ]; then
