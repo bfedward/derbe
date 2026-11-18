@@ -80,7 +80,7 @@ async fn pending_leave_request(
 
 #[tokio::test]
 async fn protected_routes_return_401_without_a_session() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let client = Client::new();
 
     for path in ["/divisions", "/locations", "/employees", "/leaveTypes"] {
@@ -92,12 +92,12 @@ async fn protected_routes_return_401_without_a_session() {
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED, "GET {path}");
     }
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn login_fails_with_a_wrong_password() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let user = seed_employee(&app, "Wrongpass", RegularUser, None).await;
 
     let response = Client::new()
@@ -109,12 +109,12 @@ async fn login_fails_with_a_wrong_password() {
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn a_deleted_employee_cannot_log_in() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let user = seed_employee(&app, "Leaver", RegularUser, None).await;
 
     sqlx::query("UPDATE employees SET deleted_at = now() WHERE unid = $1")
@@ -132,12 +132,12 @@ async fn a_deleted_employee_cannot_log_in() {
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn me_returns_the_role_of_the_logged_in_employee() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
 
     for role in [Admin, Manager, RegularUser, Demo] {
         let (user, client) = login_as(&app, role).await;
@@ -153,14 +153,14 @@ async fn me_returns_the_role_of_the_logged_in_employee() {
         assert_eq!(me["unid"], user.unid.to_string());
     }
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 // Divisions, locations and leave types: Admin creates, every role reads
 
 #[tokio::test]
 async fn only_admin_can_create_divisions() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
 
     for (role, expected) in [
         (Admin, StatusCode::CREATED),
@@ -178,12 +178,12 @@ async fn only_admin_can_create_divisions() {
         assert_eq!(response.status(), expected, "{role} creating a division");
     }
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn only_admin_can_create_locations() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
 
     for (role, expected) in [
         (Admin, StatusCode::CREATED),
@@ -201,12 +201,12 @@ async fn only_admin_can_create_locations() {
         assert_eq!(response.status(), expected, "{role} creating a location");
     }
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn only_admin_can_create_leave_types() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
 
     for (role, expected) in [
         (Admin, StatusCode::CREATED),
@@ -224,12 +224,12 @@ async fn only_admin_can_create_leave_types() {
         assert_eq!(response.status(), expected, "{role} creating a leave type");
     }
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn every_role_can_read_divisions_locations_and_leave_types() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
 
     for role in [Admin, Manager, RegularUser, Demo] {
         let (_user, client) = login_as(&app, role).await;
@@ -243,14 +243,14 @@ async fn every_role_can_read_divisions_locations_and_leave_types() {
         }
     }
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 // Employees
 
 #[tokio::test]
 async fn manager_creates_employees_but_regular_user_and_demo_cannot() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, admin_client) = login_as(&app, Admin).await;
     let division = create_division("Ops", &admin_client, &app).await;
     let location = test_helpers::create_location("HQ", &admin_client, &app).await;
@@ -276,12 +276,12 @@ async fn manager_creates_employees_but_regular_user_and_demo_cannot() {
         assert_eq!(status, expected, "{role} creating an employee: {body}");
     }
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn demo_cannot_update_an_employee_but_can_list_them() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (demo, client) = login_as(&app, Demo).await;
 
     let list = client
@@ -308,12 +308,12 @@ async fn demo_cannot_update_an_employee_but_can_list_them() {
         .unwrap();
     assert_eq!(update.status(), StatusCode::FORBIDDEN);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn regular_user_cannot_update_someone_else() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_user, client) = login_as(&app, RegularUser).await;
     let other = seed_employee(&app, "Colleague", RegularUser, None).await;
 
@@ -335,14 +335,14 @@ async fn regular_user_cannot_update_someone_else() {
 
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 // Leave requests
 
 #[tokio::test]
 async fn regular_user_creates_their_own_leave_request_but_not_someone_elses() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, admin_client) = login_as(&app, Admin).await;
     let leave_type = create_leave_type("Annual", &admin_client, &app).await;
     let (user, client) = login_as(&app, RegularUser).await;
@@ -354,12 +354,12 @@ async fn regular_user_creates_their_own_leave_request_but_not_someone_elses() {
     let someone_elses = post_leave_request(&client, &app, other.unid, &leave_type["id"]).await;
     assert_eq!(someone_elses.status(), StatusCode::FORBIDDEN);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn demo_cannot_create_a_leave_request() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, admin_client) = login_as(&app, Admin).await;
     let leave_type = create_leave_type("Annual", &admin_client, &app).await;
     let (demo, client) = login_as(&app, Demo).await;
@@ -368,12 +368,12 @@ async fn demo_cannot_create_a_leave_request() {
 
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn manager_approves_a_report_but_not_their_own_leave() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, admin_client) = login_as(&app, Admin).await;
     let leave_type = create_leave_type("Annual", &admin_client, &app).await;
     let manager = seed_employee(&app, "Boss", Manager, None).await;
@@ -391,12 +391,12 @@ async fn manager_approves_a_report_but_not_their_own_leave() {
     let approve_own = put_status(&manager_client, &app, &own_leave["id"], "Accepted").await;
     assert_eq!(approve_own.status(), StatusCode::FORBIDDEN);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn manager_cannot_approve_the_leave_of_someone_who_is_not_a_report() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, admin_client) = login_as(&app, Admin).await;
     let leave_type = create_leave_type("Annual", &admin_client, &app).await;
     let (_manager, manager_client) = login_as(&app, Manager).await;
@@ -407,12 +407,12 @@ async fn manager_cannot_approve_the_leave_of_someone_who_is_not_a_report() {
 
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn regular_user_cannot_approve_even_their_own_leave() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, admin_client) = login_as(&app, Admin).await;
     let leave_type = create_leave_type("Annual", &admin_client, &app).await;
     let (user, client) = login_as(&app, RegularUser).await;
@@ -422,12 +422,12 @@ async fn regular_user_cannot_approve_even_their_own_leave() {
 
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn regular_user_can_cancel_their_own_leave_request() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, admin_client) = login_as(&app, Admin).await;
     let leave_type = create_leave_type("Annual", &admin_client, &app).await;
     let (user, client) = login_as(&app, RegularUser).await;
@@ -437,12 +437,12 @@ async fn regular_user_can_cancel_their_own_leave_request() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn a_rejected_leave_request_cannot_go_back_to_pending() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, admin_client) = login_as(&app, Admin).await;
     let leave_type = create_leave_type("Annual", &admin_client, &app).await;
     let (user, client) = login_as(&app, RegularUser).await;
@@ -455,5 +455,5 @@ async fn a_rejected_leave_request_cannot_go_back_to_pending() {
 
     assert_eq!(back_to_pending.status(), StatusCode::BAD_REQUEST);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }

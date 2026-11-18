@@ -8,7 +8,7 @@ mod test_helpers;
 
 #[tokio::test]
 async fn get_employees() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -25,12 +25,12 @@ async fn get_employees() {
 
     assert!(response.status().is_success());
 
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn get_employee() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -67,12 +67,12 @@ async fn get_employee() {
     assert_eq!(response_text["email"], create_response["email"]);
 
     // Clean up the test application
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_get_non_existant_employee() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -88,12 +88,12 @@ async fn cannot_get_non_existant_employee() {
     assert_eq!(get_response.status(), StatusCode::NOT_FOUND);
 
     // Clean up the test application
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn create_employee_success() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -112,12 +112,12 @@ async fn create_employee_success() {
     assert_eq!(response["first_name"], first_name);
 
     // Clean up the test application
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_create_employee_with_blank_first_name() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -144,12 +144,12 @@ async fn cannot_create_employee_with_blank_first_name() {
     assert!(response_text.contains("first_name"));
 
     // Clean up the test application
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn employee_email_is_stored_lowercase() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -174,12 +174,12 @@ async fn employee_email_is_stored_lowercase() {
 
     assert_eq!(response_json["employee"]["email"], "dorothy@derbe.com");
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_create_employee_with_invalid_email() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -204,5 +204,5 @@ async fn cannot_create_employee_with_invalid_email() {
 
     assert!(response_text.contains("email"));
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }

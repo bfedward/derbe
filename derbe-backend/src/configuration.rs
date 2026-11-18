@@ -1,19 +1,17 @@
-use config::{Config, ConfigError, Environment, File, FileFormat};
-use secrecy::{ExposeSecret, SecretBox};
+use secrecy::SecretBox;
 
+/// Read from environment variables (a local `.env` is loaded first), so dev and prod share one path.
 #[derive(serde::Deserialize)]
 pub struct Settings {
-    pub database: DatabaseSettings,
-    pub application: ApplicationSettings,
-    pub auth: AuthSettings,
-}
-
-#[derive(serde::Deserialize)]
-pub struct ApplicationSettings {
-    pub application_host: String,
-    pub application_port: u16,
-    pub cors_origins: Vec<String>,
+    pub database_url: SecretBox<String>,
+    pub jwt_secret: SecretBox<String>,
     pub app_env: AppEnvironment,
+    #[serde(default = "default_host")]
+    pub app_host: String,
+    #[serde(default = "default_port")]
+    pub app_port: u16,
+    /// Comma separated in the environment: `CORS_ORIGINS=https://a.com,https://b.com`.
+    pub cors_origins: Vec<String>,
 }
 
 #[derive(serde::Deserialize, Copy, Clone, PartialEq)]
@@ -22,80 +20,56 @@ pub enum AppEnvironment {
     Development,
 }
 
-#[derive(serde::Deserialize)]
-pub struct DatabaseSettings {
-    pub username: String,
-    pub password: SecretBox<String>,
-    pub port: u16,
-    pub host: String,
-    pub database_name: String,
+fn default_host() -> String {
+    "127.0.0.1".to_string()
 }
 
-#[derive(serde::Deserialize)]
-pub struct AuthSettings {
-    pub jwt_secret: SecretBox<String>,
+fn default_port() -> u16 {
+    8001
 }
 
-impl DatabaseSettings {
-    pub fn connection_string(&self) -> SecretBox<String> {
-        SecretBox::new(Box::new(format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.username,
-            self.password.expose_secret(),
-            self.host,
-            self.port,
-            self.database_name
-        )))
-    }
-
-    pub fn connection_string_without_db(&self) -> SecretBox<String> {
-        SecretBox::new(Box::new(format!(
-            "postgres://{}:{}@{}:{}",
-            self.username,
-            self.password.expose_secret(),
-            self.host,
-            self.port
-        )))
-    }
-}
-
-const ENV_NESTING_SEPARATOR: &str = "__";
-const ENV_LIST_SEPARATOR: &str = ",";
-const CORS_ORIGINS_KEY: &str = "application.cors_origins";
-
-pub fn get_configuration() -> Result<Settings, ConfigError> {
+pub fn get_configuration() -> Result<Settings, envy::Error> {
     dotenvy::dotenv().ok();
-    let settings = Config::builder()
-        .add_source(File::new("derbe_config.yaml", FileFormat::Yaml).required(false))
-        .add_source(
-            Environment::default()
-                .separator(ENV_NESTING_SEPARATOR)
-                .list_separator(ENV_LIST_SEPARATOR)
-                .with_list_parse_key(CORS_ORIGINS_KEY)
-                .try_parsing(true),
-        )
-        .build()?;
-
-    settings.try_deserialize::<Settings>()
+    envy::from_env()
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     const CORS_ORIGINS_ENV: &str = "DERBE_APPLICATION__CORS_ORIGINS";
-//     const FIRST_ORIGIN: &str = "https://derbe.example.com";
-//     const SECOND_ORIGIN: &str = "https://www.derbe.example.com";
+    fn vars(extra: &[(&str, &str)]) -> Vec<(String, String)> {
+        [
+            ("DATABASE_URL", "postgres://u:p@localhost/db"),
+            ("JWT_SECRET", "s"),
+            ("APP_ENV", "Production"),
+            (
+                "CORS_ORIGINS",
+                "https://a.example.com,https://b.example.com",
+            ),
+        ]
+        .iter()
+        .chain(extra)
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect()
+    }
 
-//     #[test]
-//     fn cors_origins_env_override_is_split_on_commas() {
-//         std::env::set_var(CORS_ORIGINS_ENV, format!("{FIRST_ORIGIN},{SECOND_ORIGIN}"));
-//         let settings = get_configuration().expect("configuration should load");
-//         std::env::remove_var(CORS_ORIGINS_ENV);
+    #[test]
+    fn cors_origins_are_split_on_commas_and_defaults_apply() {
+        let settings: Settings = envy::from_iter(vars(&[])).expect("settings should parse");
 
-//         assert_eq!(
-//             settings.application.cors_origins,
-//             vec![FIRST_ORIGIN.to_string(), SECOND_ORIGIN.to_string()]
-//         );
-//     }
-// }
+        assert_eq!(
+            settings.cors_origins,
+            vec!["https://a.example.com", "https://b.example.com"]
+        );
+        assert_eq!(settings.app_host, "127.0.0.1");
+        assert_eq!(settings.app_port, 8001);
+        assert!(settings.app_env == AppEnvironment::Production);
+    }
+
+    #[test]
+    fn missing_secret_is_an_error() {
+        let without_jwt = vars(&[]).into_iter().filter(|(k, _)| k != "JWT_SECRET");
+
+        assert!(envy::from_iter::<_, Settings>(without_jwt).is_err());
+    }
+}

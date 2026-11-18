@@ -4,7 +4,7 @@ mod test_helpers;
 
 #[tokio::test]
 async fn create_location() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -24,12 +24,12 @@ async fn create_location() {
     assert_eq!(response["name"], name);
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_create_locations_with_duplicate_names() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -61,12 +61,12 @@ async fn cannot_create_locations_with_duplicate_names() {
     );
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn get_location() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -90,12 +90,12 @@ async fn get_location() {
     assert_eq!(response_text["name"], name);
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn get_locations() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -131,12 +131,12 @@ async fn get_locations() {
     );
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_get_nonexistant_location() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -154,12 +154,12 @@ async fn cannot_get_nonexistant_location() {
     assert_eq!(response_text["error"], "Location with id 0 not found!");
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_create_locations_with_names_differing_only_by_case() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -177,5 +177,5 @@ async fn cannot_create_locations_with_names_differing_only_by_case() {
 
     assert_eq!(response.status(), StatusCode::CONFLICT);
 
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }

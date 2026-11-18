@@ -5,7 +5,7 @@ mod test_helpers;
 
 #[tokio::test]
 async fn create_division_success() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -25,12 +25,12 @@ async fn create_division_success() {
     assert_eq!(response["name"], name);
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_create_divisions_with_duplicate_names() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -62,12 +62,12 @@ async fn cannot_create_divisions_with_duplicate_names() {
     );
 
     // Clean up the test application
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn get_division() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -91,12 +91,12 @@ async fn get_division() {
     assert_eq!(response_text["name"], name);
 
     // Clean up the test application
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn get_divisions() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -132,12 +132,12 @@ async fn get_divisions() {
     );
 
     // Clean up the test application
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_get_nonexistant_division() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -155,12 +155,12 @@ async fn cannot_get_nonexistant_division() {
     assert_eq!(response_text["error"], "Division with id 0 not found!");
 
     // Clean up the test application
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_create_divisions_with_names_differing_only_by_case() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -178,5 +178,5 @@ async fn cannot_create_divisions_with_names_differing_only_by_case() {
 
     assert_eq!(response.status(), StatusCode::CONFLICT);
 
-    cleanup_test_app(&config.database, app).await;
+    cleanup_test_app(app).await;
 }

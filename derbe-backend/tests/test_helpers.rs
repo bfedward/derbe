@@ -1,10 +1,10 @@
 // Each integration test crate uses a different subset of these helpers.
 #![allow(dead_code)]
 
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, str::FromStr, sync::Arc};
 
 use derbe_backend::{
-    configuration::{get_configuration, DatabaseSettings, Settings},
+    configuration::get_configuration,
     features::employees::model::EmployeeRole,
     http::{app_router, AppState},
 };
@@ -14,7 +14,7 @@ use reqwest::{
 };
 use secrecy::{ExposeSecret, SecretBox};
 use serde_json::Value;
-use sqlx::{Connection, Executor, PgConnection, PgPool};
+use sqlx::{postgres::PgConnectOptions, Connection, Executor, PgConnection, PgPool};
 use tokio::{
     net::TcpListener,
     sync::oneshot::{self, Sender},
@@ -25,24 +25,30 @@ pub struct TestApp {
     pub address: String,
     pub ctx: AppState,
     shutdown_tx: Option<Sender<()>>,
+    db_name: String,
+    // Same server as the app database, used to create and remove the per test database.
+    admin_options: PgConnectOptions,
 }
 
-pub async fn spawn_app() -> (TestApp, Settings) {
+pub async fn spawn_app() -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let port = listener.local_addr().unwrap().port();
     let address = SocketAddr::from(([127, 0, 0, 1], port));
 
-    let mut configuration = get_configuration().expect("Could not get configuration!");
-    configuration.database.database_name = Uuid::new_v4().to_string();
+    let configuration = get_configuration().expect("Could not get configuration!");
+    let admin_options = PgConnectOptions::from_str(configuration.database_url.expose_secret())
+        .expect("DATABASE_URL is not a valid Postgres URL")
+        .database("postgres");
+    let db_name = Uuid::new_v4().to_string();
 
-    let db = configure_database(&configuration.database).await;
+    let db = configure_database(&admin_options, &db_name).await;
 
     let ctx = AppState {
         pool: db,
         jwt_secret: Arc::new(SecretBox::new(Box::new("test-secret".to_string()))),
-        app_env: configuration.application.app_env,
+        app_env: configuration.app_env,
     };
-    let app = app_router(ctx.clone(), &configuration.application);
+    let app = app_router(ctx.clone(), &configuration.cors_origins);
 
     // Create a shutdown channel
     let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
@@ -56,14 +62,13 @@ pub async fn spawn_app() -> (TestApp, Settings) {
             .unwrap();
     });
 
-    (
-        TestApp {
-            address: format!("http://{}", address.to_string()),
-            ctx,
-            shutdown_tx: Some(shutdown_tx),
-        },
-        configuration,
-    )
+    TestApp {
+        address: format!("http://{}", address.to_string()),
+        ctx,
+        shutdown_tx: Some(shutdown_tx),
+        db_name,
+        admin_options,
+    }
 }
 
 const TEST_PASSWORD: &str = "test-password";
@@ -169,17 +174,16 @@ pub async fn login_as(app: &TestApp, role: EmployeeRole) -> (SeededUser, Client)
     (user, client)
 }
 
-pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
-    let mut connection =
-        PgConnection::connect(&config.connection_string_without_db().expose_secret())
-            .await
-            .expect("Failed to connect to Postgres");
+pub async fn configure_database(admin_options: &PgConnectOptions, db_name: &str) -> PgPool {
+    let mut connection = PgConnection::connect_with(admin_options)
+        .await
+        .expect("Failed to connect to Postgres");
     connection
-        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .execute(format!(r#"CREATE DATABASE "{db_name}";"#).as_str())
         .await
         .expect("Failed to create database.");
 
-    let connection_pool = PgPool::connect(&config.connection_string().expose_secret())
+    let connection_pool = PgPool::connect_with(admin_options.clone().database(db_name))
         .await
         .expect("Failed to connect to Postgres.");
     sqlx::migrate!("./migrations")
@@ -190,7 +194,7 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     connection_pool
 }
 
-pub async fn cleanup_test_app(config: &DatabaseSettings, test_app: TestApp) {
+pub async fn cleanup_test_app(test_app: TestApp) {
     // Gracefully shutdown the server
     if let Some(shutdown_tx) = test_app.shutdown_tx {
         let _ = shutdown_tx.send(());
@@ -200,10 +204,9 @@ pub async fn cleanup_test_app(config: &DatabaseSettings, test_app: TestApp) {
     drop(test_app.ctx.pool);
 
     // Connect to the Postgres instance without specifying a database
-    let mut connection =
-        PgConnection::connect(&config.connection_string_without_db().expose_secret())
-            .await
-            .expect("Failed to connect to Postgres");
+    let mut connection = PgConnection::connect_with(&test_app.admin_options)
+        .await
+        .expect("Failed to connect to Postgres");
 
     // Terminate any active connections to the test database
     connection
@@ -215,7 +218,7 @@ pub async fn cleanup_test_app(config: &DatabaseSettings, test_app: TestApp) {
                     WHERE pg_stat_activity.datname = '{}'
                     AND pid <> pg_backend_pid();
                     "#,
-                config.database_name
+                test_app.db_name
             )
             .as_str(),
         )
@@ -224,7 +227,7 @@ pub async fn cleanup_test_app(config: &DatabaseSettings, test_app: TestApp) {
 
     // Drop the test database
     connection
-        .execute(format!(r#"DROP DATABASE "{}";"#, config.database_name).as_str())
+        .execute(format!(r#"DROP DATABASE "{}";"#, test_app.db_name).as_str())
         .await
         .expect("Failed to drop database.");
 }

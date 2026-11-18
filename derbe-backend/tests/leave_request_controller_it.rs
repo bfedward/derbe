@@ -4,7 +4,7 @@ mod test_helpers;
 
 #[tokio::test]
 async fn create_leave_request_fails_with_unknown_employee() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -51,5 +51,5 @@ async fn create_leave_request_fails_with_unknown_employee() {
         format!("Employee with id {} not found!", uuid::Uuid::nil())
     );
 
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }

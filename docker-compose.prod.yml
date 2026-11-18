@@ -25,16 +25,12 @@ services:
     restart: always
     environment:
       RUST_LOG: info
-      DERBE_APPLICATION__APPLICATION_HOST: 0.0.0.0
-      DERBE_APPLICATION__APPLICATION_PORT: 8001
-      DERBE_APPLICATION__APP_ENV: Production
-      DERBE_APPLICATION__CORS_ORIGINS: https://${DERBE_DOMAIN:?DERBE_DOMAIN is empty or missing in ~/derbe/.env}
-      DERBE_DATABASE__HOST: db
-      DERBE_DATABASE__PORT: 5432
-      DERBE_DATABASE__USERNAME: ${POSTGRES_USER:-derbe}
-      DERBE_DATABASE__PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is empty or missing in ~/derbe/.env}
-      DERBE_DATABASE__DATABASE_NAME: ${POSTGRES_DATABASE:-derbe}
-      DERBE_AUTH__JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is empty or missing in ~/derbe/.env}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8001
+      APP_ENV: Production
+      CORS_ORIGINS: https://${DERBE_DOMAIN:?DERBE_DOMAIN is empty or missing in ~/derbe/.env}
+      DATABASE_URL: postgres://${POSTGRES_USER:-derbe}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is empty or missing in ~/derbe/.env}@db:5432/${POSTGRES_DATABASE:-derbe}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is empty or missing in ~/derbe/.env}
     ports:
       # 127.0.0.1 only: host nginx proxies /api/, nothing is reachable directly from the internet.
       - "127.0.0.1:8001:8001"

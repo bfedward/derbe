@@ -13,7 +13,7 @@ use tokio::net::TcpListener;
 use tower_http::cors::{AllowCredentials, CorsLayer};
 
 use crate::{
-    configuration::{AppEnvironment, ApplicationSettings, Settings},
+    configuration::{AppEnvironment, Settings},
     features::auth::{
         handlers::{login, logout, me},
         middleware::require_auth,
@@ -46,32 +46,27 @@ pub enum ServeError {
 pub async fn serve(configuration: Settings) -> Result<(), ServeError> {
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(configuration.database.connection_string().expose_secret())
+        .connect(configuration.database_url.expose_secret())
         .await?;
 
     // Embedded at compile time, so the container needs no sqlx-cli to start on an empty database.
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let app_env = configuration.application.app_env;
-
     let state = AppState {
         pool,
-        jwt_secret: Arc::new(configuration.auth.jwt_secret),
-        app_env,
+        jwt_secret: Arc::new(configuration.jwt_secret),
+        app_env: configuration.app_env,
     };
 
-    let app = app_router(state, &configuration.application);
-    let listener = TcpListener::bind((
-        configuration.application.application_host.as_str(),
-        configuration.application.application_port,
-    ))
-    .await
-    .map_err(ServeError::Listener)?;
+    let app = app_router(state, &configuration.cors_origins);
+    let listener = TcpListener::bind((configuration.app_host.as_str(), configuration.app_port))
+        .await
+        .map_err(ServeError::Listener)?;
 
     axum::serve(listener, app).await.map_err(ServeError::Server)
 }
 
-pub fn app_router(state: AppState, settings: &ApplicationSettings) -> Router {
+pub fn app_router(state: AppState, cors_origins: &[String]) -> Router {
     let protected =
         routes::router().route_layer(middleware::from_fn_with_state(state.clone(), require_auth));
 
@@ -84,23 +79,23 @@ pub fn app_router(state: AppState, settings: &ApplicationSettings) -> Router {
     Router::new()
         .merge(protected)
         .merge(public)
-        .layer(get_cors_layer(settings))
+        .layer(get_cors_layer(cors_origins))
         .with_state(state)
 }
 
-fn get_cors_layer(settings: &ApplicationSettings) -> CorsLayer {
-    let cors_origins: Vec<HeaderValue> = settings
-        .cors_origins
+fn get_cors_layer(cors_origins: &[String]) -> CorsLayer {
+    let origins: Vec<HeaderValue> = cors_origins
         .iter()
-        .map(|s| {
-            s.trim()
+        .map(|origin| {
+            origin
+                .trim()
                 .parse::<HeaderValue>()
-                .expect("invalid CORS_ORIGINS entry {s:?}: {e}")
+                .unwrap_or_else(|e| panic!("invalid CORS_ORIGINS entry {origin:?}: {e}"))
         })
-        .collect::<Vec<HeaderValue>>();
+        .collect();
 
     CorsLayer::new()
-        .allow_origin(cors_origins)
+        .allow_origin(origins)
         .allow_methods([
             Method::GET,
             Method::POST,

@@ -4,6 +4,25 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Simplified backend configuration: environment variables only, read with `dotenvy` (loads `.env`) and `envy` (deserializes a flat `Settings` struct). Removed the `config` and `dotenv` crates, `derbe_config.yaml`, the `__` nesting and list separator consts, and `DatabaseSettings` (one secret `DATABASE_URL` replaces five fields and two connection string builders). Integration tests now derive their per test database from `DATABASE_URL` with `PgConnectOptions`, and `spawn_app()` returns just the `TestApp`. Env var names changed: `DATABASE_URL`, `JWT_SECRET`, `APP_ENV`, `APP_HOST`, `APP_PORT`, `CORS_ORIGINS`. Production compose now sets these names, which also fixes its old `DERBE_APPLICATION__*` vars that the unprefixed config source never read.
+
+Before:
+
+```rust
+Config::builder()
+    .add_source(File::new("derbe_config.yaml", FileFormat::Yaml).required(false))
+    .add_source(Environment::default().separator("__").list_separator(",")
+        .with_list_parse_key("application.cors_origins").try_parsing(true))
+    .build()?.try_deserialize::<Settings>()
+```
+
+After:
+
+```rust
+dotenvy::dotenv().ok();
+envy::from_env()
+```
+
 - Added `scripts/rotate_deploy_key.sh`: one command (`ADMIN_SSH=root@<ip> ./scripts/rotate_deploy_key.sh`) that generates a fresh ed25519 key, installs its public half in the deploy user's `authorized_keys`, checks the login works, then stores the private half in the `production` secret `SSH_PRIVATE_KEY`. Fixes the Deploy job failing with `Permission denied (publickey,password)`. Needs server access and repo admin rights, so the repo owner runs it.
 
 - Removed the `[y/N]` confirmation prompt from `deploy_prod.sh`, like RUSTIFY: running the script is the confirmation, it passes `confirm_deploy=true` to the workflow after the local gates and the origin/main sync check.

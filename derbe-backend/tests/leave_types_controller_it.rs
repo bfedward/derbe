@@ -5,7 +5,7 @@ mod test_helpers;
 
 #[tokio::test]
 async fn create_leave_type_success() {
-    let (app, config) = test_helpers::spawn_app().await;
+    let app = test_helpers::spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -25,12 +25,12 @@ async fn create_leave_type_success() {
     assert_eq!(response["name"], name);
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_create_leave_types_with_duplicate_names() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -60,12 +60,12 @@ async fn cannot_create_leave_types_with_duplicate_names() {
     );
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_create_leave_types_with_negative_default_quota() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -89,12 +89,12 @@ async fn cannot_create_leave_types_with_negative_default_quota() {
     assert!(response_text.contains("default_quota"));
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn get_leave_types_success() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -132,12 +132,12 @@ async fn get_leave_types_success() {
     assert_eq!(leave_types[0]["name"], name);
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn cannot_get_nonexistant_leave_type() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -155,12 +155,12 @@ async fn cannot_get_nonexistant_leave_type() {
     assert_eq!(response_text["error"], "Leave Type with id 0 not found!");
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
 
 #[tokio::test]
 async fn get_leave_type() {
-    let (app, config) = spawn_app().await;
+    let app = spawn_app().await;
     let (_admin, client) = test_helpers::login_as(
         &app,
         derbe_backend::features::employees::model::EmployeeRole::Admin,
@@ -205,5 +205,5 @@ async fn get_leave_type() {
     );
 
     // Clean up the test application
-    test_helpers::cleanup_test_app(&config.database, app).await;
+    test_helpers::cleanup_test_app(app).await;
 }
