@@ -4,6 +4,10 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Added an idempotent seed migration for the `employee@example.com` local demo admin account (`password`) and documented the credentials in the local setup steps.
+
+- Updated both backend dev watchers to watch `derbe-backend/migrations`, so changed embedded SQLx migrations trigger a rebuild and run at startup.
+
 - Stopped tracking `derbe-backend/.env` and added a documented `derbe-backend/.env.example`. New setup step: `cp .env.example .env` (README updated). `.env` was already in `.gitignore` and `.dockerignore`, so it never reached the image.
 
 - Simplified backend configuration: environment variables only, read with `dotenvy` (loads `.env`) and `envy` (deserializes a flat `Settings` struct). Removed the `config` and `dotenv` crates, `derbe_config.yaml`, the `__` nesting and list separator consts, and `DatabaseSettings` (one secret `DATABASE_URL` replaces five fields and two connection string builders). Integration tests now derive their per test database from `DATABASE_URL` with `PgConnectOptions`, and `spawn_app()` returns just the `TestApp`. Env var names changed: `DATABASE_URL`, `JWT_SECRET`, `APP_ENV`, `APP_HOST`, `APP_PORT`, `CORS_ORIGINS`. Production compose now sets these names, which also fixes its old `DERBE_APPLICATION__*` vars that the unprefixed config source never read.
