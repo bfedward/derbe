@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Added `scripts/rotate_deploy_key.sh`: one command (`ADMIN_SSH=root@<ip> ./scripts/rotate_deploy_key.sh`) that generates a fresh ed25519 key, installs its public half in the deploy user's `authorized_keys`, checks the login works, then stores the private half in the `production` secret `SSH_PRIVATE_KEY`. Fixes the Deploy job failing with `Permission denied (publickey,password)`. Needs server access and repo admin rights, so the repo owner runs it.
+
 - Removed the `[y/N]` confirmation prompt from `deploy_prod.sh`, like RUSTIFY: running the script is the confirmation, it passes `confirm_deploy=true` to the workflow after the local gates and the origin/main sync check.
 
 - Fixed the typos step in `deploy_prod.sh`: it was missing the step label, so `timed` tried `cd typos` and failed instantly, killing the frontend and rust jobs. It now runs `typos derbe-backend/src derbe-frontend/src` from the repo root.
