@@ -44,7 +44,9 @@ This installs Docker, nginx and certbot, creates the `deploy` user (limited sudo
 
 ### 4. GitHub settings
 
-Settings > Environments > create `production` (optionally add yourself as required reviewer).
+Settings > Environments > create `production` (optionally add yourself as required reviewer). 
+
+(Add POSTGRES_DATABASE and POSTGRES_USER)
 
 | Kind     | Name                    | Value                                             |
 |----------|-------------------------|---------------------------------------------------|

@@ -25,7 +25,7 @@ RUN apt-get update \
     && useradd --system --no-create-home --uid 10001 derbe
 
 COPY --from=builder /app/target/release/derbe-backend /usr/local/bin/derbe-backend
-# get_configuration() requires this file; every value is overridden by DERBE_* env vars in production.
+# get_configuration() requires this file; every value is overridden by env vars in production.
 COPY derbe-backend/derbe_config.yaml ./derbe_config.yaml
 
 USER derbe

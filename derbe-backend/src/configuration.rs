@@ -59,19 +59,16 @@ impl DatabaseSettings {
     }
 }
 
-const ENV_PREFIX: &str = "DERBE";
-const ENV_PREFIX_SEPARATOR: &str = "_";
 const ENV_NESTING_SEPARATOR: &str = "__";
 const ENV_LIST_SEPARATOR: &str = ",";
 const CORS_ORIGINS_KEY: &str = "application.cors_origins";
 
 pub fn get_configuration() -> Result<Settings, ConfigError> {
-    // init
+    dotenvy::dotenv().ok();
     let settings = Config::builder()
-        .add_source(File::new("derbe_config.yaml", FileFormat::Yaml))
+        .add_source(File::new("derbe_config.yaml", FileFormat::Yaml).required(false))
         .add_source(
-            Environment::with_prefix(ENV_PREFIX)
-                .prefix_separator(ENV_PREFIX_SEPARATOR)
+            Environment::default()
                 .separator(ENV_NESTING_SEPARATOR)
                 .list_separator(ENV_LIST_SEPARATOR)
                 .with_list_parse_key(CORS_ORIGINS_KEY)

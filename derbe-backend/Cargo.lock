@@ -685,6 +685,7 @@ dependencies = [
  "chrono",
  "config",
  "dotenv",
+ "dotenvy",
  "jsonwebtoken",
  "num-traits",
  "pwhash",
