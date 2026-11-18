@@ -382,13 +382,12 @@ fi
 read -r -p "Deploy $(git rev-parse --short HEAD) to production? [y/N] " answer
 [ "$answer" = "y" ] || { echo "Aborted"; exit 1; }
 
-TAG_NAME="deploy_prod_$(date +'%Y/%m/%d_%Hh%Mm%Ss')"
-git tag "$TAG_NAME"
-git push origin "$TAG_NAME"
-DEPLOY_TAG_PUSHED=true
-
 SHA="$(git rev-parse HEAD)"
-gh workflow run deploy.yml --ref main -f confirm_deploy="true"
+# Unchanged since the last deploy: skip the image build and redeploy the previous :<service>-latest.
+gh workflow run deploy.yml --ref main \
+    -f confirm_deploy="true" \
+    -f skip_backend_build="$BACKEND_UNCHANGED" \
+    -f skip_frontend_build="$FRONTEND_UNCHANGED"
 
 # Find the run we just started (matching this commit), not an older one.
 RUN_ID=""
@@ -400,7 +399,7 @@ for _ in $(seq 1 15); do
 done
 
 echo "✅ derbe production deploy triggered!"
-echo "   Tag:      $TAG_NAME"
+echo "   Skips:    backend=$BACKEND_UNCHANGED frontend=$FRONTEND_UNCHANGED"
 echo "   Track at: https://github.com/$(gh repo view --json nameWithOwner -q .nameWithOwner)/actions"
 if [ -z "$RUN_ID" ]; then
     echo "❌ Could not find the Deploy run for $SHA, check GitHub Actions" >&2
@@ -408,3 +407,10 @@ if [ -z "$RUN_ID" ]; then
 fi
 
 gh run watch "$RUN_ID" --exit-status
+
+# Tag only after a successful deploy: the next run diffs against this tag to decide what to skip.
+TAG_NAME="deploy_prod_$(date +'%Y/%m/%d_%Hh%Mm%Ss')"
+git tag "$TAG_NAME" "$SHA"
+git push origin "$TAG_NAME"
+DEPLOY_TAG_PUSHED=true
+echo "🏷️  Tagged $TAG_NAME"

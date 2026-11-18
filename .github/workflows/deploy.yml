@@ -3,11 +3,30 @@ name: Deploy
 on:
   workflow_dispatch:
     inputs:
+      skip_frontend_build:
+        description: 'Skip frontend build and redeploy its :frontend-latest image'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      skip_backend_build:
+        description: 'Skip backend build and redeploy its :backend-latest image'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
       confirm_deploy:
-        description: 'Type true to confirm the production deploy'
+        description: 'Confirm production deployment'
         required: true
-        type: boolean
-        default: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   contents: read
@@ -21,27 +40,14 @@ env:
   SERVER_USER: ${{ vars.SERVER_USER || 'deploy' }}
 
 jobs:
-  confirm:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require explicit confirmation
-        if: ${{ !inputs.confirm_deploy }}
-        run: |
-          echo "::error::Set confirm_deploy to true (use ./deploy_prod.sh)"
-          exit 1
-
-  quality:
-    needs: confirm
-    uses: ./.github/workflows/quality.yml
-
-  build:
-    needs: quality
+  build_backend:
+    name: Build backend
     runs-on: ubuntu-latest
     timeout-minutes: 40
     environment: production
-    strategy:
-      matrix:
-        image: [backend, frontend]
+    if: github.event.inputs.confirm_deploy == 'true' && github.event.inputs.skip_backend_build != 'true'
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -49,20 +55,63 @@ jobs:
         with:
           username: ${{ secrets.PROD_DOCKER_USERNAME }}
           password: ${{ secrets.PROD_DOCKER_PASSWORD }}
-      - name: Build and push ${{ matrix.image }}
+
+      - name: Generate backend image tag
+        id: tag
+        run: echo "image_tag=backend-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.${{ matrix.image }}
+          file: Dockerfile.backend
           push: true
           tags: |
-            ${{ secrets.PROD_DOCKER_USERNAME }}/${{ vars.PROD_DOCKER_REPOSITORY }}:${{ matrix.image }}-${{ github.sha }}
-            ${{ secrets.PROD_DOCKER_USERNAME }}/${{ vars.PROD_DOCKER_REPOSITORY }}:${{ matrix.image }}-latest
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+            ${{ secrets.PROD_DOCKER_USERNAME }}/${{ vars.PROD_DOCKER_REPOSITORY }}:${{ steps.tag.outputs.image_tag }}
+            ${{ secrets.PROD_DOCKER_USERNAME }}/${{ vars.PROD_DOCKER_REPOSITORY }}:backend-latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+  build_frontend:
+    name: Build frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: production
+    if: github.event.inputs.confirm_deploy == 'true' && github.event.inputs.skip_frontend_build != 'true'
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.PROD_DOCKER_USERNAME }}
+          password: ${{ secrets.PROD_DOCKER_PASSWORD }}
+
+      - name: Generate frontend image tag
+        id: tag
+        run: echo "image_tag=frontend-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: true
+          tags: |
+            ${{ secrets.PROD_DOCKER_USERNAME }}/${{ vars.PROD_DOCKER_REPOSITORY }}:${{ steps.tag.outputs.image_tag }}
+            ${{ secrets.PROD_DOCKER_USERNAME }}/${{ vars.PROD_DOCKER_REPOSITORY }}:frontend-latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
 
   deploy:
-    needs: build
+    name: Deploy
+    needs: [build_backend, build_frontend]
+    if: |
+      always() &&
+      github.event.inputs.confirm_deploy == 'true' &&
+      (needs.build_backend.result == 'success' || needs.build_backend.result == 'skipped') &&
+      (needs.build_frontend.result == 'success' || needs.build_frontend.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -104,6 +153,9 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.PROD_DOCKER_USERNAME }}
           DOCKER_REPOSITORY: ${{ vars.PROD_DOCKER_REPOSITORY }}
           DERBE_DOMAIN: ${{ vars.DERBE_DOMAIN }}
+          # A skipped build keeps running its previous :<service>-latest image.
+          BACKEND_IMAGE_TAG: ${{ needs.build_backend.outputs.image_tag || 'backend-latest' }}
+          FRONTEND_IMAGE_TAG: ${{ needs.build_frontend.outputs.image_tag || 'frontend-latest' }}
         run: |
           {
             echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD"
@@ -111,8 +163,8 @@ jobs:
             echo "DOCKER_USERNAME=$DOCKER_USERNAME"
             echo "DOCKER_REPOSITORY=$DOCKER_REPOSITORY"
             echo "DERBE_DOMAIN=$DERBE_DOMAIN"
-            echo "BACKEND_IMAGE_TAG=backend-$GITHUB_SHA"
-            echo "FRONTEND_IMAGE_TAG=frontend-$GITHUB_SHA"
+            echo "BACKEND_IMAGE_TAG=$BACKEND_IMAGE_TAG"
+            echo "FRONTEND_IMAGE_TAG=$FRONTEND_IMAGE_TAG"
           } | ssh derbe "umask 077 && cat > ~/$DEPLOY_DIR/.env.new"
 
       - name: Pull, swap containers, wire nginx and TLS

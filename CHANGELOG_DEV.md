@@ -4,6 +4,31 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Reshaped the `Deploy` workflow like RUSTIFY: no `quality.yml` call (the gates already run locally in `deploy_prod.sh`), separate `Build backend` and `Build frontend` jobs that run in parallel and can be skipped, then `Deploy`. `deploy_prod.sh` passes `skip_backend_build` and `skip_frontend_build` from its unchanged-since-last-deploy detection, and a skipped service keeps its previous `:<service>-latest` image. The deploy tag is now pushed only after the run succeeds, so a failed deploy no longer marks the commit as deployed.
+
+Before:
+
+```yaml
+confirm -> quality (quality.yml) -> build (matrix: backend, frontend) -> deploy
+```
+
+After:
+
+```yaml
+build_backend  (skip_backend_build)   -\
+                                         > deploy
+build_frontend (skip_frontend_build)  -/
+```
+
+```bash
+# deploy_prod.sh
+git tag "$TAG_NAME" && git push origin "$TAG_NAME"   # before triggering the workflow
+gh workflow run deploy.yml ...
+# now
+gh workflow run deploy.yml -f skip_backend_build=... -f skip_frontend_build=...
+gh run watch "$RUN_ID" --exit-status && git tag "$TAG_NAME" "$SHA" && git push origin "$TAG_NAME"
+```
+
 - Grouped frontend screens and leave-specific helpers by feature under `derbe-frontend/src/features/` (`auth`, `dashboard`, `employees`, `leave`, `organisation`, `settings`). Co-located theme mode with its UI toggle and removed the one-line `lib/utils.ts` re-export in favor of direct `cn` imports. Generated bindings remain in `src/bindings`; routes and behavior are unchanged.
 
 - Fixed the `Deploy` workflow failing at `docker/login-action` with `Username and password required`: `PROD_DOCKER_USERNAME` and `PROD_DOCKER_PASSWORD` are `production` environment secrets, but the `build` job did not declare that environment, so it read empty values.
