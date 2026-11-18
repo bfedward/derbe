@@ -4,12 +4,7 @@ use serde_json::{json, Value};
 
 use crate::{
     error::AppError,
-    features::auth::{
-        dto::LoginRequest,
-        middleware::session_claims,
-        model::CurrentUser,
-        service,
-    },
+    features::auth::{dto::LoginRequest, middleware::session_claims, model::CurrentUser, service},
     http::AppState,
 };
 
