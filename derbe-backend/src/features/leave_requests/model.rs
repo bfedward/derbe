@@ -75,7 +75,7 @@ impl From<LeaveRequest> for LeaveRequestResponse {
     fn from(value: LeaveRequest) -> Self {
         Self {
             id: value.id,
-            employee_unid: value.employee_unid.to_string(),
+            employee_unid: value.employee_unid,
             leave_type_id: value.leave_type_id,
             leave_status: value.leave_status,
             date_from: value.date_from,

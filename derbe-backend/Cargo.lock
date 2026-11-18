@@ -3513,6 +3513,7 @@ dependencies = [
  "lazy_static",
  "thiserror",
  "ts-rs-macros",
+ "uuid",
 ]
 
 [[package]]

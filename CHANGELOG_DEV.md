@@ -4,6 +4,25 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Removed the `MeResponse` DTO and its `From<CurrentUser>` impl in `auth`: both structs had identical fields, so `GET /me` now serializes `CurrentUser` directly. `LeaveRequestResponse.employee_unid` is now a `Uuid` instead of a `String` (the JSON and the generated TS type are unchanged), enabled by the `uuid-impl` feature of `ts-rs`.
+
+Before:
+
+```rust
+impl From<CurrentUser> for MeResponse { /* field by field copy */ }
+pub async fn me(..) -> Result<Json<MeResponse>, AppError> { Ok(Json(user.into())) }
+employee_unid: value.employee_unid.to_string(),
+```
+
+After:
+
+```rust
+#[derive(Debug, Serialize)]
+pub struct CurrentUser { /* unid, email, role */ }
+pub async fn me(..) -> Result<Json<CurrentUser>, AppError> { Ok(Json(user)) }
+employee_unid: value.employee_unid,
+```
+
 - Production deployment added, see `DEPLOYMENT.md`. Two images (`Dockerfile.backend` with cargo-chef, `Dockerfile.frontend` with nginx-unprivileged), `docker-compose.prod.yml` with `${VAR:?}` guards, host nginx templates (`nginx.prod.conf`, `nginx.prod.bootstrap.conf`) and a manual `deploy.yml` workflow for a Hetzner VPS with certbot. `quality.yml` runs on every PR and is reused by the deploy. `audit.yml`, `cleanup-caches.yml` and `dependabot.yml` added. `scripts/` has `deploy_prod.sh`, `setup_server.sh` and `backup-db.sh`. `rust-toolchain.toml` pins 1.99.1.
 - Backend is now deployable from env only. `get_configuration` splits `DERBE_APPLICATION__CORS_ORIGINS` on commas into a list, and `serve` runs `sqlx::migrate!` at startup (new `ServeError::Migration`), so a fresh container on an empty database comes up without a manual migration step. `derbe-backend/.sqlx` is committed for `SQLX_OFFLINE=true` builds.
 

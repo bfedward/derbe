@@ -1,6 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
+use uuid::Uuid;
 
 use crate::features::leave_requests::model::LeaveStatus;
 
@@ -8,7 +9,7 @@ use crate::features::leave_requests::model::LeaveStatus;
 #[ts(export)]
 pub struct LeaveRequestResponse {
     pub id: i32,
-    pub employee_unid: String,
+    pub employee_unid: Uuid,
     pub leave_type_id: i32,
     pub leave_status: LeaveStatus,
     pub date_from: NaiveDate,

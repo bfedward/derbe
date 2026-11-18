@@ -1,24 +1,16 @@
+use serde::Serialize;
 use uuid::Uuid;
 
-use crate::{features::auth::dto::MeResponse, features::employees::model::EmployeeRole};
+use crate::features::employees::model::EmployeeRole;
 
 pub struct LoginCredentials {
     pub unid: Uuid,
     pub password: String,
 }
 
+#[derive(Debug, Serialize)]
 pub struct CurrentUser {
     pub unid: Uuid,
     pub email: String,
     pub role: EmployeeRole,
-}
-
-impl From<CurrentUser> for MeResponse {
-    fn from(value: CurrentUser) -> Self {
-        Self {
-            unid: value.unid,
-            email: value.email,
-            role: value.role,
-        }
-    }
 }

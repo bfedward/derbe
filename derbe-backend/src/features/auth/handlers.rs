@@ -5,8 +5,9 @@ use serde_json::{json, Value};
 use crate::{
     error::AppError,
     features::auth::{
-        dto::{LoginRequest, MeResponse},
+        dto::LoginRequest,
         middleware::session_claims,
+        model::CurrentUser,
         service,
     },
     http::AppState,
@@ -25,10 +26,10 @@ pub async fn login(
 pub async fn me(
     State(state): State<AppState>,
     jar: CookieJar,
-) -> Result<Json<MeResponse>, AppError> {
+) -> Result<Json<CurrentUser>, AppError> {
     let claims = session_claims(&jar, &state)?;
     let user = service::get_current_user(claims.sub, &state).await?;
-    Ok(Json(user.into()))
+    Ok(Json(user))
 }
 
 pub async fn logout(jar: CookieJar) -> (CookieJar, Json<Value>) {
