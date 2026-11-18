@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Disabled Dependabot by commenting out all of `.github/dependabot.yml` (cargo, npm, github-actions, docker) because its PRs triggered the Quality workflow and added noise to Actions. Uncomment the file to re-enable.
+
 - Reshaped the `Deploy` workflow like RUSTIFY: no `quality.yml` call (the gates already run locally in `deploy_prod.sh`), separate `Build backend` and `Build frontend` jobs that run in parallel and can be skipped, then `Deploy`. `deploy_prod.sh` passes `skip_backend_build` and `skip_frontend_build` from its unchanged-since-last-deploy detection, and a skipped service keeps its previous `:<service>-latest` image. The deploy tag is now pushed only after the run succeeds, so a failed deploy no longer marks the commit as deployed.
 
 Before:

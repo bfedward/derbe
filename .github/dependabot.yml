@@ -1,18 +1,22 @@
-version: 2
-updates:
-  - package-ecosystem: cargo
-    directory: /derbe-backend
-    schedule:
-      interval: weekly
-  - package-ecosystem: npm
-    directory: /
-    schedule:
-      interval: weekly
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-  - package-ecosystem: docker
-    directory: /
-    schedule:
-      interval: weekly
+# DEPENDABOT DISABLED FOR NOW.
+# Version update PRs triggered the Quality workflow and added noise to Actions.
+# To re-enable, uncomment everything below (remove the leading "# ").
+#
+# version: 2
+# updates:
+#   - package-ecosystem: cargo
+#     directory: /derbe-backend
+#     schedule:
+#       interval: weekly
+#   - package-ecosystem: npm
+#     directory: /
+#     schedule:
+#       interval: weekly
+#   - package-ecosystem: github-actions
+#     directory: /
+#     schedule:
+#       interval: weekly
+#   - package-ecosystem: docker
+#     directory: /
+#     schedule:
+#       interval: weekly
