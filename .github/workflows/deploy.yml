@@ -2,6 +2,12 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: 'Type true to confirm the production deploy'
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,13 +21,24 @@ env:
   SERVER_USER: ${{ vars.SERVER_USER || 'deploy' }}
 
 jobs:
+  confirm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit confirmation
+        if: ${{ !inputs.confirm_deploy }}
+        run: |
+          echo "::error::Set confirm_deploy to true (use ./deploy_prod.sh)"
+          exit 1
+
   quality:
+    needs: confirm
     uses: ./.github/workflows/quality.yml
 
   build:
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    environment: production
     strategy:
       matrix:
         image: [backend, frontend]

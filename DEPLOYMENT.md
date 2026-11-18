@@ -66,11 +66,14 @@ The Docker Hub repository can be private. Both images live in it, tagged `backen
 ## Deploy
 
 ```bash
-scripts/deploy_prod.sh
+./deploy_prod.sh
 ```
 
-It checks you are on a clean, pushed `main`, then runs the same gates as `quality.yml` on your machine (fmt, biome, knip, clippy, tests, bindings, build) so a broken commit fails in seconds instead of after a CI round trip. It needs PostgreSQL on `127.0.0.1:5432` for the integration tests. Then it asks for confirmation, pushes a `deploy_YYYYMMDD_HHMMSS` tag, runs the `Deploy` workflow and watches that run. CI runs the gates again as the authoritative check.
-`scripts/deploy_prod.sh --skip-checks` skips the local gates (hotfix when your machine cannot run them).
+It checks you are on `main`, then runs the same gates as `quality.yml` on your machine so a broken commit fails in seconds instead of after a CI round trip: rustfmt (auto-committed if the tree is clean), SQLx offline data, TypeScript bindings, then frontend (pnpm install, biome, knip, build) and Rust (clippy, tests) in parallel with fail-fast, plus typos. Parts unchanged since the last `deploy_prod_*` tag skip their checks. It needs PostgreSQL on `127.0.0.1:5432` for the SQLx check and tests. Then it checks local `main` equals `origin/main`, asks for confirmation, pushes a `deploy_prod_YYYY/MM/DD_HHhMMmSSs` tag, runs the `Deploy` workflow with `confirm_deploy=true` and watches that run. CI runs the gates again as the authoritative check. A timing table and a sound (`scripts/deploy_sounds/`) close the run.
+
+Flags: `--skip-preflight` (allow a dirty tree), `--skip-all`, `--skip-audit`, `--skip-clippy`, `--skip-sqlx`, `--force-checks` (ignore the last-tag shortcuts), `--strict-audit` (machete, cargo audit and pnpm audit block; advisory by default).
+
+Git hooks live in `.githooks/` and are enabled by `pnpm install` (`prepare` sets `core.hooksPath`). `pre-commit` runs rustfmt and typos on staged files, `pre-push` runs typecheck, biome, knip, rustfmt and clippy for what changed.
 Or use GitHub: Actions > Deploy > Run workflow.
 
 Pipeline:

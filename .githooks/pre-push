@@ -1,0 +1,93 @@
+#!/bin/sh
+set -eu
+
+summary_rows=
+
+now_ms() {
+  node -e 'process.stdout.write(String(process.hrtime.bigint() / 1000000n))'
+}
+
+record_timing() {
+  timing_label=$1
+  timing_start=$2
+  timing_status=$3
+  timing_end=$(now_ms)
+  timing_elapsed=$((timing_end - timing_start))
+  summary_rows="${summary_rows}${timing_label}|${timing_elapsed}|${timing_status}
+"
+}
+
+print_summary() {
+  hook_exit_status=$?
+  trap - EXIT
+  hook_end_ms=$(now_ms)
+  hook_total_ms=$((hook_end_ms - hook_started_ms))
+
+  printf '\nPre-push timing summary\n'
+  printf '%s\n' '+---------------------------------+-----------+--------+'
+  printf '%s\n' '| Check                           | Time      | Result |'
+  printf '%s\n' '+---------------------------------+-----------+--------+'
+  if [ -n "$summary_rows" ]; then
+    printf '%s' "$summary_rows" | awk -F'|' '{ printf "| %-31s | %7.3f s | %-6s |\n", $1, $2 / 1000, $3 }'
+  fi
+  printf '%s\n' '+---------------------------------+-----------+--------+'
+  if [ "$hook_exit_status" -eq 0 ]; then
+    hook_result=PASS
+  else
+    hook_result=FAIL
+  fi
+  awk -v elapsed="$hook_total_ms" -v result="$hook_result" 'BEGIN { printf "| %-31s | %7.3f s | %-6s |\n", "Total hook time", elapsed / 1000, result }'
+  printf '%s\n' '+---------------------------------+-----------+--------+'
+
+  exit "$hook_exit_status"
+}
+
+run_check() {
+  check_label=$1
+  shift
+  check_start_ms=$(now_ms)
+
+  if "$@"; then
+    record_timing "$check_label" "$check_start_ms" PASS
+  else
+    check_exit_status=$?
+    record_timing "$check_label" "$check_start_ms" FAIL
+    exit "$check_exit_status"
+  fi
+}
+
+run_rustfmt() {
+  (cd derbe-backend && cargo fmt --all --check)
+}
+
+# Same as CI: no -D warnings yet, existing code still has clippy warnings.
+run_rust_clippy() {
+  (cd derbe-backend && SQLX_OFFLINE=true cargo clippy --all-targets --locked)
+}
+
+hook_started_ms=$(now_ms)
+trap print_summary EXIT
+
+change_detection_started_ms=$(now_ms)
+changed_files=$(
+  {
+    git diff --name-only "@{u}"...HEAD 2>/dev/null || true
+    git diff --name-only origin/main...HEAD 2>/dev/null || true
+  } | sort -u
+)
+record_timing "Changed-file detection" "$change_detection_started_ms" PASS
+
+frontend_changed_files=$(printf '%s\n' "$changed_files" | grep -E '^derbe-frontend/(src|package\.json|tsconfig[^/]*\.json|biome\.jsonc?|knip\.jsonc?|vite\.config\.[^/]+)|^(package\.json|pnpm-lock\.yaml)$' || true)
+
+if [ -n "$frontend_changed_files" ]; then
+  run_check "Typecheck" pnpm typecheck
+  run_check "Biome" pnpm lint
+  run_check "Knip" pnpm knip
+fi
+
+backend_changed_files=$(printf '%s\n' "$changed_files" | grep -E '^derbe-backend/.*\.(rs|toml)$|^derbe-backend/Cargo\.lock$' || true)
+
+if [ -n "$backend_changed_files" ]; then
+  run_check "Rustfmt" run_rustfmt
+  run_check "Cargo clippy" run_rust_clippy
+fi

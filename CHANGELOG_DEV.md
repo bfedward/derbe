@@ -4,7 +4,27 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
-- `scripts/deploy_prod.sh` now fails fast on the developer machine: it runs the `quality.yml` gates locally (fmt, biome, knip, clippy, tests, bindings, build) before asking for confirmation, pushes a `deploy_YYYYMMDD_HHMMSS` tag, and watches the run that matches the deployed commit instead of the latest run. `--skip-checks` bypasses the local gates. Added the missing shebang.
+- Fixed the `Deploy` workflow failing at `docker/login-action` with `Username and password required`: `PROD_DOCKER_USERNAME` and `PROD_DOCKER_PASSWORD` are `production` environment secrets, but the `build` job did not declare that environment, so it read empty values.
+
+Before:
+
+```yaml
+build:
+  needs: quality
+  runs-on: ubuntu-latest
+```
+
+After:
+
+```yaml
+build:
+  needs: quality
+  runs-on: ubuntu-latest
+  environment: production
+```
+
+- `deploy_prod.sh` moved to the repo root and rewritten after RUSTIFY-APP. It fails fast on the developer machine: local gates (rustfmt auto-commit, SQLx offline check, bindings, parallel frontend and Rust jobs with fail-fast, typos), last `deploy_prod_*` tag diff to skip unchanged parts, timing table, success and failure sounds in `scripts/deploy_sounds/`, `deploy_prod_YYYY/MM/DD_HHhMMmSSs` tag, and a watch on the run matching the deployed commit. Machete and audits are advisory unless `--strict-audit`. `deploy.yml` gains a `confirm_deploy` input and `confirm` job.
+- `.githooks/pre-commit` and `pre-push` added, enabled by the root `prepare` script (`core.hooksPath`). `_typos.toml` added.
 
 Before:
 
@@ -41,7 +61,7 @@ pub async fn me(..) -> Result<Json<CurrentUser>, AppError> { Ok(Json(user)) }
 employee_unid: value.employee_unid,
 ```
 
-- Production deployment added, see `DEPLOYMENT.md`. Two images (`Dockerfile.backend` with cargo-chef, `Dockerfile.frontend` with nginx-unprivileged), `docker-compose.prod.yml` with `${VAR:?}` guards, host nginx templates (`nginx.prod.conf`, `nginx.prod.bootstrap.conf`), the in-container `nginx.frontend.conf` (all at the repo root) and a manual `deploy.yml` workflow for a Hetzner VPS with certbot. `quality.yml` runs on every PR and is reused by the deploy. `audit.yml`, `cleanup-caches.yml` and `dependabot.yml` added. `scripts/` has `deploy_prod.sh`, `setup_server.sh` and `backup-db.sh`. `rust-toolchain.toml` pins 1.99.1.
+- Production deployment added, see `DEPLOYMENT.md`. Two images (`Dockerfile.backend` with cargo-chef, `Dockerfile.frontend` with nginx-unprivileged), `docker-compose.prod.yml` with `${VAR:?}` guards, host nginx templates (`nginx.prod.conf`, `nginx.prod.bootstrap.conf`), the in-container `nginx.frontend.conf` (all at the repo root) and a manual `deploy.yml` workflow for a Hetzner VPS with certbot. `quality.yml` runs on every PR and is reused by the deploy. `audit.yml`, `cleanup-caches.yml` and `dependabot.yml` added. `scripts/` has `setup_server.sh` and `backup-db.sh`, `deploy_prod.sh` is at the repo root. `rust-toolchain.toml` pins 1.99.1.
 - Backend is now deployable from env only. `get_configuration` splits `DERBE_APPLICATION__CORS_ORIGINS` on commas into a list, and `serve` runs `sqlx::migrate!` at startup (new `ServeError::Migration`), so a fresh container on an empty database comes up without a manual migration step. `derbe-backend/.sqlx` is committed for `SQLX_OFFLINE=true` builds.
 
 Before:
