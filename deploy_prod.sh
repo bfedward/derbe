@@ -379,9 +379,6 @@ if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
     exit 1
 fi
 
-read -r -p "Deploy $(git rev-parse --short HEAD) to production? [y/N] " answer
-[ "$answer" = "y" ] || { echo "Aborted"; exit 1; }
-
 SHA="$(git rev-parse HEAD)"
 # Unchanged since the last deploy: skip the image build and redeploy the previous :<service>-latest.
 gh workflow run deploy.yml --ref main \

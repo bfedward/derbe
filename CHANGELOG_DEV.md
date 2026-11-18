@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Removed the `[y/N]` confirmation prompt from `deploy_prod.sh`, like RUSTIFY: running the script is the confirmation, it passes `confirm_deploy=true` to the workflow after the local gates and the origin/main sync check.
+
 - Fixed the typos step in `deploy_prod.sh`: it was missing the step label, so `timed` tried `cd typos` and failed instantly, killing the frontend and rust jobs. It now runs `typos derbe-backend/src derbe-frontend/src` from the repo root.
 
 - Disabled Dependabot by commenting out all of `.github/dependabot.yml` (cargo, npm, github-actions, docker) because its PRs triggered the Quality workflow and added noise to Actions. Uncomment the file to re-enable.
