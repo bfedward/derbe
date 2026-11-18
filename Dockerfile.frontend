@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # derbe-frontend: Vite SPA built to static files, served by unprivileged nginx.
 
-FROM node:26-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 RUN corepack enable
 
