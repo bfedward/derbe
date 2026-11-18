@@ -22,24 +22,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import {
-  AllLeavePage,
-  DivisionsPage,
-  EmployeeFormPage,
-  EmployeeProfilePage,
-  HomePage,
-  LeaveRequestFormPage,
-  LeaveRequestProfilePage,
-  LeaveTypesPage,
-  LocationsPage,
-  MyLeavePage,
-  NewDivisionPage,
-  NewLeaveTypePage,
-  NewLocationPage,
-  OrganisationPage,
-} from "@/pages";
-import { ProtectedRoute } from "./components/auth/protected-route";
-import { LoginPage } from "./pages/login-page";
+import { ProtectedRoute } from "@/features/auth/components/protected-route";
+import { LoginPage } from "@/features/auth/pages/login-page";
+import { HomePage } from "@/features/dashboard/pages/home-page";
+import { EmployeeFormPage } from "@/features/employees/pages/employee-form-page";
+import { EmployeeProfilePage } from "@/features/employees/pages/employee-profile-page";
+import { AllLeavePage } from "@/features/leave/pages/all-leave-page";
+import { LeaveRequestFormPage } from "@/features/leave/pages/leave-request-form-page";
+import { LeaveRequestProfilePage } from "@/features/leave/pages/leave-request-profile-page";
+import { MyLeavePage } from "@/features/leave/pages/my-leave-page";
+import { OrganisationPage } from "@/features/organisation/pages/organisation-page";
+import { DivisionsPage } from "@/features/settings/pages/divisions-page";
+import { LeaveTypesPage } from "@/features/settings/pages/leave-types-page";
+import { LocationsPage } from "@/features/settings/pages/locations-page";
+import { NewDivisionPage } from "@/features/settings/pages/new-division-page";
+import { NewLeaveTypePage } from "@/features/settings/pages/new-leave-type-page";
+import { NewLocationPage } from "@/features/settings/pages/new-location-page";
 
 function NavigationMenu({
   title,

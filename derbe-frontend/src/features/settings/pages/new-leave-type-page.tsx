@@ -31,7 +31,7 @@ import {
   DEFAULT_LEAVE_TYPE_QUOTA,
   LEAVE_TYPE_FLAGS,
   OTHERS_DAYS_VISIBILITY_OPTIONS,
-} from "@/constants/constants";
+} from "@/features/settings/constants";
 import { derbeKeys } from "@/query-keys";
 
 const leaveTypeFormSchema = z.object({

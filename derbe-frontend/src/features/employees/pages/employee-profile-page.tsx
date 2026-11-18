@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
-import { EmployeeForm } from "@/components/forms/employee-form";
 import { QueryMessage } from "@/components/query-message";
+import { EmployeeForm } from "@/features/employees/components/employee-form";
 
 export function EmployeeProfilePage() {
   const { employee_unid } = useParams();

@@ -2,8 +2,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "@/app";
+import { ThemeModeProvider } from "@/components/ui/theme-mode";
 import { queryClient } from "@/query-client";
-import { ThemeModeProvider } from "@/theme/theme-mode";
 import "@/styles.css";
 
 const rootElement = document.getElementById("root");

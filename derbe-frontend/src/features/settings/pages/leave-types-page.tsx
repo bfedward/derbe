@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EMPTY_VALUE, LEAVE_TYPE_FLAGS } from "@/constants/constants";
+import { EMPTY_VALUE, LEAVE_TYPE_FLAGS } from "@/features/settings/constants";
 
 export function LeaveTypesPage() {
   const query = useQuery(leaveTypesQueryOptions());

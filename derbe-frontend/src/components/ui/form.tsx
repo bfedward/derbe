@@ -1,6 +1,7 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "cn";
 import { Slot } from "radix-ui";
 import * as React from "react";
 import {
@@ -12,8 +13,6 @@ import {
   useFormContext,
   useFormState,
 } from "react-hook-form";
-
-import { cn } from "@/lib/utils";
 
 import { Label } from "./label";
 

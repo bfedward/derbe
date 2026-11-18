@@ -34,9 +34,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { HALF_DAY_OPTIONS } from "@/constants/constants";
+import { HALF_DAY_OPTIONS } from "@/features/leave/constants";
+import {
+  halfDayFlags,
+  halfDaySelection,
+  leaveDuration,
+} from "@/features/leave/leave-requests";
 import { formatDate } from "@/lib/dates";
-import { halfDayFlags, halfDaySelection, leaveDuration } from "@/lib/leave-requests";
 import { derbeKeys } from "@/query-keys";
 
 const leaveRequestEditSchema = z

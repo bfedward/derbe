@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EMPTY_VALUE } from "@/constants/constants";
+import { EMPTY_VALUE } from "@/features/settings/constants";
 
 export function OrganisationPage() {
   const employeesQuery = useQuery(employeesQueryOptions());

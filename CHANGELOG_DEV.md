@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Grouped frontend screens and leave-specific helpers by feature under `derbe-frontend/src/features/` (`auth`, `dashboard`, `employees`, `leave`, `organisation`, `settings`). Co-located theme mode with its UI toggle and removed the one-line `lib/utils.ts` re-export in favor of direct `cn` imports. Generated bindings remain in `src/bindings`; routes and behavior are unchanged.
+
 - Fixed the `Deploy` workflow failing at `docker/login-action` with `Username and password required`: `PROD_DOCKER_USERNAME` and `PROD_DOCKER_PASSWORD` are `production` environment secrets, but the `build` job did not declare that environment, so it read empty values.
 
 Before:

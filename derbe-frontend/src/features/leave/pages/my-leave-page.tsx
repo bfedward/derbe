@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Pencil, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { myLeaveQueryOptions } from "@/api";
-import { LeaveStatusBadge } from "@/components/leave-status-badge";
 import { PageHeading } from "@/components/page-heading";
 import { QueryMessage } from "@/components/query-message";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { LeaveStatusBadge } from "@/features/leave/components/leave-status-badge";
 import { formatDate } from "@/lib/dates";
 
 export function MyLeavePage() {
