@@ -84,7 +84,7 @@ quality (fmt, clippy, tests, bindings, biome, knip, build)
    -> copy compose + nginx files, write ~/derbe/.env from secrets
    -> pull images, swap backend and frontend only (db untouched)
    -> first run only: certbot issues the certificate
-   -> smoke test https://DOMAIN/api/health and https://DOMAIN/ (retries, logs on failure)
+   -> smoke test https://DOMAIN/health and https://DOMAIN/ (retries, logs on failure)
 ```
 
 The first deploy takes a few minutes longer (cold build, certificate).

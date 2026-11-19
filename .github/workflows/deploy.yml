@@ -36,6 +36,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  DERBE_DOMAIN: ${{ vars.DERBE_DOMAIN }}
   DEPLOY_DIR: derbe
   SERVER_USER: ${{ vars.SERVER_USER || 'deploy' }}
 
@@ -206,14 +207,23 @@ jobs:
       - name: Smoke test
         env:
           DERBE_DOMAIN: ${{ vars.DERBE_DOMAIN }}
+          DEPLOY_DIR: derbe
         run: |
           for attempt in $(seq 1 12); do
-            if curl -fsS "https://$DERBE_DOMAIN/api/health" >/dev/null && curl -fsS "https://$DERBE_DOMAIN/" >/dev/null; then
-              echo "healthy after $attempt attempt(s)"
+            if curl -fsS --connect-timeout 5 --max-time 15 "https://$DERBE_DOMAIN/health" >/dev/null &&
+              curl -fsS --connect-timeout 5 --max-time 15 "https://$DERBE_DOMAIN/" >/dev/null; then
+              echo "Healthy after $attempt attempt(s)"
               exit 0
             fi
-            echo "attempt $attempt failed, retrying in 10s"
+
+            echo "Attempt $attempt failed, retrying in 10s"
             sleep 10
           done
-          ssh derbe "cd ~/$DEPLOY_DIR && docker compose -f docker-compose.prod.yml --env-file .env ps && docker compose -f docker-compose.prod.yml --env-file .env logs --tail 80 backend"
+
+          echo "Smoke test failed. Collecting diagnostics..."
+
+          ssh derbe "cd \"\$HOME/$DEPLOY_DIR\" && \
+            docker compose -f docker-compose.prod.yml --env-file .env ps && \
+            docker compose -f docker-compose.prod.yml --env-file .env logs --tail 80 backend" || true
+
           exit 1
