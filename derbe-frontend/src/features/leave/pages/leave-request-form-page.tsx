@@ -158,7 +158,7 @@ export function LeaveRequestFormPage() {
                     <FormLabel>Employee</FormLabel>
                     <Select
                       value={field.value ? field.value : undefined}
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      onValueChange={(value) => field.onChange(value)}
                     >
                       <FormControl>
                         <SelectTrigger>

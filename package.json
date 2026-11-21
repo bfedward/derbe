@@ -14,7 +14,8 @@
     "lint": "pnpm --dir derbe-frontend lint",
     "lint:fix": "pnpm --dir derbe-frontend exec biome check --write src",
     "knip": "pnpm --dir derbe-frontend knip",
-    "check:quality": "pnpm typecheck && pnpm lint && pnpm knip"
+    "check:quality": "pnpm typecheck && pnpm lint && pnpm knip",
+    "sqlx:prepare": "cd derbe-backend && cargo sqlx prepare -- --all-targets"
   },
   "devDependencies": {
     "concurrently": "9.2.4",

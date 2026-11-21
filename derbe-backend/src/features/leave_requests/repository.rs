@@ -7,8 +7,9 @@ use crate::features::leave_requests::dto::request::{
 use crate::features::leave_requests::dto::response::{
     AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse,
 };
-use crate::features::leave_requests::model::LeaveStatus;
+use crate::features::leave_requests::model::{EmailDetails, LeaveStatus};
 use chrono::{NaiveDate, Utc};
+use sqlx::PgConnection;
 use uuid::Uuid;
 
 use crate::{error::AppError, features::leave_requests::model::LeaveRequest, http::AppState};
@@ -73,7 +74,10 @@ pub async fn list(ctx: &AppState) -> Result<Vec<LeaveRequest>, AppError> {
     .await?)
 }
 
-pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequest, AppError> {
+pub async fn create(
+    conn: &mut PgConnection,
+    dto: LeaveRequestCreate,
+) -> Result<LeaveRequest, AppError> {
     Ok(sqlx::query_as!(
         LeaveRequest,
         r#"
@@ -114,7 +118,7 @@ pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequ
         dto.date_finalised,
         dto.notes
     )
-    .fetch_one(&ctx.pool)
+    .fetch_one(&mut *conn)
     .await?)
 }
 
@@ -167,9 +171,10 @@ pub async fn update(
 }
 
 pub async fn update_status(
+    conn: &mut PgConnection,
     id: i32,
+    expected: LeaveStatus,
     dto: LeaveRequestStatusUpdate,
-    ctx: &AppState,
 ) -> Result<LeaveRequest, AppError> {
     let date_finalised = match dto.leave_status {
         LeaveStatus::Accepted | LeaveStatus::Rejected => Some(Utc::now()),
@@ -184,14 +189,15 @@ pub async fn update_status(
                 date_finalised = $2,
                 notes = $3
             WHERE id = $4
-            RETURNING id, 
-                employee_unid, 
-                leave_type_id, 
-                leave_status AS "leave_status!: LeaveStatus", 
-                date_from, 
+              AND leave_status = $5
+            RETURNING id,
+                employee_unid,
+                leave_type_id,
+                leave_status AS "leave_status!: LeaveStatus",
+                date_from,
                 date_to,
-                first_day_half, 
-                last_day_half, 
+                first_day_half,
+                last_day_half,
                 total_duration,
                 date_requested,
                 date_finalised,
@@ -200,11 +206,16 @@ pub async fn update_status(
         dto.leave_status as LeaveStatus,
         date_finalised,
         dto.notes,
-        id
+        id,
+        expected as LeaveStatus
     )
-    .fetch_optional(&ctx.pool)
+    .fetch_optional(&mut *conn)
     .await?
-    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
+    .ok_or_else(|| {
+        AppError::Conflict(
+            "This leave request was changed by someone else. Reload and try again.".to_owned(),
+        )
+    })
 }
 
 pub async fn delete(id: i32, ctx: &AppState) -> Result<(), AppError> {
@@ -354,4 +365,34 @@ pub async fn get_all_leave(
         .collect();
 
     Ok(all_leave_responses)
+}
+
+pub async fn get_email_details(
+    conn: &mut PgConnection,
+    id: i32,
+    actor: Uuid,
+) -> Result<EmailDetails, AppError> {
+    sqlx::query_as!(
+        EmailDetails,
+        r#"
+            SELECT
+                e.first_name || ' ' || e.last_name AS "employee_name!",
+                e.email AS employee_email,
+                lt.name AS leave_type,
+                m.unid AS "manager_unid?",
+                m.email AS "manager_email?",
+                a.first_name || ' ' || a.last_name AS "actor_name!"
+            FROM leave_requests lr
+            JOIN employees e ON e.unid = lr.employee_unid
+            JOIN leave_types lt ON lt.id = lr.leave_type_id
+            JOIN employees a ON a.unid = $2
+            LEFT JOIN employees m ON m.unid = e.manager_unid AND m.deleted_at IS NULL
+            WHERE lr.id = $1
+        "#,
+        id,
+        actor
+    )
+    .fetch_optional(&mut *conn)
+    .await?
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }

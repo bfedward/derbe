@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO email_outbox (event_key, recipient, template, payload)\n            VALUES ($1, $2, $3, $4)\n            ON CONFLICT (event_key) DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1eba87e5da5b8175756e64805e12e53c23f7a1ddf4bb7aa01bfbe130a85a5d2a"
+}

@@ -31,6 +31,9 @@ services:
       CORS_ORIGINS: https://${DERBE_DOMAIN:?DERBE_DOMAIN is empty or missing in ~/derbe/.env}
       DATABASE_URL: postgres://${POSTGRES_USER:-derbe}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is empty or missing in ~/derbe/.env}@db:5432/${POSTGRES_DATABASE:-derbe}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is empty or missing in ~/derbe/.env}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: "Derbe <notifications@notify.derbe.app>"
+      APP_BASE_URL: https://${DERBE_DOMAIN}
     ports:
       # 127.0.0.1 only: host nginx proxies /api/, nothing is reachable directly from the internet.
       - "127.0.0.1:8001:8001"

@@ -60,6 +60,14 @@ run_rustfmt() {
   (cd derbe-backend && cargo fmt --all --check)
 }
 
+# Needs the local database. Fails with the fix command instead of clippy's "no cached data".
+run_sqlx_check() {
+  (cd derbe-backend && SQLX_OFFLINE=false cargo sqlx prepare --check -- --all-targets) || {
+    echo "pre-push: SQLx offline data is stale. Run: pnpm sqlx:prepare, then commit derbe-backend/.sqlx" >&2
+    return 1
+  }
+}
+
 # Same as CI: no -D warnings yet, existing code still has clippy warnings.
 run_rust_clippy() {
   (cd derbe-backend && SQLX_OFFLINE=true cargo clippy --all-targets --locked)
@@ -85,9 +93,12 @@ if [ -n "$frontend_changed_files" ]; then
   run_check "Knip" pnpm knip
 fi
 
-backend_changed_files=$(printf '%s\n' "$changed_files" | grep -E '^derbe-backend/.*\.(rs|toml)$|^derbe-backend/Cargo\.lock$' || true)
+backend_changed_files=$(printf '%s\n' "$changed_files" | grep -E '^derbe-backend/.*\.(rs|toml|sql)$|^derbe-backend/Cargo\.lock$' || true)
 
 if [ -n "$backend_changed_files" ]; then
   run_check "Rustfmt" run_rustfmt
+  if command -v cargo-sqlx >/dev/null 2>&1 && nc -z 127.0.0.1 5432 2>/dev/null; then
+    run_check "SQLx offline data" run_sqlx_check
+  fi
   run_check "Cargo clippy" run_rust_clippy
 fi

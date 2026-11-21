@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                e.first_name || ' ' || e.last_name AS \"employee_name!\",\n                e.email AS employee_email,\n                lt.name AS leave_type,\n                m.unid AS \"manager_unid?\",\n                m.email AS \"manager_email?\",\n                a.first_name || ' ' || a.last_name AS \"actor_name!\"\n            FROM leave_requests lr\n            JOIN employees e ON e.unid = lr.employee_unid\n            JOIN leave_types lt ON lt.id = lr.leave_type_id\n            JOIN employees a ON a.unid = $2\n            LEFT JOIN employees m ON m.unid = e.manager_unid AND m.deleted_at IS NULL\n            WHERE lr.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "employee_name!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "employee_email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "leave_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "manager_unid?",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "manager_email?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "actor_name!",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "e51a59ff12c9c68fb9ec9b506b8666ec23e1dc586da50977b8a0f4908f34023a"
+}

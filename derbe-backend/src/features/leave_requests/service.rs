@@ -12,8 +12,14 @@ use crate::{
 };
 
 use crate::{
-    error::AppError, features::leave_requests::model::LeaveRequest,
-    features::leave_requests::repository, http::AppState,
+    error::AppError,
+    features::email::{
+        model::{EmailTemplate, LeaveRequestDecisionPayload, LeaveRequestSubmittedPayload},
+        repository as email_repository,
+    },
+    features::leave_requests::model::LeaveRequest,
+    features::leave_requests::repository,
+    http::AppState,
 };
 
 use crate::features::{employees, leave_types};
@@ -36,9 +42,47 @@ pub async fn ensure_related_entities_exist(
     Ok(())
 }
 
-pub async fn create(dto: LeaveRequestCreate, ctx: &AppState) -> Result<LeaveRequest, AppError> {
+pub async fn create(
+    dto: LeaveRequestCreate,
+    created_by: Uuid,
+    ctx: &AppState,
+) -> Result<LeaveRequest, AppError> {
     validate_create(&dto, ctx).await?;
-    repository::create(dto, ctx).await
+
+    let mut tx = ctx.pool.begin().await?;
+    let leave_request = repository::create(&mut tx, dto).await?;
+    let details = repository::get_email_details(&mut tx, leave_request.id, created_by).await?;
+
+    match (details.manager_unid, details.manager_email.as_deref()) {
+        // A manager filing leave for their own report doesn't need an email about it.
+        (Some(manager), _) if manager == created_by => {}
+        (Some(_), Some(manager_email)) => {
+            let payload = LeaveRequestSubmittedPayload {
+                request_id: leave_request.id,
+                employee_name: details.employee_name,
+                leave_type: details.leave_type,
+                date_from: leave_request.date_from,
+                date_to: leave_request.date_to,
+                total_duration: leave_request.total_duration,
+                notes: leave_request.notes.clone(),
+            };
+            email_repository::enqueue(
+                &mut tx,
+                &format!("leave-request:{}:created", leave_request.id),
+                manager_email,
+                EmailTemplate::LeaveRequestSubmitted,
+                &payload,
+            )
+            .await?;
+        }
+        _ => tracing::warn!(
+            leave_request_id = leave_request.id,
+            "employee has no active manager, no submission email queued"
+        ),
+    }
+
+    tx.commit().await?;
+    Ok(leave_request)
 }
 
 pub async fn validate_create(dto: &LeaveRequestCreate, ctx: &AppState) -> Result<(), AppError> {
@@ -69,7 +113,7 @@ async fn validate_status_update_rules(
     id: i32,
     dto: &LeaveRequestStatusUpdate,
     ctx: &AppState,
-) -> Result<(), AppError> {
+) -> Result<LeaveRequest, AppError> {
     let existing_entity = get_by_id(id, ctx).await?;
     let employee = employees::service::get_by_id(existing_entity.employee_unid, ctx).await?;
 
@@ -103,7 +147,7 @@ async fn validate_status_update_rules(
         .await?;
     }
 
-    Ok(())
+    Ok(existing_entity)
 }
 
 pub async fn get_my_leave(
@@ -130,13 +174,48 @@ pub async fn update(
     repository::update(id, dto, ctx).await
 }
 
-pub async fn update_status(
+pub async fn update_leave_request_status(
     id: i32,
-    dto: LeaveRequestStatusUpdate,
+    request: LeaveRequestStatusUpdate,
+    decided_by: Uuid,
     ctx: &AppState,
 ) -> Result<LeaveRequest, AppError> {
-    validate_status_update_rules(id, &dto, ctx).await?;
-    repository::update_status(id, dto, ctx).await
+    let existing = validate_status_update_rules(id, &request, ctx).await?;
+    let old_status = existing.leave_status;
+
+    let mut tx = ctx.pool.begin().await?;
+    let updated = repository::update_status(&mut tx, id, old_status, request).await?;
+
+    let is_decision = matches!(
+        updated.leave_status,
+        LeaveStatus::Accepted | LeaveStatus::Rejected
+    );
+    if is_decision && updated.leave_status != old_status {
+        let details = repository::get_email_details(&mut tx, id, decided_by).await?;
+        let payload = LeaveRequestDecisionPayload {
+            request_id: id,
+            leave_type: details.leave_type,
+            date_from: updated.date_from,
+            date_to: updated.date_to,
+            total_duration: updated.total_duration,
+            decision: updated.leave_status,
+            decided_by: details.actor_name,
+        };
+        email_repository::enqueue(
+            &mut tx,
+            &format!(
+                "leave-request:{id}:{}",
+                updated.leave_status.to_string().to_lowercase()
+            ),
+            &details.employee_email,
+            EmailTemplate::LeaveRequestDecision,
+            &payload,
+        )
+        .await?;
+    }
+
+    tx.commit().await?;
+    Ok(updated)
 }
 
 pub async fn validate_update(
@@ -147,16 +226,4 @@ pub async fn validate_update(
     get_by_id(id, ctx).await?;
     ensure_related_entities_exist(dto.employee_unid, dto.leave_type_id, ctx).await?;
     Ok(())
-}
-
-pub async fn update_leave_request_status(
-    id: i32,
-    request: LeaveRequestStatusUpdate,
-    ctx: &AppState,
-) -> Result<LeaveRequest, AppError> {
-    validate_status_update_rules(id, &request, ctx).await?;
-
-    let updated_leave_request = update_status(id, request, ctx).await?;
-
-    Ok(updated_leave_request)
 }

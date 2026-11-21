@@ -12,6 +12,15 @@ pub struct Settings {
     pub app_port: u16,
     /// Comma separated in the environment: `CORS_ORIGINS=https://a.com,https://b.com`.
     pub cors_origins: Vec<String>,
+    /// Missing or empty means email delivery is off.
+    #[serde(default)]
+    pub resend_api_key: Option<SecretBox<String>>,
+    #[serde(default = "default_email_from")]
+    pub email_from: String,
+    #[serde(default = "default_app_base_url")]
+    pub app_base_url: String,
+    #[serde(default = "default_resend_base_url")]
+    pub resend_base_url: String, // lets tests point at a fake server
 }
 
 #[derive(serde::Deserialize, Copy, Clone, PartialEq)]
@@ -26,6 +35,16 @@ fn default_host() -> String {
 
 fn default_port() -> u16 {
     8001
+}
+
+fn default_email_from() -> String {
+    "Derbe <notifications@notify.derbe.app>".into()
+}
+fn default_app_base_url() -> String {
+    "http://localhost:4200".into()
+}
+fn default_resend_base_url() -> String {
+    "https://api.resend.com".into()
 }
 
 pub fn get_configuration() -> Result<Settings, envy::Error> {
@@ -71,5 +90,17 @@ mod tests {
         let without_jwt = vars(&[]).into_iter().filter(|(k, _)| k != "JWT_SECRET");
 
         assert!(envy::from_iter::<_, Settings>(without_jwt).is_err());
+    }
+
+    #[test]
+    fn email_settings_are_optional() {
+        let settings: Settings = envy::from_iter(vars(&[])).expect("settings should parse");
+
+        assert!(settings.resend_api_key.is_none());
+        assert_eq!(
+            settings.email_from,
+            "Derbe <notifications@notify.derbe.app>"
+        );
+        assert_eq!(settings.resend_base_url, "https://api.resend.com");
     }
 }

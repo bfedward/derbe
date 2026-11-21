@@ -67,7 +67,7 @@ pub async fn create_leave_request(
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;
-    let leave_request = service::create(input, &state).await?;
+    let leave_request = service::create(input, user.unid, &state).await?;
     Ok((StatusCode::CREATED, Json(leave_request.into())))
 }
 
@@ -108,6 +108,6 @@ pub async fn update_leave_request_status(
         _ => authorize_reject(&user, &target)?,
     }
 
-    let leave_request = service::update_leave_request_status(id, input, &state).await?;
+    let leave_request = service::update_leave_request_status(id, input, user.unid, &state).await?;
     Ok(Json(leave_request.into()))
 }

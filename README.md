@@ -181,7 +181,7 @@ This applies any outstanding migrations and creates the database tables.
 
 To start again from an empty database (local only), run `bash reset_db.sh --yes` from the repository root. It drops the database, recreates it and runs all migrations. Use it after pulling changes to existing migration files.
 
-The backend reads its configuration from environment variables only (`DATABASE_URL`, `JWT_SECRET`, `APP_ENV`, `APP_HOST`, `APP_PORT`, `CORS_ORIGINS`). Locally they come from `derbe-backend/.env` (copied from `.env.example`, each variable is documented there).
+The backend reads its configuration from environment variables only (`DATABASE_URL`, `JWT_SECRET`, `APP_ENV`, `APP_HOST`, `APP_PORT`, `CORS_ORIGINS`, `RESEND_API_KEY`, `EMAIL_FROM`, `APP_BASE_URL`). Locally they come from `derbe-backend/.env` (copied from `.env.example`, each variable is documented there).
 
 If Rust Analyzer reports SQLx errors indicating that tables do not exist after running migrations, try restarting Rust Analyzer so it picks up the updated database schema.
 

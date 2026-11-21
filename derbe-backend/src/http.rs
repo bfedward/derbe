@@ -14,9 +14,12 @@ use tower_http::cors::{AllowCredentials, CorsLayer};
 
 use crate::{
     configuration::{AppEnvironment, Settings},
-    features::auth::{
-        handlers::{login, logout, me},
-        middleware::require_auth,
+    features::{
+        auth::{
+            handlers::{login, logout, me},
+            middleware::require_auth,
+        },
+        email,
     },
     routes,
 };
@@ -51,6 +54,14 @@ pub async fn serve(configuration: Settings) -> Result<(), ServeError> {
 
     // Embedded at compile time, so the container needs no sqlx-cli to start on an empty database.
     sqlx::migrate!("./migrations").run(&pool).await?;
+
+    email::worker::spawn(
+        pool.clone(),
+        configuration.resend_api_key,
+        configuration.email_from,
+        configuration.resend_base_url,
+        configuration.app_base_url,
+    );
 
     let state = AppState {
         pool,

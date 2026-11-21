@@ -2,7 +2,47 @@
 
 Internal development history for Derbe. Not user-facing.
 
-## [Unreleased]
+- Added email notifications for leave requests, sent through the Resend HTTP API from `notify.derbe.app`. The manager gets an email when an employee submits a request, and the employee gets one when it is accepted or rejected. Other changes (edits, cancellations, `MoreInfoReq`) send nothing yet. No email is sent when the employee has no active manager (a warning is logged) or when the manager files leave for their own report.
+  - Transactional outbox: new migration `0008_create_email_outbox.sql`. The leave change and its outbox row are written in one SQLx transaction, so an email failure can never lose a saved request or decision. A unique `event_key` (`leave-request:{id}:created`, `:accepted`, `:rejected`) with `ON CONFLICT DO NOTHING` prevents duplicates. The payload is a snapshot of the fields the email needs.
+  - New `features/email/` module: `model.rs` (template enum and payload structs), `repository.rs` (`enqueue`), `sender.rs` (small `reqwest` client for `POST /emails`), `worker.rs` (background loop), `render.rs` and `templates/` (`layout.html`, `leave-request-submitted.html`, `leave-request-decision.html`, compiled in with `include_str!`).
+  - Worker: started from `http::serve` after migrations, polls every 30 s. Claims due rows with a 5-minute `locked_until` lease (`FOR UPDATE SKIP LOCKED`), commits, then calls Resend. Sends `event_key` as the `Idempotency-Key` header, so a crash between sending and saving `sent_at` can't double-send. Network errors, 429 and 5xx retry after 1 min, 5 min, 30 min, 2 h and 24 h; 4xx errors, unknown templates and bad payloads give up at once. A given-up row stays unsent with `last_error` for manual inspection (queries in `DEPLOYMENT.md`). 15 s request timeout. The API key is only used in the `Authorization` header and never logged.
+  - Rendering: one-pass `{{placeholder}}` fill. User and database text is always HTML-escaped and never re-scanned, so `{{link}}` in notes stays literal. A missing placeholder is an error, not a panic, so it can't kill the worker task.
+  - New optional settings: `RESEND_API_KEY` (missing or blank disables the worker, and the app starts normally), `EMAIL_FROM`, `APP_BASE_URL`, `RESEND_BASE_URL` (lets tests point at a fake server). Production gets `RESEND_API_KEY` from a new `production` secret written into `~/derbe/.env` by `deploy.yml`. Compose sets `EMAIL_FROM` and derives `APP_BASE_URL` from `DERBE_DOMAIN`. Documented in `.env.example`, `README.md` and `DEPLOYMENT.md`.
+  - `reqwest` moved from dev-dependencies to dependencies (rustls, no OpenSSL in the runtime image).
+
+- Fixed a race in leave status updates. The update now only matches if the status is still the one that was validated, and returns the new `AppError::Conflict` (409) if someone else changed it first. This also stops two managers deciding at once from queuing contradictory emails. Removed the duplicate `validate_status_update_rules` call: the handler path ran it twice.
+
+Before:
+
+```sql
+UPDATE leave_requests SET leave_status = $1, ... WHERE id = $4
+```
+
+After:
+
+```sql
+UPDATE leave_requests SET leave_status = $1, ... WHERE id = $4 AND leave_status = $5
+```
+
+- Leave-request repository `create` and `update_status` now take `&mut PgConnection` instead of `&AppState`, so the service can run them in a transaction. `service::create` and `service::update_leave_request_status` take the logged-in user's `unid` (used for the manager self-check and the decision email's `decided_by`).
+
+- Fixed the leave request form's Employee dropdown: it converted the selected UUID with `Number(value)`, which stored `NaN` and failed validation with "expected string, received NaN".
+
+Before:
+
+```tsx
+onValueChange={(value) => field.onChange(Number(value))}
+```
+
+After:
+
+```tsx
+onValueChange={(value) => field.onChange(value)}
+```
+
+- Tests: `email_outbox_it.rs` (one manager email per submission, none without a manager or for a manager's own filing, one employee email per accept and reject, no email for a repeated decision, outbox failure rolls back both create and decision), `email_worker_it.rs` (against a fake axum Resend: sent, retried, given up, unknown template, no start without a key), render unit tests (escaping, placeholders in user text, every placeholder filled), and a configuration test showing the email settings are optional. Moved `post_leave_request` and `put_status` from `permissions_it.rs` into `test_helpers.rs`.
+
+- Added `pnpm sqlx:prepare`, and a pre-push check that runs `cargo sqlx prepare --check` when backend `.rs`, `.toml` or `.sql` files changed and local Postgres is reachable. It prints the fix command instead of clippy's "no cached data" error.
 
 - Added an idempotent seed migration for the `employee@example.com` local demo admin account (`password`) and documented the credentials in the local setup steps.
 

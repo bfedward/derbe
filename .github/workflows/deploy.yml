@@ -154,6 +154,7 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.PROD_DOCKER_USERNAME }}
           DOCKER_REPOSITORY: ${{ vars.PROD_DOCKER_REPOSITORY }}
           DERBE_DOMAIN: ${{ vars.DERBE_DOMAIN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           # A skipped build keeps running its previous :<service>-latest image.
           BACKEND_IMAGE_TAG: ${{ needs.build_backend.outputs.image_tag || 'backend-latest' }}
           FRONTEND_IMAGE_TAG: ${{ needs.build_frontend.outputs.image_tag || 'frontend-latest' }}
@@ -166,6 +167,7 @@ jobs:
             echo "DERBE_DOMAIN=$DERBE_DOMAIN"
             echo "BACKEND_IMAGE_TAG=$BACKEND_IMAGE_TAG"
             echo "FRONTEND_IMAGE_TAG=$FRONTEND_IMAGE_TAG"
+            echo "RESEND_API_KEY=$RESEND_API_KEY"
           } | ssh derbe "umask 077 && cat > ~/$DEPLOY_DIR/.env.new"
 
       - name: Pull, swap containers, wire nginx and TLS

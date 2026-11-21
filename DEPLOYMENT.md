@@ -55,6 +55,7 @@ Settings > Environments > create `production` (optionally add yourself as requir
 | secret   | `PROD_DOCKER_PASSWORD`  | Docker Hub access token (read/write)              |
 | secret   | `POSTGRES_PASSWORD`     | long random string (`openssl rand -hex 32`)       |
 | secret   | `JWT_SECRET`            | long random string (`openssl rand -hex 48`)       |
+| secret   | `RESEND_API_KEY`        | content of `derbe-production`     |
 | variable | `SERVER_IP`             | server IPv4                                       |
 | variable | `PROD_DOCKER_REPOSITORY`| Docker Hub repository name, e.g. `derbe`          |
 | variable | `DERBE_DOMAIN`          | e.g. `derbe.example.com`                          |
@@ -119,16 +120,22 @@ docker compose -f docker-compose.prod.yml --env-file .env logs -f backend
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-## Changing SQL queries
-
-The Docker and CI builds compile with `SQLX_OFFLINE=true`. After changing a `query_as!` query or a migration:
-
-```bash
-cd derbe-backend
-cargo sqlx prepare -- --all-targets
+If email notifications fail to send, this query shows the stuck rows:
+```sql
+SELECT id, event_key, attempt_count, next_attempt_at, last_error
+FROM email_outbox
+WHERE sent_at IS NULL
+ORDER BY id;
 ```
 
-and commit the `.sqlx` directory, otherwise the image build fails.
+After fixing the cause, this makes a row retry straight away:
+```sql
+UPDATE email_outbox SET attempt_count = 0, next_attempt_at = now(), last_error = NULL WHERE id = 1;
+```
+
+## Changing SQL queries
+
+The Docker and CI builds compile with `SQLX_OFFLINE=true`. After changing a `query_as!` query or a migration, run `pnpm sqlx:prepare` (or `cd derbe-backend` && `cargo sqlx prepare -- --all-targets`) and commit .sqlx. The pre-push hook checks this when Postgres is running.
 
 ## CI overview
 

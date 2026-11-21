@@ -13,7 +13,7 @@ use reqwest::{
     Client, Response, StatusCode,
 };
 use secrecy::{ExposeSecret, SecretBox};
-use serde_json::Value;
+use serde_json::{json, Value};
 use sqlx::{postgres::PgConnectOptions, Connection, Executor, PgConnection, PgPool};
 use tokio::{
     net::TcpListener,
@@ -350,4 +350,51 @@ pub async fn create_leave_type(name: &str, client: &Client, app: &TestApp) -> se
     assert_eq!(response.status(), StatusCode::CREATED);
 
     get_response_body_as_json(response).await
+}
+
+pub async fn post_leave_request(
+    client: &Client,
+    app: &TestApp,
+    employee_unid: Uuid,
+    leave_type_id: &Value,
+) -> Response {
+    let body = json!({
+        "employee_unid": employee_unid,
+        "leave_type_id": leave_type_id,
+        "leave_status": "Pending",
+        "values": {
+            "date_from": "2030-05-20",
+            "date_to": "2030-05-24",
+            "first_day_half": false,
+            "last_day_half": false,
+            "total_duration": 5.0,
+        },
+        "date_requested": "2030-05-11T13:48:48.739+00:00",
+        "date_finalised": null,
+        "notes": null
+    });
+
+    client
+        .post(format!("{}/leaveRequests", app.address))
+        .json(&body)
+        .send()
+        .await
+        .expect("Failed to create leave request")
+}
+
+pub async fn put_status(client: &Client, app: &TestApp, id: &Value, status: &str) -> Response {
+    client
+        .put(format!("{}/leaveRequests/{}/status", app.address, id))
+        .json(&json!({ "leave_status": status, "notes": null }))
+        .send()
+        .await
+        .expect("Failed to update status")
+}
+
+/// (event_key, recipient, template) for every queued email, oldest first.
+pub async fn outbox_rows(app: &TestApp) -> Vec<(String, String, String)> {
+    sqlx::query_as("SELECT event_key, recipient, template FROM email_outbox ORDER BY id")
+        .fetch_all(&app.ctx.pool)
+        .await
+        .expect("Failed to read email_outbox")
 }

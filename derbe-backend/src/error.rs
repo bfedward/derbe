@@ -50,6 +50,9 @@ pub enum AppError {
 
     #[error("Forbidden")]
     Forbidden,
+
+    #[error("{0}")]
+    Conflict(String),
 }
 
 impl AppError {
@@ -77,9 +80,10 @@ impl IntoResponse for AppError {
             Self::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             Self::EntityUnidNotFound(_, _) => StatusCode::NOT_FOUND,
             Self::EntityNotFound(_, _) => StatusCode::NOT_FOUND,
-            Self::RelatedEntity(_) | Self::ConstraintError(_) | Self::DuplicateNamedEntity(_) => {
-                StatusCode::CONFLICT
-            }
+            Self::RelatedEntity(_)
+            | Self::ConstraintError(_)
+            | Self::DuplicateNamedEntity(_)
+            | Self::Conflict(_) => StatusCode::CONFLICT,
             Self::InvalidStructArgs(_)
             | Self::ValidationFailed(_)
             | Self::RequestValidationFailed(_)

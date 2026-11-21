@@ -139,6 +139,15 @@ impl HalfDayOptions {
     }
 }
 
+pub struct EmailDetails {
+    pub employee_name: String,
+    pub employee_email: String,
+    pub leave_type: String,
+    pub manager_unid: Option<Uuid>,
+    pub manager_email: Option<String>,
+    pub actor_name: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::{HalfDayOptions, LeaveStatus};

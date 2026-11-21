@@ -2,13 +2,15 @@
 //! with a real session cookie per role.
 
 use derbe_backend::features::employees::model::EmployeeRole::{Admin, Demo, Manager, RegularUser};
-use reqwest::{Client, Response, StatusCode};
+use reqwest::{Client, StatusCode};
 use serde_json::{json, Value};
 use test_helpers::{
     cleanup_test_app, create_division, create_leave_type, get_response_body_as_json,
     leave_type_body, login_as, login_client, seed_employee, spawn_app, TestApp,
 };
 use uuid::Uuid;
+
+use crate::test_helpers::{post_leave_request, put_status};
 
 mod test_helpers;
 
@@ -23,45 +25,6 @@ fn employee_body(division: &Value, location: &Value, email: &str) -> Value {
         "manager_unid": null,
         "email": email,
     })
-}
-
-async fn post_leave_request(
-    client: &Client,
-    app: &TestApp,
-    employee_unid: Uuid,
-    leave_type_id: &Value,
-) -> Response {
-    let body = json!({
-        "employee_unid": employee_unid,
-        "leave_type_id": leave_type_id,
-        "leave_status": "Pending",
-        "values": {
-            "date_from": "2030-05-20",
-            "date_to": "2030-05-24",
-            "first_day_half": false,
-            "last_day_half": false,
-            "total_duration": 5.0,
-        },
-        "date_requested": "2030-05-11T13:48:48.739+00:00",
-        "date_finalised": null,
-        "notes": null
-    });
-
-    client
-        .post(format!("{}/leaveRequests", app.address))
-        .json(&body)
-        .send()
-        .await
-        .expect("Failed to create leave request")
-}
-
-async fn put_status(client: &Client, app: &TestApp, id: &Value, status: &str) -> Response {
-    client
-        .put(format!("{}/leaveRequests/{}/status", app.address, id))
-        .json(&json!({ "leave_status": status, "notes": null }))
-        .send()
-        .await
-        .expect("Failed to update status")
 }
 
 /// A pending leave request owned by `owner`, created by an admin.
