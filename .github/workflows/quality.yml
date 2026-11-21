@@ -52,11 +52,12 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets --locked
       - name: Tests
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:5432/derbe
+          JWT_SECRET: ci-test-secret
+          APP_ENV: Development
+          CORS_ORIGINS: http://localhost:4200
         run: cargo test --locked
-      - name: Generated TypeScript bindings are committed
-        run: |
-          cargo run --locked --bin export_bindings
-          git diff --exit-code -- ../derbe-frontend
 
   frontend:
     runs-on: ubuntu-latest

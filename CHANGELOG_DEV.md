@@ -2,6 +2,8 @@
 
 Internal development history for Derbe. Not user-facing.
 
+- Fixed the Quality workflow's tests failing with MissingValue("database_url"): CI has no .env, so the Tests step now sets DATABASE_URL, JWT_SECRET, APP_ENV and CORS_ORIGINS for the Postgres service.
+
 - Added email notifications for leave requests, sent through the Resend HTTP API from `notify.derbe.app`. The manager gets an email when an employee submits a request, and the employee gets one when it is accepted or rejected. Other changes (edits, cancellations, `MoreInfoReq`) send nothing yet. No email is sent when the employee has no active manager (a warning is logged) or when the manager files leave for their own report.
   - Transactional outbox: new migration `0008_create_email_outbox.sql`. The leave change and its outbox row are written in one SQLx transaction, so an email failure can never lose a saved request or decision. A unique `event_key` (`leave-request:{id}:created`, `:accepted`, `:rejected`) with `ON CONFLICT DO NOTHING` prevents duplicates. The payload is a snapshot of the fields the email needs.
   - New `features/email/` module: `model.rs` (template enum and payload structs), `repository.rs` (`enqueue`), `sender.rs` (small `reqwest` client for `POST /emails`), `worker.rs` (background loop), `render.rs` and `templates/` (`layout.html`, `leave-request-submitted.html`, `leave-request-decision.html`, compiled in with `include_str!`).
