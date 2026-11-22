@@ -46,16 +46,16 @@ This installs Docker, nginx and certbot, creates the `deploy` user (limited sudo
 
 Settings > Environments > create `production` (optionally add yourself as required reviewer). 
 
-(Add POSTGRES_DATABASE and POSTGRES_USER)
-
 | Kind     | Name                    | Value                                             |
 |----------|-------------------------|---------------------------------------------------|
 | secret   | `SSH_PRIVATE_KEY`       | content of `derbe_deploy`                         |
 | secret   | `PROD_DOCKER_USERNAME`  | Docker Hub username                               |
 | secret   | `PROD_DOCKER_PASSWORD`  | Docker Hub access token (read/write)              |
+| secret   | `POSTGRES_USER`         | e.g. `postgres`                                   |
+| secret   | `POSTGRES_DATABASE`     | e.g. `derbe`                                      |
 | secret   | `POSTGRES_PASSWORD`     | long random string (`openssl rand -hex 32`)       |
 | secret   | `JWT_SECRET`            | long random string (`openssl rand -hex 48`)       |
-| secret   | `RESEND_API_KEY`        | content of `derbe-production`     |
+| secret   | `RESEND_API_KEY`        | content of `derbe-production`                     |
 | variable | `SERVER_IP`             | server IPv4                                       |
 | variable | `PROD_DOCKER_REPOSITORY`| Docker Hub repository name, e.g. `derbe`          |
 | variable | `DERBE_DOMAIN`          | e.g. `derbe.example.com`                          |

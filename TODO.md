@@ -8,3 +8,4 @@
 - The list of employees in the page to create a new leave request shows all employees. 
 - Check that employee emails must be unique.
 - sempahore for tests?
+- make employees verify their email address before sending emails to them.
