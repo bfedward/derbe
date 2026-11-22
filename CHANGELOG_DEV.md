@@ -74,6 +74,7 @@ useQuery(currentUserQueryOptions());
 
 - Fixed the employee form's Manager dropdown: it converted the selected UUID with `Number(value)`, which stored `NaN`, left the dropdown blank and failed validation with "Invalid input".
 
+- Added `SUGGESTIONS_W4.md`: review of email retry safety, Resend conflict handling, and production link configuration.
 - Documented that migration `9999_____seed_data.sql` is temporary fake demo data, acceptable pre-launch and to remove before onboarding real users.
 
 - Fixed the Quality workflow's tests failing with MissingValue("database_url"): CI has no .env, so the Tests step now sets DATABASE_URL, JWT_SECRET, APP_ENV and CORS_ORIGINS for the Postgres service.
