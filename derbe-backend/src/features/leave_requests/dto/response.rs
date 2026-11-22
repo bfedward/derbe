@@ -49,3 +49,17 @@ pub struct MyLeaveResponse {
     pub date_to: NaiveDate,
     pub total_duration: f64,
 }
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TeamLeaveResponse {
+    pub leave_request_id: i32,
+    pub employee_unid: Uuid,
+    pub employee_name: String,
+    pub leave_type: String,
+    pub leave_status: LeaveStatus,
+    pub date_from: NaiveDate,
+    pub date_to: NaiveDate,
+    pub total_duration: f64,
+    pub date_requested: DateTime<Utc>,
+}

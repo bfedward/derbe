@@ -420,3 +420,60 @@ async fn a_rejected_leave_request_cannot_go_back_to_pending() {
 
     cleanup_test_app(app).await;
 }
+
+#[tokio::test]
+async fn regular_user_cannot_view_someone_elses_leave_request() {
+    let app = spawn_app().await;
+    let (_admin, admin_client) = login_as(&app, Admin).await;
+    let leave_type = create_leave_type("Annual", &admin_client, &app).await;
+    let owner = seed_employee(&app, "Owner", RegularUser, None).await;
+    let snoop = seed_employee(&app, "Snoop", RegularUser, None).await;
+    let leave = pending_leave_request(&app, &admin_client, owner.unid, &leave_type["id"]).await;
+
+    let owner_client = login_client(&app, &owner).await;
+    let snoop_client = login_client(&app, &snoop).await;
+    let url = format!("{}/leaveRequests/{}", app.address, leave["id"]);
+
+    assert_eq!(
+        owner_client.get(&url).send().await.unwrap().status(),
+        StatusCode::OK
+    );
+    assert_eq!(
+        snoop_client.get(&url).send().await.unwrap().status(),
+        StatusCode::FORBIDDEN
+    );
+
+    cleanup_test_app(app).await;
+}
+
+#[tokio::test]
+async fn manager_can_view_a_reports_leave_request_but_not_a_strangers() {
+    let app = spawn_app().await;
+    let (_admin, admin_client) = login_as(&app, Admin).await;
+    let leave_type = create_leave_type("Annual", &admin_client, &app).await;
+    let boss = seed_employee(&app, "Boss", Manager, None).await;
+    let report = seed_employee(&app, "Report", RegularUser, Some(boss.unid)).await;
+    let stranger = seed_employee(&app, "Stranger", RegularUser, None).await;
+    let reports_leave =
+        pending_leave_request(&app, &admin_client, report.unid, &leave_type["id"]).await;
+    let strangers_leave =
+        pending_leave_request(&app, &admin_client, stranger.unid, &leave_type["id"]).await;
+
+    let boss_client = login_client(&app, &boss).await;
+    let get = |id: &Value| {
+        boss_client
+            .get(format!("{}/leaveRequests/{}", app.address, id))
+            .send()
+    };
+
+    assert_eq!(
+        get(&reports_leave["id"]).await.unwrap().status(),
+        StatusCode::OK
+    );
+    assert_eq!(
+        get(&strangers_leave["id"]).await.unwrap().status(),
+        StatusCode::FORBIDDEN
+    );
+
+    cleanup_test_app(app).await;
+}

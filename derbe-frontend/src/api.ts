@@ -44,6 +44,7 @@ const API_PATHS = {
   employeeDetails: "/employees/detailsTable",
   leaveRequests: "/leaveRequests",
   myLeave: "/myLeave",
+  teamLeave: "/teamLeave",
   allLeave: "/allLeave",
   leaveTypes: "/leaveTypes",
   locations: "/locations",
@@ -173,6 +174,10 @@ export function getAllLeave(input: AllLeaveRequest, signal?: AbortSignal) {
   return postJson<AllLeaveResponse[]>(API_PATHS.allLeave, input, signal);
 }
 
+export function getTeamLeave(signal?: AbortSignal) {
+  return request<TeamLeaveResponse[]>(API_PATHS.teamLeave, { signal });
+}
+
 export function getLeaveRequest(id: number, signal?: AbortSignal) {
   return request<LeaveRequestResponse>(`${API_PATHS.leaveRequests}/${id}`, { signal });
 }
@@ -192,6 +197,7 @@ export function updateLeaveRequestStatus(id: number, input: LeaveRequestStatusUp
 import { queryOptions, skipToken } from "@tanstack/react-query";
 import type { DivisionCreate } from "./bindings/DivisionCreate";
 import type { LocationCreate } from "./bindings/LocationCreate";
+import type { TeamLeaveResponse } from "./bindings/TeamLeaveResponse";
 
 export const employeesQueryOptions = () =>
   queryOptions({
@@ -251,6 +257,12 @@ export const allLeaveQueryOptions = (year: number, month: number) => {
     queryFn: ({ signal }) => getAllLeave(dateRange, signal),
   });
 };
+
+export const teamLeaveQueryOptions = () =>
+  queryOptions({
+    queryKey: derbeKeys.teamLeave(),
+    queryFn: ({ signal }) => getTeamLeave(signal),
+  });
 
 export const leaveRequestQueryOptions = (id: number) =>
   queryOptions({

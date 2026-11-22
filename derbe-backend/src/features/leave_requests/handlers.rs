@@ -8,9 +8,8 @@ use validator::Validate;
 use crate::{
     access_control::{authorize, authorize_on},
     error::AppError,
-    features::auth::middleware::AuthenticatedUser,
-    features::leave_requests::model::{LeaveStatus::Accepted, LeaveStatus::Pending},
     features::{
+        auth::middleware::AuthenticatedUser,
         employees,
         leave_requests::{
             dto::{
@@ -18,8 +17,11 @@ use crate::{
                     AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate,
                     LeaveRequestUpdate, MyLeaveRequest,
                 },
-                response::{AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse},
+                response::{
+                    AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse, TeamLeaveResponse,
+                },
             },
+            model::LeaveStatus::{Accepted, Pending},
             permission::{authorize_approve, authorize_reject, LeaveRequestPermission},
             service,
         },
@@ -37,6 +39,14 @@ pub async fn get_my_leave(
     Ok(Json(leaves))
 }
 
+pub async fn get_team_leave(
+    Extension(user): Extension<AuthenticatedUser>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<TeamLeaveResponse>>, AppError> {
+    authorize(&user, LeaveRequestPermission::ListTeam)?;
+    Ok(Json(service::get_team_leave(&user, &state).await?))
+}
+
 pub async fn get_all_leave(
     Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
@@ -52,8 +62,9 @@ pub async fn get_leave_request(
     State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> Result<Json<LeaveRequestResponse>, AppError> {
-    authorize(&user, LeaveRequestPermission::View)?;
     let leave_request = service::get_by_id(id, &state).await?;
+    let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
+    authorize_on(&user, &target, LeaveRequestPermission::View)?;
     Ok(Json(leave_request.into()))
 }
 

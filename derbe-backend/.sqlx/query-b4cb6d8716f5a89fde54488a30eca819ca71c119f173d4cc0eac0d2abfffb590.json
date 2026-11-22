@@ -1,0 +1,83 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                lr.id AS leave_request_id,\n                e.unid AS employee_unid,\n                e.first_name || ' ' || e.last_name AS \"employee_name!\",\n                lt.name AS leave_type,\n                lr.leave_status AS \"leave_status!: LeaveStatus\",\n                lr.date_from,\n                lr.date_to,\n                lr.total_duration,\n                lr.date_requested\n            FROM leave_requests lr\n            JOIN employees e ON e.unid = lr.employee_unid\n            JOIN leave_types lt ON lt.id = lr.leave_type_id\n            WHERE lr.leave_status = 'Pending'\n              AND e.deleted_at IS NULL\n              AND ($1::uuid IS NULL OR e.manager_unid = $1)\n            ORDER BY lr.date_from, lr.id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "leave_request_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "employee_unid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "employee_name!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "leave_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "leave_status!: LeaveStatus",
+        "type_info": {
+          "Custom": {
+            "name": "valid_leave_statuses",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "MoreInfoReq",
+                "Cancelled",
+                "Rejected",
+                "Accepted"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "date_from",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 6,
+        "name": "date_to",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 7,
+        "name": "total_duration",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "date_requested",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b4cb6d8716f5a89fde54488a30eca819ca71c119f173d4cc0eac0d2abfffb590"
+}

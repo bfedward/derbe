@@ -1,14 +1,18 @@
 use uuid::Uuid;
 
-use crate::{
-    features::leave_requests::dto::{
-        request::{
-            AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
-            MyLeaveRequest,
+use crate::features::{
+    auth::middleware::AuthenticatedUser,
+    employees::model::EmployeeRole,
+    leave_requests::{
+        dto::{
+            request::{
+                AllLeaveRequest, LeaveRequestCreate, LeaveRequestStatusUpdate, LeaveRequestUpdate,
+                MyLeaveRequest,
+            },
+            response::{AllLeaveResponse, MyLeaveResponse, TeamLeaveResponse},
         },
-        response::{AllLeaveResponse, MyLeaveResponse},
+        model::LeaveStatus,
     },
-    features::leave_requests::model::LeaveStatus,
 };
 
 use crate::{
@@ -156,6 +160,19 @@ pub async fn get_my_leave(
     ctx: &AppState,
 ) -> Result<Vec<MyLeaveResponse>, AppError> {
     repository::get_my_leave(employee_unid, my_leave_request, ctx).await
+}
+
+pub async fn get_team_leave(
+    user: &AuthenticatedUser,
+    ctx: &AppState,
+) -> Result<Vec<TeamLeaveResponse>, AppError> {
+    let manager_unid = match user.role {
+        EmployeeRole::Admin => None,
+        EmployeeRole::Manager => Some(user.unid),
+        // The handler's permission check already rejects these. This is a second guard.
+        EmployeeRole::RegularUser | EmployeeRole::Demo => return Err(AppError::Forbidden),
+    };
+    repository::get_team_leave(manager_unid, ctx).await
 }
 
 pub async fn get_all_leave(

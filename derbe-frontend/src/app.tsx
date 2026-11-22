@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, ChevronDown, Settings2, Users } from "lucide-react";
 import {
   BrowserRouter,
@@ -38,6 +39,8 @@ import { LocationsPage } from "@/features/settings/pages/locations-page";
 import { NewDivisionPage } from "@/features/settings/pages/new-division-page";
 import { NewLeaveTypePage } from "@/features/settings/pages/new-leave-type-page";
 import { NewLocationPage } from "@/features/settings/pages/new-location-page";
+import { getCurrentUser } from "./api";
+import { TeamLeavePage } from "./features/leave/pages/team-leave-page";
 
 function NavigationMenu({
   title,
@@ -93,6 +96,15 @@ function LoginLayout() {
 }
 
 function Layout() {
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: getCurrentUser,
+    retry: false,
+  });
+  const canReviewLeave = currentUser?.role === "Admin" || currentUser?.role === "Manager";
+  const canCreateEmployees =
+    currentUser?.role === "Admin" || currentUser?.role === "Manager";
+
   return (
     <div className="min-h-screen">
       <header className="border-b bg-card">
@@ -106,6 +118,7 @@ function Layout() {
               icon={<CalendarDays />}
               items={[
                 { label: "My Leave", to: "/my-leave" },
+                ...(canReviewLeave ? [{ label: "Team Leave", to: "/team-leave" }] : []),
                 { label: "All Leave", to: "/all-leave" },
                 { label: "Request Days Off", to: "/leave-request" },
               ]}
@@ -115,7 +128,9 @@ function Layout() {
               icon={<Users />}
               items={[
                 { label: "Organisation", to: "/organisation" },
-                { label: "Create Employee", to: "/employee/new" },
+                ...(canCreateEmployees
+                  ? [{ label: "Create Employee", to: "/employee/new" }]
+                  : []),
               ]}
             />
             <NavigationMenu
@@ -166,6 +181,7 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="my-leave" element={<MyLeavePage />} />
             <Route path="all-leave" element={<AllLeavePage />} />
+            <Route path="team-leave" element={<TeamLeavePage />} />
             <Route path="leave-request" element={<LeaveRequestFormPage />} />
             <Route path="leave-request/:id" element={<LeaveRequestProfilePage />} />
             <Route path="organisation" element={<OrganisationPage />} />

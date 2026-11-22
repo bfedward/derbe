@@ -9,6 +9,7 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LeaveRequestPermission {
     List,
+    ListTeam,
     View,
     Create,
     Update,
@@ -22,6 +23,7 @@ impl Permission for LeaveRequestPermission {
 
         match self {
             Self::List => ALL_ROLES,
+            Self::ListTeam => &[Admin, Manager],
             Self::View => &[Admin, Manager, RegularUser],
             // Whose leave requests a role may create or update is decided by its scope.
             Self::Create => &[Admin, Manager, RegularUser],
@@ -95,6 +97,7 @@ mod tests {
         use EmployeeRole::*;
         use LeaveRequestPermission::*;
         assert_eq!(List.roles_required(), ALL_ROLES);
+        assert_eq!(ListTeam.roles_required(), &[Admin, Manager]);
         assert_eq!(View.roles_required(), &[Admin, Manager, RegularUser]);
         assert_eq!(Create.roles_required(), &[Admin, Manager, RegularUser]);
         assert_eq!(Update.roles_required(), &[Admin, Manager, RegularUser]);

@@ -111,6 +111,7 @@ export function LeaveRequestProfilePage() {
         queryKey: derbeKeys.leaveRequest(requestId),
       });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.myLeaveAll() });
+      await queryClient.invalidateQueries({ queryKey: derbeKeys.teamLeave() });
       navigate("/my-leave");
     },
   });

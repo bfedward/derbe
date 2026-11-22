@@ -5,7 +5,7 @@ use crate::features::leave_requests::dto::request::{
     MyLeaveRequest,
 };
 use crate::features::leave_requests::dto::response::{
-    AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse,
+    AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse, TeamLeaveResponse,
 };
 use crate::features::leave_requests::model::{EmailDetails, LeaveStatus};
 use chrono::{NaiveDate, Utc};
@@ -277,6 +277,37 @@ pub async fn get_my_leave(
         dto.leave_statuses as Vec<LeaveStatus>,
         dto.date_from,
         dto.date_to
+    )
+    .fetch_all(&ctx.pool)
+    .await?)
+}
+
+pub async fn get_team_leave(
+    manager_unid: Option<Uuid>,
+    ctx: &AppState,
+) -> Result<Vec<TeamLeaveResponse>, AppError> {
+    Ok(sqlx::query_as!(
+        TeamLeaveResponse,
+        r#"
+            SELECT
+                lr.id AS leave_request_id,
+                e.unid AS employee_unid,
+                e.first_name || ' ' || e.last_name AS "employee_name!",
+                lt.name AS leave_type,
+                lr.leave_status AS "leave_status!: LeaveStatus",
+                lr.date_from,
+                lr.date_to,
+                lr.total_duration,
+                lr.date_requested
+            FROM leave_requests lr
+            JOIN employees e ON e.unid = lr.employee_unid
+            JOIN leave_types lt ON lt.id = lr.leave_type_id
+            WHERE lr.leave_status = 'Pending'
+              AND e.deleted_at IS NULL
+              AND ($1::uuid IS NULL OR e.manager_unid = $1)
+            ORDER BY lr.date_from, lr.id
+        "#,
+        manager_unid
     )
     .fetch_all(&ctx.pool)
     .await?)

@@ -55,5 +55,6 @@ pub fn router() -> Router<AppState> {
             put(leave_request_handlers::update_leave_request_status),
         )
         .route("/myLeave", post(leave_request_handlers::get_my_leave))
+        .route("/teamLeave", get(leave_request_handlers::get_team_leave))
         .route("/allLeave", post(leave_request_handlers::get_all_leave))
 }
