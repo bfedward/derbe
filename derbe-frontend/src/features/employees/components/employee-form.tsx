@@ -178,7 +178,7 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
                     <Select
                       value={field.value === null ? NONE_OPTION : field.value}
                       onValueChange={(value) =>
-                        field.onChange(value === NONE_OPTION ? null : Number(value))
+                        field.onChange(value === NONE_OPTION ? null : value)
                       }
                     >
                       <FormControl>
