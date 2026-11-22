@@ -44,7 +44,7 @@ pub async fn find_current_user_by_unid(
     Ok(sqlx::query_as!(
         CurrentUser,
         r#"
-        SELECT unid, email, role AS "role!: EmployeeRole"
+        SELECT unid, first_name, last_name, email, role AS "role!: EmployeeRole"
         FROM employees
         WHERE unid = $1
           AND deleted_at IS NULL

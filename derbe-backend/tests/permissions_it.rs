@@ -113,6 +113,8 @@ async fn me_returns_the_role_of_the_logged_in_employee() {
         assert_eq!(response.status(), StatusCode::OK);
         let me = get_response_body_as_json(response).await;
         assert_eq!(me["role"], role.to_string());
+        assert_eq!(me["first_name"], user.first_name);
+        assert_eq!(me["last_name"], user.last_name);
         assert_eq!(me["unid"], user.unid.to_string());
     }
 

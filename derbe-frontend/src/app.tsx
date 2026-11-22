@@ -1,5 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, ChevronDown, Settings2, Users } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  CalendarDays,
+  ChevronDown,
+  LogOut,
+  Settings2,
+  UserRound,
+  Users,
+} from "lucide-react";
 import {
   BrowserRouter,
   Link,
@@ -7,6 +14,7 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +28,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -39,8 +49,61 @@ import { LocationsPage } from "@/features/settings/pages/locations-page";
 import { NewDivisionPage } from "@/features/settings/pages/new-division-page";
 import { NewLeaveTypePage } from "@/features/settings/pages/new-leave-type-page";
 import { NewLocationPage } from "@/features/settings/pages/new-location-page";
-import { getCurrentUser } from "./api";
+import { currentUserQueryOptions, logout } from "./api";
+import type { CurrentUser } from "./bindings/CurrentUser";
 import { TeamLeavePage } from "./features/leave/pages/team-leave-page";
+
+const ROLE_LABELS: Record<CurrentUser["role"], string> = {
+  Admin: "Admin",
+  Manager: "Manager",
+  RegularUser: "Employee",
+  Demo: "Demo",
+};
+
+function UserMenu({ user }: { user: CurrentUser }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      navigate("/login", { replace: true });
+      // Drop everything cached for this user, so the next user never sees it.
+      queryClient.clear();
+    },
+  });
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="gap-2">
+          <UserRound />
+          <span>
+            {user.first_name} {user.last_name}
+          </span>
+          <span className="text-muted-foreground">· {ROLE_LABELS[user.role]}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-56">
+        <DropdownMenuLabel className="font-normal">
+          <div className="font-medium">
+            {user.first_name} {user.last_name}
+          </div>
+          <div className="text-xs text-muted-foreground">{user.email}</div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          disabled={logoutMutation.isPending}
+          onSelect={() => logoutMutation.mutate()}
+          className="cursor-pointer"
+        >
+          <LogOut />
+          Log out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function NavigationMenu({
   title,
@@ -96,11 +159,7 @@ function LoginLayout() {
 }
 
 function Layout() {
-  const { data: currentUser } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: getCurrentUser,
-    retry: false,
-  });
+  const { data: currentUser } = useQuery(currentUserQueryOptions());
   const canReviewLeave = currentUser?.role === "Admin" || currentUser?.role === "Manager";
   const canCreateEmployees =
     currentUser?.role === "Admin" || currentUser?.role === "Manager";
@@ -143,6 +202,7 @@ function Layout() {
               ]}
             />
             <ThemeToggle />
+            {currentUser && <UserMenu user={currentUser} />}
           </nav>
         </div>
       </header>

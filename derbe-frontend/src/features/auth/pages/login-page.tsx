@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { derbeKeys } from "@/query-keys";
 
 const loginFormSchema = z.object({
   email: z.string().trim().min(1, "Email required."),
@@ -41,9 +42,7 @@ export function LoginPage() {
   const mutation = useMutation({
     mutationFn: (values: LoginFormValues) => login(values),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["currentUser"],
-      });
+      await queryClient.invalidateQueries({ queryKey: derbeKeys.currentUser() });
       navigate("/", { replace: true });
     },
   });

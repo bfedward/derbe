@@ -1,4 +1,5 @@
 use derbe_backend::features::{
+    auth::model::CurrentUser,
     divisions::dto::{
         request::{DivisionCreate, DivisionUpdate},
         response::DivisionResponse,
@@ -8,7 +9,7 @@ use derbe_backend::features::{
             request::{EmployeeCreate, EmployeeUpdate},
             response::{EmployeeDetailsResponse, EmployeeResponse},
         },
-        model::EmploymentType,
+        model::{EmployeeRole, EmploymentType},
     },
     leave_requests::{
         dto::{
@@ -35,6 +36,8 @@ use derbe_backend::features::{
 use ts_rs::TS;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    CurrentUser::export_all()?;
+    EmployeeRole::export_all()?;
     DivisionCreate::export_all()?;
     DivisionUpdate::export_all()?;
     EmployeeCreate::export_all()?;

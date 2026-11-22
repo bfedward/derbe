@@ -75,7 +75,10 @@ const TEST_PASSWORD: &str = "test-password";
 
 pub struct SeededUser {
     pub unid: Uuid,
+    pub first_name: String,
+    pub last_name: String,
     pub email: String,
+    pub role: String,
 }
 
 /// Inserts an employee with the given role straight into the database.
@@ -137,7 +140,13 @@ pub async fn seed_employee(
     .await
     .expect("Failed to seed employee");
 
-    SeededUser { unid, email }
+    SeededUser {
+        unid,
+        first_name: first_name.to_string(),
+        last_name: String::from("Testerson"),
+        role: role.to_string(),
+        email,
+    }
 }
 
 /// A client that sends the session cookie of the given seeded user.

@@ -1,4 +1,5 @@
 use serde::Serialize;
+use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::features::employees::model::EmployeeRole;
@@ -8,9 +9,12 @@ pub struct LoginCredentials {
     pub password: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
 pub struct CurrentUser {
     pub unid: Uuid,
+    pub first_name: String,
+    pub last_name: String,
     pub email: String,
     pub role: EmployeeRole,
 }

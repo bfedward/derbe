@@ -4,6 +4,50 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Added a Team Leave screen (`/team-leave`, under Days Off) listing the pending leave requests the logged-in user can decide on: an admin sees everyone's, a manager sees their direct reports'. `MoreInfoReq` requests are not listed, because they are waiting on the employee and already show on their My Leave screen. Each row has the employee's name, leave type, dates, duration, date requested and a Review link to the request page. The menu item is only shown to admins and managers.
+  - New `GET /teamLeave` endpoint instead of extending `/myLeave`. The backend decides whose team it is from the session (`None` for an admin, `Some(user.unid)` for a manager), so the client can never ask for another manager's team. It also needs a different response shape (`TeamLeaveResponse`, with `employee_name`). The SQL excludes soft-deleted employees and orders by `date_from`. A manager's own pending request doesn't appear, because they can't approve it.
+  - New `LeaveRequestPermission::ListTeam` (`Admin`, `Manager`). `RegularUser` and `Demo` get 403.
+  - Accepting or rejecting a request now also invalidates the Team Leave query, so the request disappears when the manager goes back to the list.
+  - Tests in `team_leave_it.rs`: a manager sees only their direct reports, an admin sees everyone (including employees with no manager), a manager doesn't see their own request, accepted, rejected and cancelled requests and deleted employees are not listed, `RegularUser` and `Demo` get 403, no session gets 401.
+
+- Fixed `GET /leaveRequests/{id}` checking only the role (`View`) and not whose request it is: any manager or regular user could open any request by changing the id in the URL. It now uses `authorize_on` with the request's employee, so a regular user can only view their own requests and a manager their own and their direct reports'. Tests added to `permissions_it.rs`.
+
+Before:
+
+```rust
+authorize(&user, LeaveRequestPermission::View)?;
+let leave_request = service::get_by_id(id, &state).await?;
+```
+
+After:
+
+```rust
+let leave_request = service::get_by_id(id, &state).await?;
+let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
+authorize_on(&user, &target, LeaveRequestPermission::View)?;
+```
+
+- Added a user menu to the header, showing the logged-in user's name and role ("Employee" for `RegularUser`). It opens to show their email and a Log out item. Logging out calls `POST /logout`, navigates to `/login`, then runs `queryClient.clear()`, so the next user never briefly sees the previous user's cached data. Switching users no longer means clearing browser cookies.
+  - `/logout` stays a public route: it only clears the caller's own cookie, and it must still work when the session is expired or invalid, which is exactly when `require_auth` would reject it. Sessions are stateless JWTs, so logout deletes the cookie but doesn't revoke the token.
+
+- `GET /me` now returns `first_name` and `last_name`. `CurrentUser` and `EmployeeRole` are exported with ts-rs, so the frontend uses the generated `CurrentUser` binding instead of a hand-written interface in `api.ts`.
+
+- Added `currentUserQueryOptions()` and `derbeKeys.currentUser()`, used by `ProtectedRoute`, `Layout` and the login page instead of three copies of an inline `["currentUser"]` query. Updating the login page's invalidation at the same time matters: if it invalidated a stale key, a cached 401 from an expired session would survive a successful login and send the user straight back to `/login`.
+
+Before:
+
+```tsx
+useQuery({ queryKey: ["currentUser"], queryFn: getCurrentUser, retry: false });
+```
+
+After:
+
+```tsx
+useQuery(currentUserQueryOptions());
+```
+
+- Fixed the employee form's Manager dropdown: it converted the selected UUID with `Number(value)`, which stored `NaN`, left the dropdown blank and failed validation with "Invalid input".
+
 - Documented that migration `9999_____seed_data.sql` is temporary fake demo data, acceptable pre-launch and to remove before onboarding real users.
 
 - Fixed the Quality workflow's tests failing with MissingValue("database_url"): CI has no .env, so the Tests step now sets DATABASE_URL, JWT_SECRET, APP_ENV and CORS_ORIGINS for the Postgres service.

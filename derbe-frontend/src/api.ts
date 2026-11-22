@@ -1,3 +1,4 @@
+import { queryOptions, skipToken } from "@tanstack/react-query";
 import type { AllLeaveRequest } from "@/bindings/AllLeaveRequest";
 import type { AllLeaveResponse } from "@/bindings/AllLeaveResponse";
 import type { DivisionResponse } from "@/bindings/DivisionResponse";
@@ -17,6 +18,10 @@ import type { MyLeaveRequest } from "@/bindings/MyLeaveRequest";
 import type { MyLeaveResponse } from "@/bindings/MyLeaveResponse";
 import { dateRangeIso } from "@/lib/dates";
 import { derbeKeys } from "@/query-keys";
+import type { CurrentUser } from "./bindings/CurrentUser";
+import type { DivisionCreate } from "./bindings/DivisionCreate";
+import type { LocationCreate } from "./bindings/LocationCreate";
+import type { TeamLeaveResponse } from "./bindings/TeamLeaveResponse";
 
 const API_DEFAULT_BASE_URL = "http://localhost:8001";
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? API_DEFAULT_BASE_URL).replace(
@@ -27,12 +32,6 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? API_DEFAULT_BASE_URL)
 interface LoginRequest {
   email: string;
   password: string;
-}
-
-interface CurrentUser {
-  unid: string;
-  email: string;
-  role: string;
 }
 
 const API_PATHS = {
@@ -194,10 +193,12 @@ export function updateLeaveRequestStatus(id: number, input: LeaveRequestStatusUp
   return putJson<LeaveRequestResponse>(`${API_PATHS.leaveRequests}/${id}/status`, input);
 }
 
-import { queryOptions, skipToken } from "@tanstack/react-query";
-import type { DivisionCreate } from "./bindings/DivisionCreate";
-import type { LocationCreate } from "./bindings/LocationCreate";
-import type { TeamLeaveResponse } from "./bindings/TeamLeaveResponse";
+export const currentUserQueryOptions = () =>
+  queryOptions({
+    queryKey: derbeKeys.currentUser(),
+    queryFn: getCurrentUser,
+    retry: false,
+  });
 
 export const employeesQueryOptions = () =>
   queryOptions({

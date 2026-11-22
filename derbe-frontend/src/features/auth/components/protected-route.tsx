@@ -1,14 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, Outlet } from "react-router-dom";
 
-import { ApiError, getCurrentUser } from "@/api";
+import { ApiError, currentUserQueryOptions } from "@/api";
 
 export function ProtectedRoute() {
-  const { isPending, isError, error, refetch } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: getCurrentUser,
-    retry: false,
-  });
+  const { isPending, isError, error, refetch } = useQuery(currentUserQueryOptions());
 
   // The session check is still in progress.
   if (isPending) {
