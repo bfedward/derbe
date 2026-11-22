@@ -2,6 +2,10 @@
 
 Internal development history for Derbe. Not user-facing.
 
+## [Unreleased]
+
+- Documented that migration `9999_____seed_data.sql` is temporary fake demo data, acceptable pre-launch and to remove before onboarding real users.
+
 - Fixed the Quality workflow's tests failing with MissingValue("database_url"): CI has no .env, so the Tests step now sets DATABASE_URL, JWT_SECRET, APP_ENV and CORS_ORIGINS for the Postgres service.
 
 - Added email notifications for leave requests, sent through the Resend HTTP API from `notify.derbe.app`. The manager gets an email when an employee submits a request, and the employee gets one when it is accepted or rejected. Other changes (edits, cancellations, `MoreInfoReq`) send nothing yet. No email is sent when the employee has no active manager (a warning is logged) or when the manager files leave for their own report.
