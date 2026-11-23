@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT unid AS employee_unid, \n                    first_name, \n                    last_name, \n                    job_title, \n                    division_id, \n                    employment_type AS \"employment_type!: EmploymentType\", \n                    location_id, \n                    manager_unid, \n                    email\n            FROM employees\n            ",
+  "query": "\n            UPDATE employees\n            SET first_name = $1,\n                last_name = $2,\n                job_title = $3,\n                division_id = $4,\n                employment_type = $5,\n                location_id = $6,\n                manager_unid = $7,\n                email = $8\n            WHERE unid = $9\n            RETURNING unid AS employee_unid, \n                first_name, \n                last_name, \n                job_title, \n                division_id, \n                employment_type AS \"employment_type!: EmploymentType\", \n                location_id, \n                manager_unid, \n                email,\n                role AS \"role!: EmployeeRole\"\n            ",
   "describe": {
     "columns": [
       {
@@ -57,10 +57,35 @@
         "ordinal": 8,
         "name": "email",
         "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "role!: EmployeeRole",
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Int4",
+        {
+          "Custom": {
+            "name": "valid_employment_types",
+            "kind": {
+              "Enum": [
+                "Permanent",
+                "Contract"
+              ]
+            }
+          }
+        },
+        "Int4",
+        "Uuid",
+        "Text",
+        "Uuid"
+      ]
     },
     "nullable": [
       false,
@@ -71,8 +96,9 @@
       false,
       false,
       true,
+      false,
       false
     ]
   },
-  "hash": "78f8c56467728a3e7f8bfbee33470f0d1b319828d44d9bde13f59257c9da503a"
+  "hash": "5364e0f26be9ac15743e3f83b24d3b12675fe19a6fa475da9491bc1131c66c31"
 }

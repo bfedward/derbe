@@ -5,7 +5,7 @@ use crate::features::employees::{
         request::{EmployeeCreate, EmployeeUpdate},
         response::{CreatedEmployeeResponse, EmployeeDetailsResponse, EmployeeResponse},
     },
-    model::EmployeeAccess,
+    model::{EmployeeAccess, EmployeeRole},
 };
 
 use crate::{error::AppError, features::employees::repository, http::AppState};
@@ -72,7 +72,12 @@ pub async fn ensure_related_entities_exist(
     locations::service::ensure_exists(location_id, ctx).await?;
     divisions::service::ensure_exists(division_id, ctx).await?;
     if let Some(manager_id) = manager_id {
-        get_by_id(manager_id, ctx).await?;
+        let manager = get_by_id(manager_id, ctx).await?;
+        if !matches!(manager.role, EmployeeRole::Admin | EmployeeRole::Manager) {
+            return Err(AppError::ValidationFailed(
+                "An employee's manager must be an admin or a manager".to_owned(),
+            ));
+        }
     }
     Ok(())
 }

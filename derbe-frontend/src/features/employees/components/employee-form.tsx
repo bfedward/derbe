@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import {
   createEmployee,
+  currentUserQueryOptions,
   divisionsQueryOptions,
   employeeQueryOptions,
   employeesQueryOptions,
@@ -19,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormItem,
   FormLabel,
   FormMessage,
@@ -32,7 +34,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { EMPLOYMENT_TYPES, NONE_OPTION } from "@/features/employees/constants";
+import {
+  CREATABLE_ROLES,
+  EMPLOYMENT_TYPES,
+  MANAGER_ROLES,
+  NONE_OPTION,
+  ROLE_LABELS,
+} from "@/features/employees/constants";
 import { derbeKeys } from "@/query-keys";
 
 const employeeFormSchema = z.object({
@@ -44,6 +52,7 @@ const employeeFormSchema = z.object({
   location_id: z.number().int().positive("Choose a location."),
   manager_unid: z.string().trim().nullable(),
   email: z.email("Enter a valid email address."),
+  role: z.enum(CREATABLE_ROLES),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
@@ -57,9 +66,15 @@ const EMPTY_EMPLOYEE: EmployeeFormValues = {
   location_id: 0,
   manager_unid: null,
   email: "",
+  role: "RegularUser",
 };
 
 export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
+  const { data: currentUser } = useQuery(currentUserQueryOptions());
+  const isAdmin = currentUser?.role === "Admin";
+  const isManager = currentUser?.role === "Manager";
+  const isEditing = employee_unid !== undefined;
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm<EmployeeFormValues>({
@@ -71,6 +86,12 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
   const employeesQuery = useQuery(employeesQueryOptions());
   const divisionsQuery = useQuery(divisionsQueryOptions());
   const locationsQuery = useQuery(locationsQueryOptions());
+
+  // A manager's new hire always reports to them
+  useEffect(() => {
+    if (isEditing || !isManager || !currentUser) return;
+    form.setValue("manager_unid", currentUser.unid);
+  }, [isEditing, isManager, currentUser, form]);
 
   useEffect(() => {
     if (!employeeQuery.data) return;
@@ -84,15 +105,15 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
       location_id: employee.location_id,
       manager_unid: employee.manager_unid,
       email: employee.email,
+      role: employee.role === "Manager" ? "Manager" : "RegularUser",
     });
   }, [employeeQuery.data, reset]);
 
   const saveMutation = useMutation({
     mutationFn: (values: EmployeeFormValues) => {
-      const payload = { ...values };
-      return employee_unid === undefined
-        ? createEmployee(payload)
-        : updateEmployee(employee_unid, payload);
+      if (employee_unid === undefined) return createEmployee(values);
+      const { role: _role, ...update } = values;
+      return updateEmployee(employee_unid, update);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.employees() });
@@ -115,6 +136,16 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
     locationsQuery.error;
   if (error) return <QueryMessage error={error} />;
   const employees = employeesQuery.data ?? [];
+  // When editing, keep the current manager in the list even if they're no longer
+  // an admin or manager, so the dropdown doesn't go blank for older data.
+  const currentManagerUnid = employeeQuery.data?.manager_unid ?? null;
+  const managerOptions = employees.filter(
+    (employee) =>
+      employee.employee_unid !== employee_unid &&
+      ((MANAGER_ROLES as readonly string[]).includes(employee.role) ||
+        employee.employee_unid === currentManagerUnid),
+  );
+
   const divisions = divisionsQuery.data ?? [];
   const locations = locationsQuery.data ?? [];
 
@@ -158,6 +189,19 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
               />
               <RHFField
                 control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <RHFField
+                control={form.control}
                 name="job_title"
                 render={({ field }) => (
                   <FormItem>
@@ -180,6 +224,7 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
                       onValueChange={(value) =>
                         field.onChange(value === NONE_OPTION ? null : value)
                       }
+                      disabled={isManager && !isEditing}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -188,18 +233,56 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value={NONE_OPTION}>No manager</SelectItem>
-                        {employees
-                          .filter((employee) => employee.employee_unid !== employee_unid)
-                          .map((employee) => (
-                            <SelectItem
-                              key={employee.employee_unid}
-                              value={employee.employee_unid}
-                            >
-                              {employee.first_name} {employee.last_name}
-                            </SelectItem>
-                          ))}
+                        {managerOptions.map((employee) => (
+                          <SelectItem
+                            key={employee.employee_unid}
+                            value={employee.employee_unid}
+                          >
+                            {employee.first_name} {employee.last_name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {isManager && !isEditing && (
+                      <FormDescription>New employees report to you.</FormDescription>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <RHFField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role</FormLabel>
+                    {isEditing && employeeQuery.data ? (
+                      <p className="text-sm">{ROLE_LABELS[employeeQuery.data.role]}</p>
+                    ) : (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={!isAdmin}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {CREATABLE_ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {ROLE_LABELS[role]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {isManager && !isEditing && (
+                      <FormDescription>
+                        Managers can only create employees.
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -278,19 +361,6 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <RHFField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

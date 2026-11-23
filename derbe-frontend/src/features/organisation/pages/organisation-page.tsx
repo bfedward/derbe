@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
+  currentUserQueryOptions,
   divisionsQueryOptions,
   employeesQueryOptions,
   locationsQueryOptions,
@@ -18,9 +19,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ROLE_LABELS } from "@/features/employees/constants";
 import { EMPTY_VALUE } from "@/features/settings/constants";
 
 export function OrganisationPage() {
+  const { data: currentUser } = useQuery(currentUserQueryOptions());
+  const canViewEmployees =
+    currentUser?.role === "Admin" || currentUser?.role === "Manager";
+
   const employeesQuery = useQuery(employeesQueryOptions());
   const divisionsQuery = useQuery(divisionsQueryOptions());
   const locationsQuery = useQuery(locationsQueryOptions());
@@ -49,13 +55,13 @@ export function OrganisationPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Job Title</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Manager</TableHead>
                 <TableHead>Employment Type</TableHead>
                 <TableHead>Division</TableHead>
                 <TableHead>Location</TableHead>
-                <TableHead>Manager</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -72,23 +78,28 @@ export function OrganisationPage() {
                 return (
                   <TableRow key={employee.employee_unid}>
                     <TableCell className="font-medium">
-                      <Link
-                        className="text-primary hover:underline"
-                        to={`/employee/${employee.employee_unid}`}
-                      >
-                        {employee.first_name} {employee.last_name}
-                      </Link>
+                      {canViewEmployees ? (
+                        <Link
+                          className="text-primary hover:underline"
+                          to={`/employee/${employee.employee_unid}`}
+                        >
+                          {employee.first_name} {employee.last_name}
+                        </Link>
+                      ) : (
+                        `${employee.first_name} ${employee.last_name}`
+                      )}
                     </TableCell>
+                    <TableCell>{employee.email}</TableCell>
                     <TableCell>{employee.job_title}</TableCell>
-                    <TableCell>{employee.employment_type}</TableCell>
-                    <TableCell>{division?.name ?? EMPTY_VALUE}</TableCell>
-                    <TableCell>{location?.name ?? EMPTY_VALUE}</TableCell>
+                    <TableCell>{ROLE_LABELS[employee.role]}</TableCell>
                     <TableCell>
                       {manager
                         ? `${manager.first_name} ${manager.last_name}`
                         : EMPTY_VALUE}
                     </TableCell>
-                    <TableCell>{employee.email}</TableCell>
+                    <TableCell>{employee.employment_type}</TableCell>
+                    <TableCell>{division?.name ?? EMPTY_VALUE}</TableCell>
+                    <TableCell>{location?.name ?? EMPTY_VALUE}</TableCell>
                   </TableRow>
                 );
               })}

@@ -4,7 +4,10 @@ use serde::Deserialize;
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::{error::AppError, features::employees::model::EmploymentType};
+use crate::{
+    error::AppError,
+    features::employees::model::{EmployeeRole, EmploymentType},
+};
 
 use validator::Validate;
 
@@ -25,6 +28,7 @@ pub struct EmployeeCreate {
     pub manager_unid: Option<Uuid>,
     #[validate(email)]
     pub email: String,
+    pub role: EmployeeRole,
 }
 
 #[derive(Deserialize)]
@@ -37,6 +41,8 @@ struct EmployeeCreateRaw {
     location_id: i32,
     manager_unid: Option<String>,
     email: String,
+    #[serde(default)]
+    role: EmployeeRole,
 }
 
 impl TryFrom<EmployeeCreateRaw> for EmployeeCreate {
@@ -59,6 +65,7 @@ impl TryFrom<EmployeeCreateRaw> for EmployeeCreate {
             location_id: raw.location_id,
             manager_unid,
             email: raw.email.trim().to_lowercase(),
+            role: raw.role,
         })
     }
 }

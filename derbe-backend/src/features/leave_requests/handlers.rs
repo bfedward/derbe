@@ -18,7 +18,8 @@ use crate::{
                     LeaveRequestUpdate, MyLeaveRequest,
                 },
                 response::{
-                    AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse, TeamLeaveResponse,
+                    AllLeaveResponse, LeaveRequestDetailsResponse, LeaveRequestResponse,
+                    MyLeaveResponse, TeamLeaveResponse,
                 },
             },
             model::LeaveStatus::{Accepted, Pending},
@@ -61,11 +62,16 @@ pub async fn get_leave_request(
     Extension(user): Extension<AuthenticatedUser>,
     State(state): State<AppState>,
     Path(id): Path<i32>,
-) -> Result<Json<LeaveRequestResponse>, AppError> {
+) -> Result<Json<LeaveRequestDetailsResponse>, AppError> {
     let leave_request = service::get_by_id(id, &state).await?;
     let target = employees::service::get_access_by_id(leave_request.employee_unid, &state).await?;
     authorize_on(&user, &target, LeaveRequestPermission::View)?;
-    Ok(Json(leave_request.into()))
+    let names = service::get_names(id, &state).await?;
+    Ok(Json(LeaveRequestDetailsResponse {
+        request: leave_request.into(),
+        employee_name: names.employee_name,
+        leave_type: names.leave_type,
+    }))
 }
 
 pub async fn create_leave_request(

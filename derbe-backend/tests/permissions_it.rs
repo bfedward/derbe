@@ -225,14 +225,17 @@ async fn manager_creates_employees_but_regular_user_and_demo_cannot() {
         (RegularUser, StatusCode::FORBIDDEN),
         (Demo, StatusCode::FORBIDDEN),
     ] {
-        let (_user, client) = login_as(&app, role).await;
+        let (user, client) = login_as(&app, role).await;
+        let mut body = employee_body(
+            &division,
+            &location,
+            &format!("new-{}@derbe.test", role.to_string().to_lowercase()),
+        );
+        // A manager's new hire must report to them.
+        body["manager_unid"] = user.unid.to_string().into();
         let response = client
             .post(format!("{}/employees", app.address))
-            .json(&employee_body(
-                &division,
-                &location,
-                &format!("new-{}@derbe.test", role.to_string().to_lowercase()),
-            ))
+            .json(&body)
             .send()
             .await
             .unwrap();
@@ -436,10 +439,19 @@ async fn regular_user_cannot_view_someone_elses_leave_request() {
     let snoop_client = login_client(&app, &snoop).await;
     let url = format!("{}/leaveRequests/{}", app.address, leave["id"]);
 
+    let response = owner_client.get(&url).send().await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = get_response_body_as_json(response).await;
+
+    assert_eq!(body["employee_name"], "Owner Testerson");
+    assert_eq!(body["leave_type"], "Annual");
     assert_eq!(
-        owner_client.get(&url).send().await.unwrap().status(),
-        StatusCode::OK
+        body["id"], leave["id"],
+        "the existing fields are still at the top level"
     );
+
     assert_eq!(
         snoop_client.get(&url).send().await.unwrap().status(),
         StatusCode::FORBIDDEN

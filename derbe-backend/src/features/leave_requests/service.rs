@@ -11,7 +11,7 @@ use crate::features::{
             },
             response::{AllLeaveResponse, MyLeaveResponse, TeamLeaveResponse},
         },
-        model::LeaveStatus,
+        model::{LeaveRequestNames, LeaveStatus},
     },
 };
 
@@ -30,6 +30,10 @@ use crate::features::{employees, leave_types};
 
 pub async fn get_by_id(id: i32, ctx: &AppState) -> Result<LeaveRequest, AppError> {
     repository::get_by_id(id, ctx).await
+}
+
+pub async fn get_names(id: i32, ctx: &AppState) -> Result<LeaveRequestNames, AppError> {
+    repository::get_names(id, ctx).await
 }
 
 pub async fn ensure_exists(id: i32, ctx: &AppState) -> Result<(), AppError> {

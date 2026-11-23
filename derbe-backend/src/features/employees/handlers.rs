@@ -11,14 +11,16 @@ use validator::Validate;
 use crate::{
     access_control::{authorize, authorize_on},
     error::AppError,
-    features::auth::middleware::AuthenticatedUser,
-    features::employees::permission::EmployeePermission,
-    features::employees::{
-        dto::{
-            request::{EmployeeCreate, EmployeeUpdate},
-            response::{CreatedEmployeeResponse, EmployeeDetailsResponse, EmployeeResponse},
+    features::{
+        auth::middleware::AuthenticatedUser,
+        employees::{
+            dto::{
+                request::{EmployeeCreate, EmployeeUpdate},
+                response::{CreatedEmployeeResponse, EmployeeDetailsResponse, EmployeeResponse},
+            },
+            permission::{self, EmployeePermission},
+            service,
         },
-        service,
     },
     http::AppState,
 };
@@ -56,8 +58,7 @@ pub async fn create_employee(
     State(state): State<AppState>,
     Json(input): Json<EmployeeCreate>,
 ) -> Result<(StatusCode, Json<CreatedEmployeeResponse>), AppError> {
-    authorize(&user, EmployeePermission::Create)?;
-
+    permission::authorize_create(&user, &input)?;
     input
         .validate()
         .map_err(AppError::RequestValidationFailed)?;

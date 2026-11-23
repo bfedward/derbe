@@ -3,10 +3,9 @@ import { QueryMessage } from "@/components/query-message";
 import { EmployeeForm } from "@/features/employees/components/employee-form";
 
 export function EmployeeProfilePage() {
-  const { employee_unid } = useParams();
-  const employeeUnid = employee_unid;
-  return employeeUnid ? (
-    <EmployeeForm employee_unid={employeeUnid} />
+  const { employee_unid } = useParams<{ employee_unid: string }>();
+  return employee_unid ? (
+    <EmployeeForm employee_unid={employee_unid} />
   ) : (
     <QueryMessage empty="Employee not found." />
   );

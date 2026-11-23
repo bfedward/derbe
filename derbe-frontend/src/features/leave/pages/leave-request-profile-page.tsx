@@ -128,6 +128,7 @@ export function LeaveRequestProfilePage() {
         queryKey: derbeKeys.leaveRequest(requestId),
       });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.myLeaveAll() });
+      await queryClient.invalidateQueries({ queryKey: derbeKeys.teamLeave() });
       navigate("/my-leave");
     },
   });
@@ -153,11 +154,11 @@ export function LeaveRequestProfilePage() {
             >
               <div className="grid gap-2">
                 <span className="text-sm font-medium">Employee</span>
-                <Input readOnly value={`Employee #${request.employee_unid}`} />
+                <Input readOnly value={request.employee_name} />
               </div>
               <div className="grid gap-2">
                 <span className="text-sm font-medium">Leave Type</span>
-                <Input readOnly value={`Leave type #${request.leave_type_id}`} />
+                <Input readOnly value={request.leave_type} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <RHFField

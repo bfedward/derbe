@@ -7,7 +7,7 @@ use crate::features::leave_requests::dto::request::{
 use crate::features::leave_requests::dto::response::{
     AllLeaveInnerResponse, AllLeaveResponse, MyLeaveResponse, TeamLeaveResponse,
 };
-use crate::features::leave_requests::model::{EmailDetails, LeaveStatus};
+use crate::features::leave_requests::model::{EmailDetails, LeaveRequestNames, LeaveStatus};
 use chrono::{NaiveDate, Utc};
 use sqlx::PgConnection;
 use uuid::Uuid;
@@ -72,6 +72,24 @@ pub async fn list(ctx: &AppState) -> Result<Vec<LeaveRequest>, AppError> {
     )
     .fetch_all(&ctx.pool)
     .await?)
+}
+
+pub async fn get_names(id: i32, ctx: &AppState) -> Result<LeaveRequestNames, AppError> {
+    sqlx::query_as!(
+        LeaveRequestNames,
+        r#"
+            SELECT e.first_name || ' ' || e.last_name AS "employee_name!",
+                   lt.name AS leave_type
+            FROM leave_requests lr
+            JOIN employees e ON e.unid = lr.employee_unid
+            JOIN leave_types lt ON lt.id = lr.leave_type_id
+            WHERE lr.id = $1
+        "#,
+        id
+    )
+    .fetch_optional(&ctx.pool)
+    .await?
+    .ok_or_else(|| AppError::EntityNotFound(id, ENTITY.to_owned()))
 }
 
 pub async fn create(

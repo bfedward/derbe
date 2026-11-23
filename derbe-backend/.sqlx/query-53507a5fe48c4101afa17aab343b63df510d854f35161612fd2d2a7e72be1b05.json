@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO employees (first_name, \n                                    last_name, \n                                    job_title, \n                                    division_id, \n                                    employment_type, \n                                    location_id, \n                                    manager_unid, \n                                    email,\n                                    password)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            RETURNING unid AS employee_unid, \n                        first_name, \n                        last_name, \n                        job_title, \n                        division_id, \n                        employment_type AS \"employment_type!: EmploymentType\", \n                        location_id, \n                        manager_unid, \n                        email\n            ",
+  "query": "\n            INSERT INTO employees (first_name, \n                                    last_name, \n                                    job_title, \n                                    division_id, \n                                    employment_type, \n                                    location_id, \n                                    manager_unid, \n                                    email,\n                                    password,\n                                    role)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n            RETURNING unid AS employee_unid, \n                        first_name, \n                        last_name, \n                        job_title, \n                        division_id, \n                        employment_type AS \"employment_type!: EmploymentType\", \n                        location_id, \n                        manager_unid, \n                        email,\n                        role AS \"role!: EmployeeRole\"\n            ",
   "describe": {
     "columns": [
       {
@@ -57,6 +57,11 @@
         "ordinal": 8,
         "name": "email",
         "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "role!: EmployeeRole",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -79,6 +84,7 @@
         "Int4",
         "Uuid",
         "Text",
+        "Text",
         "Text"
       ]
     },
@@ -91,8 +97,9 @@
       false,
       false,
       true,
+      false,
       false
     ]
   },
-  "hash": "2679711ad5b77fc0fe9ae9dc45522d01a54365a69c65dffe3dee5858c15fde11"
+  "hash": "53507a5fe48c4101afa17aab343b63df510d854f35161612fd2d2a7e72be1b05"
 }

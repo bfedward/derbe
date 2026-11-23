@@ -5,10 +5,12 @@ use crate::features::employees::dto::response::{
     CreatedEmployeeResponse, EmployeeDetailsResponse, EmployeeResponse,
 };
 
-use crate::features::employees::model::EmployeeAccess;
+use crate::features::employees::model::{EmployeeAccess, EmployeeRole};
 use crate::{error::AppError, features::employees::model::EmploymentType, http::AppState};
 
 const ENTITY: &str = "Employee";
+
+const EMAIL_UNIQUE_INDEX: &str = "employees_email_active_key";
 
 pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeResponse, AppError> {
     sqlx::query_as!(
@@ -22,7 +24,8 @@ pub async fn get_by_id(unid: Uuid, ctx: &AppState) -> Result<EmployeeResponse, A
                     employment_type AS "employment_type!: EmploymentType", 
                     location_id, 
                     manager_unid, 
-                    email
+                    email,
+                    role AS "role!: EmployeeRole"
             FROM employees
             WHERE unid = $1
             "#,
@@ -61,8 +64,10 @@ pub async fn list(ctx: &AppState) -> Result<Vec<EmployeeResponse>, AppError> {
                     employment_type AS "employment_type!: EmploymentType", 
                     location_id, 
                     manager_unid, 
-                    email
+                    email,
+                    role AS "role!: EmployeeRole"
             FROM employees
+            ORDER BY last_name
             "#
     )
     .fetch_all(&ctx.pool)
@@ -90,8 +95,9 @@ pub async fn create(
                                     location_id, 
                                     manager_unid, 
                                     email,
-                                    password)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                                    password,
+                                    role)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING unid AS employee_unid, 
                         first_name, 
                         last_name, 
@@ -100,7 +106,8 @@ pub async fn create(
                         employment_type AS "employment_type!: EmploymentType", 
                         location_id, 
                         manager_unid, 
-                        email
+                        email,
+                        role AS "role!: EmployeeRole"
             "#,
         dto.first_name,
         dto.last_name,
@@ -110,10 +117,12 @@ pub async fn create(
         dto.location_id,
         dto.manager_unid,
         dto.email,
-        password_hash
+        password_hash,
+        dto.role as EmployeeRole
     )
     .fetch_one(&ctx.pool)
-    .await?;
+    .await
+    .map_err(duplicate_email_or_db)?;
 
     Ok(CreatedEmployeeResponse {
         employee,
@@ -147,7 +156,8 @@ pub async fn update(
                 employment_type AS "employment_type!: EmploymentType", 
                 location_id, 
                 manager_unid, 
-                email
+                email,
+                role AS "role!: EmployeeRole"
             "#,
         dto.first_name,
         dto.last_name,
@@ -160,8 +170,19 @@ pub async fn update(
         unid
     )
     .fetch_optional(&ctx.pool)
-    .await?
+    .await
+    .map_err(duplicate_email_or_db)?
     .ok_or_else(|| AppError::EntityUnidNotFound(unid, ENTITY.to_owned()))
+}
+
+/// A clash on the active-email index becomes a 409. Any other database error stays a 500.
+fn duplicate_email_or_db(error: sqlx::Error) -> AppError {
+    match &error {
+        sqlx::Error::Database(db_error) if db_error.constraint() == Some(EMAIL_UNIQUE_INDEX) => {
+            AppError::DuplicateEmail
+        }
+        _ => AppError::DatabaseQueryError(error),
+    }
 }
 
 pub async fn delete(unid: Uuid, ctx: &AppState) -> Result<(), AppError> {

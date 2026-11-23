@@ -20,6 +20,7 @@ import { dateRangeIso } from "@/lib/dates";
 import { derbeKeys } from "@/query-keys";
 import type { CurrentUser } from "./bindings/CurrentUser";
 import type { DivisionCreate } from "./bindings/DivisionCreate";
+import type { LeaveRequestDetailsResponse } from "./bindings/LeaveRequestDetailsResponse";
 import type { LocationCreate } from "./bindings/LocationCreate";
 import type { TeamLeaveResponse } from "./bindings/TeamLeaveResponse";
 
@@ -74,17 +75,32 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    const body = await response.text();
-    throw new ApiError(
-      body || `${response.status} ${response.statusText}`,
-      response.status,
-    );
+    throw new ApiError(await errorMessage(response), response.status);
   }
 
   if (response.status === 204) return undefined as T;
-  if (response.status === 401) return undefined as T;
-  if (response.status === 403) return undefined as T;
   return (await response.json()) as T;
+}
+
+/** The backend's `{ "error": "..." }` message, with nicer wording for common statuses. */
+async function errorMessage(response: Response): Promise<string> {
+  if (response.status === 403) return "You don't have permission to view this.";
+
+  const body = await response.text();
+  try {
+    const parsed: unknown = JSON.parse(body);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "error" in parsed &&
+      typeof parsed.error === "string"
+    ) {
+      return parsed.error;
+    }
+  } catch {
+    // Not JSON: fall through to the raw body.
+  }
+  return body || `${response.status} ${response.statusText}`;
 }
 
 function postJson<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
@@ -178,7 +194,9 @@ export function getTeamLeave(signal?: AbortSignal) {
 }
 
 export function getLeaveRequest(id: number, signal?: AbortSignal) {
-  return request<LeaveRequestResponse>(`${API_PATHS.leaveRequests}/${id}`, { signal });
+  return request<LeaveRequestDetailsResponse>(`${API_PATHS.leaveRequests}/${id}`, {
+    signal,
+  });
 }
 
 export function createLeaveRequest(input: LeaveRequestCreate) {

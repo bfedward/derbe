@@ -53,6 +53,9 @@ pub enum AppError {
 
     #[error("{0}")]
     Conflict(String),
+
+    #[error("An employee with this email address already exists")]
+    DuplicateEmail,
 }
 
 impl AppError {
@@ -83,7 +86,8 @@ impl IntoResponse for AppError {
             Self::RelatedEntity(_)
             | Self::ConstraintError(_)
             | Self::DuplicateNamedEntity(_)
-            | Self::Conflict(_) => StatusCode::CONFLICT,
+            | Self::Conflict(_)
+            | Self::DuplicateEmail => StatusCode::CONFLICT,
             Self::InvalidStructArgs(_)
             | Self::ValidationFailed(_)
             | Self::RequestValidationFailed(_)

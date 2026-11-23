@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT e.first_name || ' ' || e.last_name AS \"employee_name!\",\n                   lt.name AS leave_type\n            FROM leave_requests lr\n            JOIN employees e ON e.unid = lr.employee_unid\n            JOIN leave_types lt ON lt.id = lr.leave_type_id\n            WHERE lr.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "employee_name!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "leave_type",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      false
+    ]
+  },
+  "hash": "560a2df140548c76d443bc93c841319afc64470f39832df587b800bd117ff012"
+}

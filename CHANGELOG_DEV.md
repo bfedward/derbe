@@ -4,6 +4,16 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- The leave request page shows the employee's name and the leave type's name instead of their ids. GET /leaveRequests/{id} now returns LeaveRequestDetailsResponse, which flattens LeaveRequestResponse and adds employee_name and leave_type. Names are joined after the permission check, and soft-deleted employees still show their name. Accepting or rejecting now also refreshes Team Leave.
+
+- Queries no longer retry 4xx responses, so a 403 or 404 shows its error straight away instead of a loading skeleton for several seconds. API errors show the backend's message instead of raw JSON, and 403 reads 'You don't have permission to view this.' On the Organisation page, employee names are only links for admins and managers, and the Role column uses the same labels as the rest of the app.
+
+- Fixed clicking an employee in Organisation showing 'Employee not found.': the route parameter was :id but the page read employee_unid, so it never loaded the employee.
+
+- An employee's manager must now be an admin or a manager. The Manager dropdown only lists admins and managers (plus the employee's current manager, when editing older data), and POST/PUT /employees return 400 for any other manager.
+
+- Employee emails are now unique among active employees (employees_email_active_key, a partial unique index on email WHERE deleted_at IS NULL). Previously two employees could share an address, and login picked one of them arbitrarily. Creating or updating an employee with an email that's already in use returns 409 'An employee with this email address already exists'. A soft-deleted employee's address can be reused. create_employee in the test helpers now derives the email from the first name.
+
 - Added a Team Leave screen (`/team-leave`, under Days Off) listing the pending leave requests the logged-in user can decide on: an admin sees everyone's, a manager sees their direct reports'. `MoreInfoReq` requests are not listed, because they are waiting on the employee and already show on their My Leave screen. Each row has the employee's name, leave type, dates, duration, date requested and a Review link to the request page. The menu item is only shown to admins and managers.
   - New `GET /teamLeave` endpoint instead of extending `/myLeave`. The backend decides whose team it is from the session (`None` for an admin, `Some(user.unid)` for a manager), so the client can never ask for another manager's team. It also needs a different response shape (`TeamLeaveResponse`, with `employee_name`). The SQL excludes soft-deleted employees and orders by `date_from`. A manager's own pending request doesn't appear, because they can't approve it.
   - New `LeaveRequestPermission::ListTeam` (`Admin`, `Manager`). `RegularUser` and `Demo` get 403.

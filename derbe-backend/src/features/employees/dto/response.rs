@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::features::employees::model::EmploymentType;
+use crate::features::employees::model::{EmployeeRole, EmploymentType};
 
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -18,6 +18,7 @@ pub struct EmployeeResponse {
     #[ts(type = "string | null")]
     pub manager_unid: Option<Uuid>,
     pub email: String,
+    pub role: EmployeeRole,
 }
 
 #[derive(Serialize, Deserialize, TS)]

@@ -18,8 +18,8 @@ use derbe_backend::features::{
                 LeaveRequestValues, MyLeaveRequest,
             },
             response::{
-                AllLeaveInnerResponse, AllLeaveResponse, LeaveRequestResponse, MyLeaveResponse,
-                TeamLeaveResponse,
+                AllLeaveInnerResponse, AllLeaveResponse, LeaveRequestDetailsResponse,
+                LeaveRequestResponse, MyLeaveResponse, TeamLeaveResponse,
             },
         },
         model::{HalfDayOptions, LeaveStatus},
@@ -46,6 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     LocationUpdate::export_all()?;
     LeaveTypeCreate::export_all()?;
     LeaveTypeUpdate::export_all()?;
+    LeaveRequestDetailsResponse::export_all()?;
     LeaveRequestCreate::export_all()?;
     LeaveRequestValues::export_all()?;
     LeaveRequestUpdate::export_all()?;

@@ -36,6 +36,11 @@ pub enum HalfDayOptions {
     BothHalfDays,
 }
 
+pub struct LeaveRequestNames {
+    pub employee_name: String,
+    pub leave_type: String,
+}
+
 #[serde_with::serde_as]
 #[derive(Debug, sqlx::FromRow)]
 pub struct LeaveRequest {

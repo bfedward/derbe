@@ -51,14 +51,8 @@ import { NewLeaveTypePage } from "@/features/settings/pages/new-leave-type-page"
 import { NewLocationPage } from "@/features/settings/pages/new-location-page";
 import { currentUserQueryOptions, logout } from "./api";
 import type { CurrentUser } from "./bindings/CurrentUser";
+import { ROLE_LABELS } from "./features/employees/constants";
 import { TeamLeavePage } from "./features/leave/pages/team-leave-page";
-
-const ROLE_LABELS: Record<CurrentUser["role"], string> = {
-  Admin: "Admin",
-  Manager: "Manager",
-  RegularUser: "Employee",
-  Demo: "Demo",
-};
 
 function UserMenu({ user }: { user: CurrentUser }) {
   const navigate = useNavigate();
@@ -160,8 +154,7 @@ function LoginLayout() {
 
 function Layout() {
   const { data: currentUser } = useQuery(currentUserQueryOptions());
-  const canReviewLeave = currentUser?.role === "Admin" || currentUser?.role === "Manager";
-  const canCreateEmployees =
+  const isAdminOrManager =
     currentUser?.role === "Admin" || currentUser?.role === "Manager";
 
   return (
@@ -177,7 +170,7 @@ function Layout() {
               icon={<CalendarDays />}
               items={[
                 { label: "My Leave", to: "/my-leave" },
-                ...(canReviewLeave ? [{ label: "Team Leave", to: "/team-leave" }] : []),
+                ...(isAdminOrManager ? [{ label: "Team Leave", to: "/team-leave" }] : []),
                 { label: "All Leave", to: "/all-leave" },
                 { label: "Request Days Off", to: "/leave-request" },
               ]}
@@ -187,7 +180,7 @@ function Layout() {
               icon={<Users />}
               items={[
                 { label: "Organisation", to: "/organisation" },
-                ...(canCreateEmployees
+                ...(isAdminOrManager
                   ? [{ label: "Create Employee", to: "/employee/new" }]
                   : []),
               ]}
@@ -246,7 +239,7 @@ function App() {
             <Route path="leave-request/:id" element={<LeaveRequestProfilePage />} />
             <Route path="organisation" element={<OrganisationPage />} />
             <Route path="employee/new" element={<EmployeeFormPage />} />
-            <Route path="employee/:id" element={<EmployeeProfilePage />} />
+            <Route path="employee/:employee_unid" element={<EmployeeProfilePage />} />
             <Route path="leave-types" element={<LeaveTypesPage />} />
             <Route path="leave-types/new" element={<NewLeaveTypePage />} />
             <Route path="locations" element={<LocationsPage />} />

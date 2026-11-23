@@ -22,6 +22,15 @@ pub struct LeaveRequestResponse {
     pub notes: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct LeaveRequestDetailsResponse {
+    #[serde(flatten)]
+    pub request: LeaveRequestResponse,
+    pub employee_name: String,
+    pub leave_type: String,
+}
+
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct AllLeaveResponse {

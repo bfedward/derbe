@@ -328,8 +328,8 @@ pub async fn create_employee(
 ) -> serde_json::Value {
     let division = create_division("Division", client, app).await;
     let location = create_location("Location", client, app).await;
-
-    let body = employee_body(first_name, "test@derbe.com", &division, &location);
+    let email = format!("{}@derbe.test", first_name.to_lowercase());
+    let body = employee_body(first_name, &email, &division, &location);
 
     let response = do_post(
         client,
