@@ -12,8 +12,12 @@ use crate::{
 
 const POLL_INTERVAL: Duration = Duration::from_secs(30);
 const BATCH_SIZE: i64 = 10;
+/// Resend ignores a repeated Idempotency-Key for 24 hours after first seeing it.
+const RESEND_IDEMPOTENCY_WINDOW_MINUTES: i32 = 24 * 60;
+/// Stop retrying an hour before the window closes, to allow for polling, timeouts and clock drift.
+const RETRY_CUTOFF_MINUTES: i32 = RESEND_IDEMPOTENCY_WINDOW_MINUTES - 60;
 /// Delay after the 1st, 2nd, ... failure. One more failure after the last delay gives up.
-const RETRY_DELAYS_MINUTES: [i32; 5] = [1, 5, 30, 120, 1440];
+const RETRY_DELAYS_MINUTES: [i32; 5] = [1, 5, 30, 120, 600];
 pub const MAX_ATTEMPTS: i32 = RETRY_DELAYS_MINUTES.len() as i32 + 1;
 
 struct ClaimedEmail {
@@ -23,6 +27,7 @@ struct ClaimedEmail {
     template: String,
     payload: serde_json::Value,
     attempt_count: i32,
+    past_retry_cutoff: bool,
 }
 
 pub struct EmailWorker {
@@ -101,16 +106,26 @@ impl EmailWorker {
                 FROM due
                 WHERE email.id = due.id
                 RETURNING email.id, email.event_key, email.recipient,
-                          email.template, email.payload, email.attempt_count
+                          email.template, email.payload, email.attempt_count,
+                          email.created_at <= now() - make_interval(mins => $3)
+                              AS "past_retry_cutoff!"
             "#,
             MAX_ATTEMPTS,
-            BATCH_SIZE
+            BATCH_SIZE,
+            RETRY_CUTOFF_MINUTES
         )
         .fetch_all(&self.pool)
         .await
     }
 
     async fn deliver(&self, email: ClaimedEmail) -> Result<(), sqlx::Error> {
+        if email.past_retry_cutoff {
+            let reason = "not sent: queued more than 23 hours ago, so Resend may have forgotten \
+                          the idempotency key and a retry could send a duplicate";
+            tracing::error!(id = email.id, event_key = %email.event_key, reason);
+            return self.give_up(email.id, reason).await;
+        }
+
         let rendered = match render(&email.template, email.payload, &self.app_base_url) {
             Ok(rendered) => rendered,
             Err(error) => {
@@ -195,4 +210,24 @@ impl EmailWorker {
 
 fn truncate(error: &str) -> String {
     error.chars().take(500).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_planned_retry_starts_before_the_cutoff() {
+        let last_retry_minutes: i32 = RETRY_DELAYS_MINUTES.iter().sum();
+        assert!(
+            last_retry_minutes < RETRY_CUTOFF_MINUTES,
+            "the last retry is due after {last_retry_minutes} minutes, \
+             past the {RETRY_CUTOFF_MINUTES}-minute cutoff"
+        );
+    }
+
+    #[test]
+    fn the_cutoff_is_inside_resends_idempotency_window() {
+        assert!(RETRY_CUTOFF_MINUTES < RESEND_IDEMPOTENCY_WINDOW_MINUTES);
+    }
 }

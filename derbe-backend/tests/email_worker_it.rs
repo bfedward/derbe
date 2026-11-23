@@ -113,6 +113,20 @@ async fn row_state(pool: &PgPool, id: i64) -> (bool, i32, bool, Option<String>) 
     .unwrap()
 }
 
+async fn backdate(pool: &PgPool, id: i64, interval: &str, attempt_count: i32) {
+    sqlx::query(
+        "UPDATE email_outbox
+         SET created_at = now() - $2::interval, attempt_count = $3
+         WHERE id = $1",
+    )
+    .bind(id)
+    .bind(interval)
+    .bind(attempt_count)
+    .execute(pool)
+    .await
+    .unwrap();
+}
+
 #[tokio::test]
 async fn a_successful_send_marks_the_row_sent_and_uses_the_event_key() {
     let app = spawn_app().await;
@@ -247,6 +261,42 @@ async fn the_worker_does_not_start_without_an_api_key() {
         "http://127.0.0.1:1".to_owned(),
         "https://derbe.test".to_owned(),
     );
+
+    cleanup_test_app(app).await;
+}
+
+#[tokio::test]
+async fn a_retry_past_the_idempotency_cutoff_is_given_up_without_sending() {
+    let app = spawn_app().await;
+    let pool = &app.ctx.pool;
+    let (url, fake) = spawn_fake_resend(200).await;
+    let id = queue_email(pool, "leave-request:7:created", "leave_request_submitted").await;
+    backdate(pool, id, "23 hours 30 minutes", 2).await;
+
+    worker(pool, url).process_batch().await.unwrap();
+
+    let (sent, attempts, _, last_error) = row_state(pool, id).await;
+    assert!(!sent);
+    assert_eq!(attempts, MAX_ATTEMPTS);
+    assert!(last_error.unwrap().contains("idempotency key"));
+    assert_eq!(fake.request_count(), 0);
+
+    cleanup_test_app(app).await;
+}
+
+#[tokio::test]
+async fn a_retry_inside_the_cutoff_is_still_sent() {
+    let app = spawn_app().await;
+    let pool = &app.ctx.pool;
+    let (url, fake) = spawn_fake_resend(200).await;
+    let id = queue_email(pool, "leave-request:7:created", "leave_request_submitted").await;
+    backdate(pool, id, "12 hours", 4).await;
+
+    worker(pool, url).process_batch().await.unwrap();
+
+    let (sent, _, _, _) = row_state(pool, id).await;
+    assert!(sent);
+    assert_eq!(fake.request_count(), 1);
 
     cleanup_test_app(app).await;
 }
