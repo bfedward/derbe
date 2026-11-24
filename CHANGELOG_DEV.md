@@ -4,7 +4,7 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
-- Replaced the top dropdown navigation with the official shadcn `sidebar-07` collapsible sidebar components. Derbe routes are grouped by feature, active pages and role-based employee links are shown in the sidebar, and the user menu handles logout. Sidebar works on mobile, supports icon collapse, and inherits light/dark theme colors. Removed sample projects and team-switcher data because Derbe has no project or team switching.
+- Replaced the top dropdown navigation with the official shadcn `sidebar-07` collapsible sidebar components. Derbe routes are grouped by feature, active pages and role-based employee links are shown in the sidebar, and the user menu handles logout. Sidebar works on mobile, supports icon collapse, and inherits light/dark theme colors. Sidebar uses official neutral accent colors, and only active links receive the active state. Removed sample projects and team-switcher data because Derbe has no project or team switching.
 
 - Added migration `10000_____demo_account_roles.sql` to keep the applied seed migration checksum intact, make `employee@example.com` a RegularUser, and add `admin@example.com` as Admin. Both use password `password`.
 
