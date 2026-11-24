@@ -6,6 +6,8 @@ Internal development history for Derbe. Not user-facing.
 
 - Split the backend into a Rust 2024 Cargo workspace: one crate per feature, with shared runtime state, errors, configuration, session identity, and domain types in `derbe-core`; the app crate now assembles feature routes.
 
+- Replaced separate leave-request date inputs with the shadcn range calendar (Calendar + Popover). Preserved half-day selection and duration preview; single-day ranges offer full day or half day, multi-day ranges can halve either endpoint or both.
+
 - Added List and Organisation Chart views to Organisation. The chart groups Admin, Manager, and employee roles into levels, links employees to their manager where available, and uses a dedicated hook for hierarchy wiring. Migration `10001_____demo_org_chart_data.sql` seeds three managers and ten assigned employees without changing the applied seed migration checksum.
 
 - Added a public Derbe homepage at `/`, moved the authenticated application under `/dashboard/`, updated internal navigation, and kept legacy dashboard URLs redirecting to their `/dashboard/...` equivalents. Login now returns users to the protected URL they originally requested.

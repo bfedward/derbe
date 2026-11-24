@@ -1,6 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { format } from "date-fns";
+import { CalendarDays } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -9,6 +12,7 @@ import type { LeaveRequestCreate } from "@/bindings/LeaveRequestCreate";
 import { PageHeading } from "@/components/page-heading";
 import { ErrorAlert, QueryMessage } from "@/components/query-message";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
@@ -19,7 +23,7 @@ import {
   FormMessage,
   FormField as RHFField,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -28,9 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { HALF_DAY_OPTIONS } from "@/features/leave/constants";
+import {
+  HALF_DAY_OPTIONS,
+  SINGLE_DAY_HALF_DAY_OPTIONS,
+} from "@/features/leave/constants";
 import { halfDayFlags, leaveDuration } from "@/features/leave/leave-requests";
-import { elapsedDays, toDateInputValue } from "@/lib/dates";
+import { parseLocalDate, toDateInputValue } from "@/lib/dates";
 import { derbeKeys } from "@/query-keys";
 
 const leaveRequestFormSchema = z
@@ -63,6 +70,7 @@ export function LeaveRequestFormPage() {
   const employeesQuery = useQuery(employeesQueryOptions());
   const leaveTypesQuery = useQuery(leaveTypesQueryOptions());
   const today = toDateInputValue(new Date());
+  const todayDate = parseLocalDate(today);
   const form = useForm<LeaveRequestFormValues>({
     resolver: zodResolver(leaveRequestFormSchema),
     defaultValues: {
@@ -75,10 +83,46 @@ export function LeaveRequestFormPage() {
     },
   });
   const { control, getValues, setValue } = form;
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(
+    () => ({ from: todayDate, to: todayDate }),
+  );
   const dateFrom = useWatch({ control, name: "date_from" });
   const dateTo = useWatch({ control, name: "date_to" });
   const halfDays = useWatch({ control, name: "half_days" });
   const duration = leaveDuration(dateFrom, dateTo, halfDays);
+  const isSingleDay = dateFrom === dateTo;
+
+  function setFormDateRange(from: Date, to: Date) {
+    setValue("date_from", toDateInputValue(from), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("date_to", toDateInputValue(to), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }
+
+  function handleDateRangeSelect(range: DateRange | undefined) {
+    setSelectedDateRange(range);
+    if (range?.from && range.to) {
+      setFormDateRange(range.from, range.to);
+      if (range.to > range.from) setDatePickerOpen(false);
+    }
+  }
+
+  function handleDatePickerOpenChange(open: boolean) {
+    setDatePickerOpen(open);
+    if (open) {
+      setSelectedDateRange(undefined);
+      return;
+    }
+    if (!open && selectedDateRange?.from && !selectedDateRange.to) {
+      setSelectedDateRange({ from: selectedDateRange.from, to: selectedDateRange.from });
+      setFormDateRange(selectedDateRange.from, selectedDateRange.from);
+    }
+  }
 
   useEffect(() => {
     if (getValues("employee_unid") === null && employeesQuery.data?.[0]) {
@@ -91,6 +135,15 @@ export function LeaveRequestFormPage() {
       setValue("leave_type_id", defaultLeaveType.id);
     }
   }, [employeesQuery.data, getValues, leaveTypesQuery.data, setValue]);
+
+  useEffect(() => {
+    if (!isSingleDay) return;
+    if (halfDays === "both") {
+      setValue("half_days", "full", { shouldValidate: true });
+    } else if (halfDays === "last") {
+      setValue("half_days", "first", { shouldValidate: true });
+    }
+  }, [halfDays, isSingleDay, setValue]);
 
   const mutation = useMutation({
     mutationFn: (values: LeaveRequestFormValues) => {
@@ -138,8 +191,9 @@ export function LeaveRequestFormPage() {
   const requestableLeaveTypes =
     defaultLeaveTypes.length > 0 ? defaultLeaveTypes : leaveTypes;
 
-  const availableHalfDayOptions =
-    elapsedDays(dateFrom, dateTo) <= 1 ? HALF_DAY_OPTIONS.slice(0, 3) : HALF_DAY_OPTIONS;
+  const availableHalfDayOptions = isSingleDay
+    ? SINGLE_DAY_HALF_DAY_OPTIONS
+    : HALF_DAY_OPTIONS;
   return (
     <>
       <PageHeading title="Leave Request" />
@@ -207,40 +261,67 @@ export function LeaveRequestFormPage() {
                   </FormItem>
                 )}
               />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <RHFField
-                  control={control}
-                  name="date_from"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date From</FormLabel>
+              <RHFField
+                control={control}
+                name="date_from"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date Range</FormLabel>
+                    <Popover
+                      open={datePickerOpen}
+                      onOpenChange={handleDatePickerOpenChange}
+                    >
                       <FormControl>
-                        <Input type="date" min={today} {...field} />
+                        <PopoverTrigger asChild>
+                          <Button
+                            ref={field.ref}
+                            type="button"
+                            variant="outline"
+                            aria-invalid={Boolean(
+                              form.formState.errors.date_from ||
+                                form.formState.errors.date_to,
+                            )}
+                            className="w-full justify-start text-left font-normal"
+                            onBlur={field.onBlur}
+                          >
+                            <CalendarDays />
+                            {dateFrom === dateTo
+                              ? format(parseLocalDate(dateFrom), "dd/MM/yyyy")
+                              : `${format(parseLocalDate(dateFrom), "dd/MM/yyyy")} – ${format(parseLocalDate(dateTo), "dd/MM/yyyy")}`}
+                          </Button>
+                        </PopoverTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <RHFField
-                  control={control}
-                  name="date_to"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date To</FormLabel>
-                      <FormControl>
-                        <Input type="date" min={dateFrom} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                      <PopoverContent align="start" className="w-auto p-0">
+                        <Calendar
+                          mode="range"
+                          selected={selectedDateRange}
+                          onSelect={handleDateRangeSelect}
+                          disabled={{ before: todayDate }}
+                          defaultMonth={parseLocalDate(dateFrom)}
+                          autoFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    {form.formState.errors.date_to?.message && (
+                      <p className="text-sm font-medium text-destructive" role="alert">
+                        {form.formState.errors.date_to.message}
+                      </p>
+                    )}
+                  </FormItem>
+                )}
+              />
               <RHFField
                 control={control}
                 name="half_days"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Half Day Options</FormLabel>
+                    <FormDescription>
+                      {isSingleDay
+                        ? "Choose a full day or half day."
+                        : "Choose a half day on either end of the request."}
+                    </FormDescription>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
