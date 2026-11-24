@@ -1,16 +1,14 @@
 use axum::{
-    routing::{get, post, put},
     Router,
+    routing::{get, post, put},
 };
 
-use crate::{
-    features::{
-        divisions::handlers as division_handlers, employees::handlers as employee_handlers,
-        leave_requests::handlers as leave_request_handlers,
-        leave_types::handlers as leave_type_handlers, locations::handlers as location_handlers,
-    },
-    http::AppState,
-};
+use derbe_core::state::AppState;
+use derbe_divisions::handlers as division_handlers;
+use derbe_employees::handlers as employee_handlers;
+use derbe_leave_requests::handlers as leave_request_handlers;
+use derbe_leave_types::handlers as leave_type_handlers;
+use derbe_locations::handlers as location_handlers;
 
 pub fn router() -> Router<AppState> {
     Router::new()

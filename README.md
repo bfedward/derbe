@@ -309,6 +309,8 @@ Production runs on a Hetzner VPS with Docker Compose, nginx and certbot. See [DE
 
 ## Architecture
 
+Backend is a Cargo workspace. `derbe-backend` assembles HTTP routes and runtime; `derbe-core` owns shared state, errors, configuration, session identity, and shared domain types. Each backend feature lives in its own crate under `derbe-backend/crates/` (`derbe-auth`, `derbe-divisions`, `derbe-email`, `derbe-employees`, `derbe-leave_requests`, `derbe-leave_types`, and `derbe-locations`). All workspace packages use Rust edition 2024.
+
 ```text
 React pages
     |

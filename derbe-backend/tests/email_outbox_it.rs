@@ -1,11 +1,11 @@
 //! Which leave-request changes queue an email, and that the outbox commits with the change.
 
-use derbe_backend::features::employees::model::EmployeeRole::{Admin, Manager, RegularUser};
+use derbe_core::model::EmployeeRole::{Admin, Manager, RegularUser};
 use reqwest::StatusCode;
 use serde_json::Value;
 use test_helpers::{
-    cleanup_test_app, create_leave_type, get_response_body_as_json, login_as, login_client,
-    outbox_rows, post_leave_request, put_status, seed_employee, spawn_app, SeededUser, TestApp,
+    SeededUser, TestApp, cleanup_test_app, create_leave_type, get_response_body_as_json, login_as,
+    login_client, outbox_rows, post_leave_request, put_status, seed_employee, spawn_app,
 };
 
 mod test_helpers;

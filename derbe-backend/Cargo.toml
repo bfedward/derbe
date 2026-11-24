@@ -1,35 +1,55 @@
 [package]
 name = "derbe-backend"
 version = "0.2.0"
-edition = "2021"
+edition = "2024"
 default-run = "derbe-backend"
+
+[workspace]
+members = ["crates/*"]
+resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+axum.workspace = true
+ts-rs.workspace = true
+secrecy.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+tower-http.workspace = true
+thiserror.workspace = true
+tracing-subscriber.workspace = true
+pwhash.workspace = true
+derbe-core.workspace = true
+derbe-auth.workspace = true
+derbe-divisions.workspace = true
+derbe-email.workspace = true
+derbe-employees.workspace = true
+derbe_leave_requests.workspace = true
+derbe_leave_types.workspace = true
+derbe-locations.workspace = true
+
+[dev-dependencies]
+reqwest.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+
+
+[workspace.dependencies]
 axum = "0.8"
 axum-extra = { version = "0.12", features = ["cookie"] }
 chrono = { version = "0.4", features = ["serde"] }
 dotenvy = "0.15.7"
 envy = "0.4"
 jsonwebtoken = { version = "11", features = ["rust_crypto"] }
-num-traits = "0.2"
 pwhash = "1"
 reqwest = { version = "0.13", features = ["json"] }
 secrecy = { version = "0.10", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_with = { version = "3", features = ["time_0_3"] }
-sqlx = { version = "0.8", features = [
-    "bigdecimal",
-    "chrono",
-    "migrate",
-    "postgres",
-    "runtime-tokio-rustls",
-    "uuid",
-] }
+sqlx = { version = "0.8", features = ["bigdecimal", "chrono", "migrate", "postgres", "runtime-tokio-rustls", "uuid"] }
 strum = { version = "0.28", features = ["derive"] }
-strum_macros = "0.28"
 thiserror = "2"
 time = "0.3"
 tokio = { version = "1", features = ["full"] }
@@ -40,5 +60,11 @@ ts-rs = { version = "10", features = ["chrono-impl", "serde-compat", "uuid-impl"
 uuid = { version = "1", features = ["serde", "v4"] }
 validator = { version = "0.21", features = ["derive"] }
 
-[dev-dependencies]
-
+derbe-core = { path = "crates/derbe-core" }
+derbe-auth = { path = "crates/derbe-auth" }
+derbe-divisions = { path = "crates/derbe-divisions" }
+derbe-email = { path = "crates/derbe-email" }
+derbe-employees = { path = "crates/derbe-employees" }
+derbe_leave_requests = { package = "derbe-leave_requests", path = "crates/derbe-leave_requests" }
+derbe_leave_types = { package = "derbe-leave_types", path = "crates/derbe-leave_types" }
+derbe-locations = { path = "crates/derbe-locations" }

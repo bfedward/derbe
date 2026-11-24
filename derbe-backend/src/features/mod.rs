@@ -1,7 +1,0 @@
-pub mod auth;
-pub mod divisions;
-pub mod email;
-pub mod employees;
-pub mod leave_requests;
-pub mod leave_types;
-pub mod locations;

@@ -1,17 +1,17 @@
 //! The worker against a fake Resend server: sent, retried, and given-up paths.
 
 use std::sync::{
-    atomic::{AtomicU16, Ordering},
     Arc, Mutex,
+    atomic::{AtomicU16, Ordering},
 };
 
-use axum::{extract::State, http::HeaderMap, http::StatusCode, routing::post, Json, Router};
-use derbe_backend::features::email::{
+use axum::{Json, Router, extract::State, http::HeaderMap, http::StatusCode, routing::post};
+use derbe_email::{
     sender::ResendClient,
     worker::{EmailWorker, MAX_ATTEMPTS},
 };
 use secrecy::SecretBox;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sqlx::PgPool;
 use test_helpers::{cleanup_test_app, spawn_app};
 use tokio::net::TcpListener;
@@ -142,10 +142,12 @@ async fn a_successful_send_marks_the_row_sent_and_uses_the_event_key() {
             request.body["subject"],
             "New leave request from Emma Testerson"
         );
-        assert!(request.body["html"]
-            .as_str()
-            .unwrap()
-            .contains("https://derbe.test/leave-request/7"));
+        assert!(
+            request.body["html"]
+                .as_str()
+                .unwrap()
+                .contains("https://derbe.test/leave-request/7")
+        );
     }
 
     // A sent row is never sent again.
@@ -231,14 +233,14 @@ async fn the_worker_does_not_start_without_an_api_key() {
     let app = spawn_app().await;
 
     // Neither a missing nor a blank key should panic or start the loop.
-    derbe_backend::features::email::worker::spawn(
+    derbe_email::worker::spawn(
         app.ctx.pool.clone(),
         None,
         "Derbe <test@notify.derbe.app>".to_owned(),
         "http://127.0.0.1:1".to_owned(),
         "https://derbe.test".to_owned(),
     );
-    derbe_backend::features::email::worker::spawn(
+    derbe_email::worker::spawn(
         app.ctx.pool.clone(),
         Some(SecretBox::new(Box::new("   ".to_owned()))),
         "Derbe <test@notify.derbe.app>".to_owned(),
