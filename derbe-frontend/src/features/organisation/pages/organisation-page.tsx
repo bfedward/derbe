@@ -7,8 +7,10 @@ import {
   employeesQueryOptions,
   locationsQueryOptions,
 } from "@/api";
+import { OrganisationChart } from "@/components/my-components/organisation-chart";
 import { PageHeading } from "@/components/page-heading";
 import { QueryMessage } from "@/components/query-message";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ROLE_LABELS } from "@/features/employees/constants";
 import { EMPTY_VALUE } from "@/features/settings/constants";
 
@@ -54,67 +57,89 @@ export function OrganisationPage() {
       {pending || error ? (
         <QueryMessage error={error} />
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Job Title</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Manager</TableHead>
-                <TableHead>Employment Type</TableHead>
-                <TableHead>Division</TableHead>
-                <TableHead>Location</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employees.map((employee) => {
-                const manager = employees.find(
-                  (candidate) => candidate.employee_unid === employee.manager_unid,
-                );
-                const division = divisionsQuery.data?.find(
-                  (candidate) => candidate.id === employee.division_id,
-                );
-                const location = locationsQuery.data?.find(
-                  (candidate) => candidate.id === employee.location_id,
-                );
-                return (
-                  <TableRow key={employee.employee_unid}>
-                    <TableCell className="font-medium">
-                      {canViewEmployees ? (
-                        <Link
-                          className="text-primary hover:underline"
-                          to={`/dashboard/employee/${employee.employee_unid}`}
-                        >
-                          {employee.first_name} {employee.last_name}
-                        </Link>
-                      ) : (
-                        `${employee.first_name} ${employee.last_name}`
-                      )}
-                    </TableCell>
-                    <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.job_title}</TableCell>
-                    <TableCell>{ROLE_LABELS[employee.role]}</TableCell>
-                    <TableCell>
-                      {manager
-                        ? `${manager.first_name} ${manager.last_name}`
-                        : EMPTY_VALUE}
-                    </TableCell>
-                    <TableCell>{employee.employment_type}</TableCell>
-                    <TableCell>{division?.name ?? EMPTY_VALUE}</TableCell>
-                    <TableCell>{location?.name ?? EMPTY_VALUE}</TableCell>
+        <Tabs defaultValue="list" className="space-y-4">
+          <TabsList aria-label="Organisation views">
+            <TabsTrigger value="list">List</TabsTrigger>
+            <TabsTrigger value="chart">Organisation Chart</TabsTrigger>
+          </TabsList>
+          <TabsContent value="list">
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Job Title</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Manager</TableHead>
+                    <TableHead>Employment Type</TableHead>
+                    <TableHead>Division</TableHead>
+                    <TableHead>Location</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-          {employees.length === 0 && (
-            <CardContent>
-              <p className="text-sm text-muted-foreground">No employees yet.</p>
-            </CardContent>
-          )}
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {employees.map((employee) => {
+                    const initials = `${employee.first_name[0] ?? ""}${employee.last_name[0] ?? ""}`;
+                    const manager = employees.find(
+                      (candidate) => candidate.employee_unid === employee.manager_unid,
+                    );
+                    const division = divisionsQuery.data?.find(
+                      (candidate) => candidate.id === employee.division_id,
+                    );
+                    const location = locationsQuery.data?.find(
+                      (candidate) => candidate.id === employee.location_id,
+                    );
+                    return (
+                      <TableRow key={employee.employee_unid}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="size-8">
+                              <AvatarFallback className="text-xs">
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            {canViewEmployees ? (
+                              <Link
+                                className="text-primary hover:underline"
+                                to={`/dashboard/employee/${employee.employee_unid}`}
+                              >
+                                {employee.first_name} {employee.last_name}
+                              </Link>
+                            ) : (
+                              `${employee.first_name} ${employee.last_name}`
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{employee.email}</TableCell>
+                        <TableCell>{employee.job_title}</TableCell>
+                        <TableCell>{ROLE_LABELS[employee.role]}</TableCell>
+                        <TableCell>
+                          {manager
+                            ? `${manager.first_name} ${manager.last_name}`
+                            : EMPTY_VALUE}
+                        </TableCell>
+                        <TableCell>{employee.employment_type}</TableCell>
+                        <TableCell>{division?.name ?? EMPTY_VALUE}</TableCell>
+                        <TableCell>{location?.name ?? EMPTY_VALUE}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              {employees.length === 0 && (
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">No employees yet.</p>
+                </CardContent>
+              )}
+            </Card>
+          </TabsContent>
+          <TabsContent value="chart">
+            <OrganisationChart
+              employees={employees}
+              canViewEmployees={canViewEmployees}
+            />
+          </TabsContent>
+        </Tabs>
       )}
     </>
   );
