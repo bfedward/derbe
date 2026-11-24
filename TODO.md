@@ -18,3 +18,6 @@
 
 - Employee could be promoted to manager?
 - Fix the script that sets up the Hetzner server.
+
+- Add Playwright scripts
+- Add gzip compression
