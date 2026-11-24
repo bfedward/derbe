@@ -4,7 +4,9 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
-- Seeded separate local demo accounts: `admin@example.com` has the Admin role, and `employee@example.com` has the RegularUser role. Both use password `password`.
+- Replaced the top dropdown navigation with the official shadcn `sidebar-07` collapsible sidebar components. Derbe routes are grouped by feature, active pages and role-based employee links are shown in the sidebar, and the user menu handles logout. Sidebar works on mobile, supports icon collapse, and inherits light/dark theme colors. Removed sample projects and team-switcher data because Derbe has no project or team switching.
+
+- Added migration `10000_____demo_account_roles.sql` to keep the applied seed migration checksum intact, make `employee@example.com` a RegularUser, and add `admin@example.com` as Admin. Both use password `password`.
 
 - The leave request page shows the employee's name and the leave type's name instead of their ids. GET /leaveRequests/{id} now returns LeaveRequestDetailsResponse, which flattens LeaveRequestResponse and adds employee_name and leave_type. Names are joined after the permission check, and soft-deleted employees still show their name. Accepting or rejecting now also refreshes Team Leave.
 

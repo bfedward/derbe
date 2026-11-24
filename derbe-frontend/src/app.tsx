@@ -1,12 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CalendarDays,
-  ChevronDown,
-  LogOut,
-  Settings2,
-  UserRound,
-  Users,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BrowserRouter,
   Link,
@@ -14,8 +6,15 @@ import {
   Route,
   Routes,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
+import { currentUserQueryOptions } from "@/api";
+import { AppSidebar } from "@/components/app-sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,14 +23,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ProtectedRoute } from "@/features/auth/components/protected-route";
 import { LoginPage } from "@/features/auth/pages/login-page";
@@ -42,6 +35,7 @@ import { AllLeavePage } from "@/features/leave/pages/all-leave-page";
 import { LeaveRequestFormPage } from "@/features/leave/pages/leave-request-form-page";
 import { LeaveRequestProfilePage } from "@/features/leave/pages/leave-request-profile-page";
 import { MyLeavePage } from "@/features/leave/pages/my-leave-page";
+import { TeamLeavePage } from "@/features/leave/pages/team-leave-page";
 import { OrganisationPage } from "@/features/organisation/pages/organisation-page";
 import { DivisionsPage } from "@/features/settings/pages/divisions-page";
 import { LeaveTypesPage } from "@/features/settings/pages/leave-types-page";
@@ -49,97 +43,28 @@ import { LocationsPage } from "@/features/settings/pages/locations-page";
 import { NewDivisionPage } from "@/features/settings/pages/new-division-page";
 import { NewLeaveTypePage } from "@/features/settings/pages/new-leave-type-page";
 import { NewLocationPage } from "@/features/settings/pages/new-location-page";
-import { currentUserQueryOptions, logout } from "./api";
-import type { CurrentUser } from "./bindings/CurrentUser";
-import { ROLE_LABELS } from "./features/employees/constants";
-import { TeamLeavePage } from "./features/leave/pages/team-leave-page";
 
-function UserMenu({ user }: { user: CurrentUser }) {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const logoutMutation = useMutation({
-    mutationFn: logout,
-    onSuccess: () => {
-      navigate("/login", { replace: true });
-      // Drop everything cached for this user, so the next user never sees it.
-      queryClient.clear();
-    },
-  });
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="gap-2">
-          <UserRound />
-          <span>
-            {user.first_name} {user.last_name}
-          </span>
-          <span className="text-muted-foreground">· {ROLE_LABELS[user.role]}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="font-medium">
-            {user.first_name} {user.last_name}
-          </div>
-          <div className="text-xs text-muted-foreground">{user.email}</div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          disabled={logoutMutation.isPending}
-          onSelect={() => logoutMutation.mutate()}
-          className="cursor-pointer"
-        >
-          <LogOut />
-          Log out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function NavigationMenu({
-  title,
-  icon,
-  items,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  items: Array<{ label: string; to: string }>;
-}) {
-  const location = useLocation();
-  const isActive = items.some(
-    ({ to }) => location.pathname === to || location.pathname.startsWith(`${to}/`),
-  );
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant={isActive ? "secondary" : "ghost"} className="group gap-2">
-          {icon}
-          {title}
-          <ChevronDown className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-48">
-        {items.map(({ label, to }) => (
-          <DropdownMenuItem key={to} asChild>
-            <Link to={to} className="cursor-pointer">
-              {label}
-            </Link>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+const PAGE_TITLES: Record<string, string> = {
+  "/": "Home",
+  "/my-leave": "My Leave",
+  "/all-leave": "All Leave",
+  "/team-leave": "Team Leave",
+  "/leave-request": "Request Days Off",
+  "/organisation": "Organisation",
+  "/employee/new": "Create Employee",
+  "/leave-types": "Leave Types",
+  "/leave-types/new": "New Leave Type",
+  "/locations": "Locations",
+  "/locations/new": "New Location",
+  "/divisions": "Divisions",
+  "/divisions/new": "New Division",
+};
 
 function LoginLayout() {
   return (
     <div className="min-h-screen">
       <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 sm:px-6">
           <Link to="/" className="text-lg font-semibold tracking-tight">
             derbe
           </Link>
@@ -154,55 +79,38 @@ function LoginLayout() {
 
 function Layout() {
   const { data: currentUser } = useQuery(currentUserQueryOptions());
-  const isAdminOrManager =
-    currentUser?.role === "Admin" || currentUser?.role === "Manager";
+  const { pathname } = useLocation();
+  const pageTitle =
+    PAGE_TITLES[pathname] ??
+    (pathname.startsWith("/leave-request/")
+      ? "Leave Request"
+      : pathname.startsWith("/employee/")
+        ? "Employee"
+        : "Derbe");
+
+  if (!currentUser) return null;
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link to="/" className="text-lg font-semibold tracking-tight">
-            derbe
-          </Link>
-          <nav className="flex flex-wrap items-center gap-1">
-            <NavigationMenu
-              title="Days Off"
-              icon={<CalendarDays />}
-              items={[
-                { label: "My Leave", to: "/my-leave" },
-                ...(isAdminOrManager ? [{ label: "Team Leave", to: "/team-leave" }] : []),
-                { label: "All Leave", to: "/all-leave" },
-                { label: "Request Days Off", to: "/leave-request" },
-              ]}
-            />
-            <NavigationMenu
-              title="Employees"
-              icon={<Users />}
-              items={[
-                { label: "Organisation", to: "/organisation" },
-                ...(isAdminOrManager
-                  ? [{ label: "Create Employee", to: "/employee/new" }]
-                  : []),
-              ]}
-            />
-            <NavigationMenu
-              title="Configuration"
-              icon={<Settings2 />}
-              items={[
-                { label: "Leave Types", to: "/leave-types" },
-                { label: "Locations", to: "/locations" },
-                { label: "Divisions", to: "/divisions" },
-              ]}
-            />
-            <ThemeToggle />
-            {currentUser && <UserMenu user={currentUser} />}
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6">
-        <Outlet />
-      </main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar user={currentUser} />
+      <SidebarInset>
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb className="flex-1">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <ThemeToggle />
+        </header>
+        <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
@@ -248,7 +156,6 @@ function App() {
             <Route path="divisions/new" element={<NewDivisionPage />} />
           </Route>
         </Route>
-
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
