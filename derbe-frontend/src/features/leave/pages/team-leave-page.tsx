@@ -47,7 +47,9 @@ export function TeamLeavePage() {
                   <TableCell>{formatDate(leave.date_requested)}</TableCell>
                   <TableCell>
                     <Button size="sm" variant="secondary" asChild>
-                      <Link to={`/leave-request/${leave.leave_request_id}`}>Review</Link>
+                      <Link to={`/dashboard/leave-request/${leave.leave_request_id}`}>
+                        Review
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>

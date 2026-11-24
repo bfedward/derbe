@@ -123,7 +123,7 @@ export function LeaveRequestFormPage() {
     },
     onSuccess: async (request) => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.myLeaveAll() });
-      navigate(`/leave-request/${request.id}`);
+      navigate(`/dashboard/leave-request/${request.id}`);
     },
   });
   const loadError = employeesQuery.error ?? leaveTypesQuery.error;
@@ -284,7 +284,7 @@ export function LeaveRequestFormPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/my-leave")}
+                  onClick={() => navigate("/dashboard/my-leave")}
                 >
                   Cancel
                 </Button>

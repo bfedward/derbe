@@ -112,7 +112,7 @@ export function LeaveRequestProfilePage() {
       });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.myLeaveAll() });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.teamLeave() });
-      navigate("/my-leave");
+      navigate("/dashboard/my-leave");
     },
   });
   const statusMutation = useMutation({
@@ -129,7 +129,7 @@ export function LeaveRequestProfilePage() {
       });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.myLeaveAll() });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.teamLeave() });
-      navigate("/my-leave");
+      navigate("/dashboard/my-leave");
     },
   });
 
@@ -243,7 +243,7 @@ export function LeaveRequestProfilePage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/my-leave")}
+                  onClick={() => navigate("/dashboard/my-leave")}
                 >
                   Cancel
                 </Button>

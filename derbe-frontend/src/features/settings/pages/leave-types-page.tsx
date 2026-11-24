@@ -25,7 +25,7 @@ export function LeaveTypesPage() {
         title="Leave Types"
         action={
           <Button asChild>
-            <Link to="/leave-types/new">
+            <Link to="/dashboard/leave-types/new">
               <Plus />
               Create Leave Type
             </Link>

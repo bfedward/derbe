@@ -39,7 +39,7 @@ export function NewLocationPage() {
     mutationFn: (values: LocationFormValues) => createLocation(values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.locations() });
-      navigate("/locations");
+      navigate("/dashboard/locations");
     },
   });
 
@@ -71,7 +71,7 @@ export function NewLocationPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/locations")}
+                  onClick={() => navigate("/dashboard/locations")}
                 >
                   Cancel
                 </Button>

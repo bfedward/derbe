@@ -39,7 +39,7 @@ export function NewDivisionPage() {
     mutationFn: (values: DivisionFormValues) => createDivision(values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.divisions() });
-      navigate("/divisions");
+      navigate("/dashboard/divisions");
     },
   });
 
@@ -71,7 +71,7 @@ export function NewDivisionPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/divisions")}
+                  onClick={() => navigate("/dashboard/divisions")}
                 >
                   Cancel
                 </Button>

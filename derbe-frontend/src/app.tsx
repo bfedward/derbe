@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BrowserRouter,
   Link,
+  Navigate,
   Outlet,
   Route,
   Routes,
@@ -31,6 +32,7 @@ import { LoginPage } from "@/features/auth/pages/login-page";
 import { HomePage } from "@/features/dashboard/pages/home-page";
 import { EmployeeFormPage } from "@/features/employees/pages/employee-form-page";
 import { EmployeeProfilePage } from "@/features/employees/pages/employee-profile-page";
+import { PublicHomePage } from "@/features/home/pages/public-home-page";
 import { AllLeavePage } from "@/features/leave/pages/all-leave-page";
 import { LeaveRequestFormPage } from "@/features/leave/pages/leave-request-form-page";
 import { LeaveRequestProfilePage } from "@/features/leave/pages/leave-request-profile-page";
@@ -45,19 +47,20 @@ import { NewLeaveTypePage } from "@/features/settings/pages/new-leave-type-page"
 import { NewLocationPage } from "@/features/settings/pages/new-location-page";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/": "Home",
-  "/my-leave": "My Leave",
-  "/all-leave": "All Leave",
-  "/team-leave": "Team Leave",
-  "/leave-request": "Request Days Off",
-  "/organisation": "Organisation",
-  "/employee/new": "Create Employee",
-  "/leave-types": "Leave Types",
-  "/leave-types/new": "New Leave Type",
-  "/locations": "Locations",
-  "/locations/new": "New Location",
-  "/divisions": "Divisions",
-  "/divisions/new": "New Division",
+  "/dashboard": "Dashboard",
+  "/dashboard/": "Dashboard",
+  "/dashboard/my-leave": "My Leave",
+  "/dashboard/all-leave": "All Leave",
+  "/dashboard/team-leave": "Team Leave",
+  "/dashboard/leave-request": "Request Days Off",
+  "/dashboard/organisation": "Organisation",
+  "/dashboard/employee/new": "Create Employee",
+  "/dashboard/leave-types": "Leave Types",
+  "/dashboard/leave-types/new": "New Leave Type",
+  "/dashboard/locations": "Locations",
+  "/dashboard/locations/new": "New Location",
+  "/dashboard/divisions": "Divisions",
+  "/dashboard/divisions/new": "New Division",
 };
 
 function LoginLayout() {
@@ -82,13 +85,14 @@ function Layout() {
   const { pathname } = useLocation();
   const pageTitle =
     PAGE_TITLES[pathname] ??
-    (pathname.startsWith("/leave-request/")
+    (pathname.startsWith("/dashboard/leave-request/")
       ? "Leave Request"
-      : pathname.startsWith("/employee/")
+      : pathname.startsWith("/dashboard/employee/")
         ? "Employee"
         : "Derbe");
 
   if (!currentUser) return null;
+  if (pathname === "/dashboard") return <Navigate to="/dashboard/" replace />;
 
   return (
     <SidebarProvider>
@@ -130,6 +134,11 @@ function NotFoundPage() {
   );
 }
 
+function LegacyDashboardRedirect() {
+  const { pathname, search } = useLocation();
+  return <Navigate to={`/dashboard${pathname}${search}`} replace />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -137,8 +146,9 @@ function App() {
         <Route element={<LoginLayout />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
+        <Route path="/" element={<PublicHomePage />} />
         <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Layout />}>
             <Route index element={<HomePage />} />
             <Route path="my-leave" element={<MyLeavePage />} />
             <Route path="all-leave" element={<AllLeavePage />} />
@@ -156,6 +166,15 @@ function App() {
             <Route path="divisions/new" element={<NewDivisionPage />} />
           </Route>
         </Route>
+        <Route path="/my-leave" element={<LegacyDashboardRedirect />} />
+        <Route path="/all-leave" element={<LegacyDashboardRedirect />} />
+        <Route path="/team-leave" element={<LegacyDashboardRedirect />} />
+        <Route path="/leave-request/*" element={<LegacyDashboardRedirect />} />
+        <Route path="/organisation" element={<LegacyDashboardRedirect />} />
+        <Route path="/employee/*" element={<LegacyDashboardRedirect />} />
+        <Route path="/leave-types/*" element={<LegacyDashboardRedirect />} />
+        <Route path="/locations/*" element={<LegacyDashboardRedirect />} />
+        <Route path="/divisions/*" element={<LegacyDashboardRedirect />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

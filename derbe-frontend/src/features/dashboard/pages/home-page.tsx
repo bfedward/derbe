@@ -13,14 +13,14 @@ export function HomePage() {
   return (
     <>
       <PageHeading
-        title="derbe"
+        title="Dashboard"
         description="Manage leave, employees, and leave types."
       />
       <div className="grid gap-4 sm:grid-cols-3">
         {[
-          ["My Leave", "/my-leave", "View requests and request days off."],
-          ["All Leave", "/all-leave", "See the team leave calendar."],
-          ["Organisation", "/organisation", "Manage employee records."],
+          ["My Leave", "/dashboard/my-leave", "View requests and request days off."],
+          ["All Leave", "/dashboard/all-leave", "See the team leave calendar."],
+          ["Organisation", "/dashboard/organisation", "Manage employee records."],
         ].map(([title, href, description]) => (
           <Card key={href} className="transition-colors hover:border-primary/40">
             <CardHeader>

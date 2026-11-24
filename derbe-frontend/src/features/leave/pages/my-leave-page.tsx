@@ -26,7 +26,7 @@ export function MyLeavePage() {
         title="My Leave"
         action={
           <Button asChild>
-            <Link to="/leave-request">
+            <Link to="/dashboard/leave-request">
               <Plus />
               Request Days Off
             </Link>
@@ -65,7 +65,7 @@ export function MyLeavePage() {
                       aria-label="Edit leave request"
                       asChild
                     >
-                      <Link to={`/leave-request/${leave.leave_request_id}`}>
+                      <Link to={`/dashboard/leave-request/${leave.leave_request_id}`}>
                         <Pencil />
                       </Link>
                     </Button>

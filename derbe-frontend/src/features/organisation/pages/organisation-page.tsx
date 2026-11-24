@@ -43,7 +43,7 @@ export function OrganisationPage() {
         action={
           canCreateEmployees && (
             <Button asChild>
-              <Link to="/employee/new">
+              <Link to="/dashboard/employee/new">
                 <Plus />
                 Create Employee
               </Link>
@@ -85,7 +85,7 @@ export function OrganisationPage() {
                       {canViewEmployees ? (
                         <Link
                           className="text-primary hover:underline"
-                          to={`/employee/${employee.employee_unid}`}
+                          to={`/dashboard/employee/${employee.employee_unid}`}
                         >
                           {employee.first_name} {employee.last_name}
                         </Link>
