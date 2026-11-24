@@ -23,6 +23,7 @@ debug/
 **/.DS_Store
 
 # Local test and scratch output
+.playwright-mcp/
 test-results/
 playwright-report/
 playwright/.cache/
