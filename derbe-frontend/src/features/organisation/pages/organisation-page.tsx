@@ -24,8 +24,9 @@ import { EMPTY_VALUE } from "@/features/settings/constants";
 
 export function OrganisationPage() {
   const { data: currentUser } = useQuery(currentUserQueryOptions());
-    const isAdminOrManager = currentUser?.role === "Admin" || currentUser?.role === "Manager";
-  const canViewEmployees = isAdminOrManager;   // EmployeePermission::View
+  const isAdminOrManager =
+    currentUser?.role === "Admin" || currentUser?.role === "Manager";
+  const canViewEmployees = isAdminOrManager; // EmployeePermission::View
   const canCreateEmployees = isAdminOrManager; // EmployeePermission::Create
 
   const employeesQuery = useQuery(employeesQueryOptions());
