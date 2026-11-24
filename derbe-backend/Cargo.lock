@@ -605,33 +605,161 @@ dependencies = [
 ]
 
 [[package]]
-name = "derbe-backend"
+name = "derbe-auth"
 version = "0.2.0"
 dependencies = [
  "axum",
  "axum-extra",
  "chrono",
+ "derbe-core",
+ "derbe-employees",
+ "jsonwebtoken",
+ "pwhash",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "time",
+ "tracing",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
+name = "derbe-backend"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "derbe-auth",
+ "derbe-core",
+ "derbe-divisions",
+ "derbe-email",
+ "derbe-employees",
+ "derbe-leave_requests",
+ "derbe-leave_types",
+ "derbe-locations",
+ "pwhash",
+ "reqwest",
+ "secrecy",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tower-http",
+ "tracing-subscriber",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
+name = "derbe-core"
+version = "0.2.0"
+dependencies = [
+ "axum",
  "dotenvy",
  "envy",
- "jsonwebtoken",
- "num-traits",
- "pwhash",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "strum",
+ "thiserror",
+ "tracing",
+ "ts-rs",
+ "uuid",
+ "validator",
+]
+
+[[package]]
+name = "derbe-divisions"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "derbe-core",
+ "serde",
+ "sqlx",
+ "ts-rs",
+ "validator",
+]
+
+[[package]]
+name = "derbe-email"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "derbe-core",
  "reqwest",
  "secrecy",
  "serde",
  "serde_json",
+ "sqlx",
+ "strum",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "derbe-employees"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "derbe-core",
+ "derbe-divisions",
+ "derbe-locations",
+ "pwhash",
+ "serde",
  "serde_with",
  "sqlx",
  "strum",
- "strum_macros",
- "thiserror",
- "time",
- "tokio",
- "tower-http",
  "tracing",
- "tracing-subscriber",
  "ts-rs",
  "uuid",
+ "validator",
+]
+
+[[package]]
+name = "derbe-leave_requests"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "derbe-core",
+ "derbe-email",
+ "derbe-employees",
+ "derbe-leave_types",
+ "serde",
+ "serde_with",
+ "sqlx",
+ "strum",
+ "tracing",
+ "ts-rs",
+ "uuid",
+ "validator",
+]
+
+[[package]]
+name = "derbe-leave_types"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "derbe-core",
+ "serde",
+ "sqlx",
+ "ts-rs",
+ "validator",
+]
+
+[[package]]
+name = "derbe-locations"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "derbe-core",
+ "serde",
+ "sqlx",
+ "ts-rs",
  "validator",
 ]
 

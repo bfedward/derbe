@@ -1,0 +1,21 @@
+[package]
+name = "derbe-employees"
+version = "0.2.0"
+edition = "2024"
+
+[dependencies]
+axum.workspace = true
+pwhash.workspace = true
+tracing.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_with.workspace = true
+sqlx.workspace = true
+strum.workspace = true
+ts-rs.workspace = true
+uuid.workspace = true
+validator.workspace = true
+
+derbe-core.workspace = true
+derbe-divisions.workspace = true
+derbe-locations.workspace = true

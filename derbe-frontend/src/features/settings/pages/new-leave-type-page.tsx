@@ -65,7 +65,7 @@ export function NewLeaveTypePage() {
     mutationFn: (values: LeaveTypeFormValues) => createLeaveType(values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.leaveTypes() });
-      navigate("/leave-types");
+      navigate("/dashboard/leave-types");
     },
   });
 
@@ -182,7 +182,7 @@ export function NewLeaveTypePage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/leave-types")}
+                  onClick={() => navigate("/dashboard/leave-types")}
                 >
                   Cancel
                 </Button>

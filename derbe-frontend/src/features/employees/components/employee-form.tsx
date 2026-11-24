@@ -118,7 +118,7 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.employees() });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.employeeDetails() });
-      navigate("/organisation");
+      navigate("/dashboard/organisation");
     },
   });
 
@@ -370,7 +370,7 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/organisation")}
+                  onClick={() => navigate("/dashboard/organisation")}
                 >
                   Cancel
                 </Button>

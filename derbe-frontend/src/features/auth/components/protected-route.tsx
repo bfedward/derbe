@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { ApiError, currentUserQueryOptions } from "@/api";
 
 export function ProtectedRoute() {
+  const location = useLocation();
   const { isPending, isError, error, refetch } = useQuery(currentUserQueryOptions());
 
   // The session check is still in progress.
@@ -13,7 +14,7 @@ export function ProtectedRoute() {
 
   // No valid session: send the user to the login page.
   if (isError && error instanceof ApiError && error.status === 401) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Something other than an authentication failure went wrong.

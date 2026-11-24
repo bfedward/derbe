@@ -1,35 +1,24 @@
 use std::sync::Arc;
 
 use axum::{
-    http::{header, HeaderValue, Method},
+    Router,
+    http::{HeaderValue, Method, header},
     middleware,
     routing::{get, post},
-    Router,
 };
-use secrecy::{ExposeSecret, SecretBox};
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use secrecy::ExposeSecret;
+use sqlx::postgres::PgPoolOptions;
 use thiserror::Error;
 use tokio::net::TcpListener;
 use tower_http::cors::{AllowCredentials, CorsLayer};
 
-use crate::{
-    configuration::{AppEnvironment, Settings},
-    features::{
-        auth::{
-            handlers::{login, logout, me},
-            middleware::require_auth,
-        },
-        email,
-    },
-    routes,
+use crate::routes;
+use derbe_auth::{
+    handlers::{login, logout, me},
+    middleware::require_auth,
 };
-
-#[derive(Clone)]
-pub struct AppState {
-    pub pool: PgPool,
-    pub jwt_secret: Arc<SecretBox<String>>,
-    pub app_env: AppEnvironment,
-}
+use derbe_core::{configuration::Settings, state::AppState};
+use derbe_email::worker;
 
 #[derive(Debug, Error)]
 pub enum ServeError {
@@ -55,7 +44,7 @@ pub async fn serve(configuration: Settings) -> Result<(), ServeError> {
     // Embedded at compile time, so the container needs no sqlx-cli to start on an empty database.
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    email::worker::spawn(
+    worker::spawn(
         pool.clone(),
         configuration.resend_api_key,
         configuration.email_from,

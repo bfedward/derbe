@@ -1,6 +1,7 @@
+use derbe_core::configuration::get_configuration;
 use std::error::Error;
 
-use derbe_backend::{configuration::get_configuration, http};
+use derbe_backend::http;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {

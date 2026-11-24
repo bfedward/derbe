@@ -23,7 +23,7 @@ export function DivisionsPage() {
         title="Division"
         action={
           <Button asChild>
-            <Link to="/divisions/new">
+            <Link to="/dashboard/divisions/new">
               <Plus />
               Create Division
             </Link>

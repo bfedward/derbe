@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { login } from "@/api";
@@ -29,6 +29,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const form = useForm<LoginFormValues>({
@@ -43,7 +44,8 @@ export function LoginPage() {
     mutationFn: (values: LoginFormValues) => login(values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.currentUser() });
-      navigate("/", { replace: true });
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from;
+      navigate(from?.pathname ?? "/dashboard/", { replace: true });
     },
   });
 

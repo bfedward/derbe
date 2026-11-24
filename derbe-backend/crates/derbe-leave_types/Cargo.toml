@@ -1,0 +1,13 @@
+[package]
+name = "derbe-leave_types"
+version = "0.2.0"
+edition = "2024"
+
+[dependencies]
+axum.workspace = true
+serde.workspace = true
+sqlx.workspace = true
+ts-rs.workspace = true
+validator.workspace = true
+
+derbe-core.workspace = true

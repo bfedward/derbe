@@ -3,18 +3,15 @@
 
 use std::{net::SocketAddr, str::FromStr, sync::Arc};
 
-use derbe_backend::{
-    configuration::get_configuration,
-    features::employees::model::EmployeeRole,
-    http::{app_router, AppState},
-};
+use derbe_backend::http::app_router;
+use derbe_core::{configuration::get_configuration, model::EmployeeRole, state::AppState};
 use reqwest::{
-    header::{HeaderMap, HeaderValue, COOKIE, SET_COOKIE},
     Client, Response, StatusCode,
+    header::{COOKIE, HeaderMap, HeaderValue, SET_COOKIE},
 };
 use secrecy::{ExposeSecret, SecretBox};
-use serde_json::{json, Value};
-use sqlx::{postgres::PgConnectOptions, Connection, Executor, PgConnection, PgPool};
+use serde_json::{Value, json};
+use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgConnectOptions};
 use tokio::{
     net::TcpListener,
     sync::oneshot::{self, Sender},

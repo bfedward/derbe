@@ -1,12 +1,12 @@
 //! One integration test per permission rule, through the real router,
 //! with a real session cookie per role.
 
-use derbe_backend::features::employees::model::EmployeeRole::{Admin, Demo, Manager, RegularUser};
+use derbe_core::model::EmployeeRole::{Admin, Demo, Manager, RegularUser};
 use reqwest::{Client, StatusCode};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use test_helpers::{
-    cleanup_test_app, create_division, create_leave_type, get_response_body_as_json,
-    leave_type_body, login_as, login_client, seed_employee, spawn_app, TestApp,
+    TestApp, cleanup_test_app, create_division, create_leave_type, get_response_body_as_json,
+    leave_type_body, login_as, login_client, seed_employee, spawn_app,
 };
 use uuid::Uuid;
 

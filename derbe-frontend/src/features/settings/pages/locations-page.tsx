@@ -23,7 +23,7 @@ export function LocationsPage() {
         title="Location"
         action={
           <Button asChild>
-            <Link to="/locations/new">
+            <Link to="/dashboard/locations/new">
               <Plus />
               Create Location
             </Link>

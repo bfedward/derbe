@@ -1,9 +1,9 @@
-use derbe_backend::features::employees::model::EmployeeRole::{Admin, Manager, RegularUser};
+use derbe_core::model::EmployeeRole::{Admin, Manager, RegularUser};
 use reqwest::{Client, Response, StatusCode};
 use serde_json::Value;
 use test_helpers::{
-    cleanup_test_app, create_division, create_employee, create_location, do_post, employee_body,
-    get_response_body_as_json, login_client, seed_employee, TestApp,
+    TestApp, cleanup_test_app, create_division, create_employee, create_location, do_post,
+    employee_body, get_response_body_as_json, login_client, seed_employee,
 };
 use uuid::Uuid;
 
@@ -56,11 +56,8 @@ async fn create_as(
 #[tokio::test]
 async fn get_employees() {
     let app = test_helpers::spawn_app().await;
-    let (_admin, client) = test_helpers::login_as(
-        &app,
-        derbe_backend::features::employees::model::EmployeeRole::Admin,
-    )
-    .await;
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_core::model::EmployeeRole::Admin).await;
 
     println!("{}", &app.address);
 
@@ -78,11 +75,8 @@ async fn get_employees() {
 #[tokio::test]
 async fn get_employee() {
     let app = test_helpers::spawn_app().await;
-    let (_admin, client) = test_helpers::login_as(
-        &app,
-        derbe_backend::features::employees::model::EmployeeRole::Admin,
-    )
-    .await;
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_core::model::EmployeeRole::Admin).await;
 
     let first_name = "Dorothy";
 
@@ -122,11 +116,8 @@ async fn get_employee() {
 #[tokio::test]
 async fn cannot_get_non_existant_employee() {
     let app = test_helpers::spawn_app().await;
-    let (_admin, client) = test_helpers::login_as(
-        &app,
-        derbe_backend::features::employees::model::EmployeeRole::Admin,
-    )
-    .await;
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_core::model::EmployeeRole::Admin).await;
 
     let get_response = client
         .get(format!("{}/employees/{}", app.address, uuid::Uuid::nil()))
@@ -143,11 +134,8 @@ async fn cannot_get_non_existant_employee() {
 #[tokio::test]
 async fn create_employee_success() {
     let app = test_helpers::spawn_app().await;
-    let (_admin, client) = test_helpers::login_as(
-        &app,
-        derbe_backend::features::employees::model::EmployeeRole::Admin,
-    )
-    .await;
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_core::model::EmployeeRole::Admin).await;
     let first_name = "Dorothy";
 
     let response = create_employee(first_name, &client, &app).await;
@@ -167,11 +155,8 @@ async fn create_employee_success() {
 #[tokio::test]
 async fn cannot_create_employee_with_blank_first_name() {
     let app = test_helpers::spawn_app().await;
-    let (_admin, client) = test_helpers::login_as(
-        &app,
-        derbe_backend::features::employees::model::EmployeeRole::Admin,
-    )
-    .await;
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_core::model::EmployeeRole::Admin).await;
 
     let division = create_division("Division", &client, &app).await;
     let location = create_location("Location", &client, &app).await;
@@ -223,11 +208,8 @@ async fn an_employees_manager_must_be_an_admin_or_a_manager() {
 #[tokio::test]
 async fn employee_email_is_stored_lowercase() {
     let app = test_helpers::spawn_app().await;
-    let (_admin, client) = test_helpers::login_as(
-        &app,
-        derbe_backend::features::employees::model::EmployeeRole::Admin,
-    )
-    .await;
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_core::model::EmployeeRole::Admin).await;
 
     let division = create_division("Division", &client, &app).await;
     let location = create_location("Location", &client, &app).await;
@@ -253,11 +235,8 @@ async fn employee_email_is_stored_lowercase() {
 #[tokio::test]
 async fn cannot_create_employee_with_invalid_email() {
     let app = test_helpers::spawn_app().await;
-    let (_admin, client) = test_helpers::login_as(
-        &app,
-        derbe_backend::features::employees::model::EmployeeRole::Admin,
-    )
-    .await;
+    let (_admin, client) =
+        test_helpers::login_as(&app, derbe_core::model::EmployeeRole::Admin).await;
 
     let division = create_division("Division", &client, &app).await;
     let location = create_location("Location", &client, &app).await;
