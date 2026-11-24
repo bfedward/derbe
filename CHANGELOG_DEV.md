@@ -4,6 +4,8 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Seeded separate local demo accounts: `admin@example.com` has the Admin role, and `employee@example.com` has the RegularUser role. Both use password `password`.
+
 - The leave request page shows the employee's name and the leave type's name instead of their ids. GET /leaveRequests/{id} now returns LeaveRequestDetailsResponse, which flattens LeaveRequestResponse and adds employee_name and leave_type. Names are joined after the permission check, and soft-deleted employees still show their name. Accepting or rejecting now also refreshes Team Leave.
 
 - Queries no longer retry 4xx responses, so a 403 or 404 shows its error straight away instead of a loading skeleton for several seconds. API errors show the backend's message instead of raw JSON, and 403 reads 'You don't have permission to view this.' On the Organisation page, employee names are only links for admins and managers, and the Role column uses the same labels as the rest of the app.

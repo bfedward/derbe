@@ -220,13 +220,14 @@ Open the application in your browser:
 
 **http://localhost:4200**
 
-After migrations run, sign in with the seeded local demo account:
+After migrations run, sign in with either seeded local demo account:
 
-| Email | Password |
-|---|---|
-| employee@example.com | password |
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@example.com | password |
+| Regular user | employee@example.com | password |
 
-This account has the Admin role for local development.
+These accounts are for local development only.
 
 The backend API listens on:
 
