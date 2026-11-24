@@ -4,7 +4,7 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
-- Added List and Organisation Chart views to Organisation. The chart groups Admin, Manager, and employee roles into levels, links employees to their manager where available, and uses a dedicated hook for hierarchy wiring. The temporary seed now includes three managers and ten assigned employees so the chart has a realistic demo tree.
+- Added List and Organisation Chart views to Organisation. The chart groups Admin, Manager, and employee roles into levels, links employees to their manager where available, and uses a dedicated hook for hierarchy wiring. Migration `10001_____demo_org_chart_data.sql` seeds three managers and ten assigned employees without changing the applied seed migration checksum.
 
 - Added a public Derbe homepage at `/`, moved the authenticated application under `/dashboard/`, updated internal navigation, and kept legacy dashboard URLs redirecting to their `/dashboard/...` equivalents. Login now returns users to the protected URL they originally requested.
 
