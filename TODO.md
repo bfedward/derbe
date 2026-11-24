@@ -13,6 +13,8 @@
 - Don't show the "More Info Required", "Reject" and "Accept" butt
 - a manager can move a report to another team.
 - a regular user can't open their own details, but they can save changes to them through the API, including their own manager_unid, division_id and email.
+- Remove the "Create Employee" button on the Organisation screen for regular employees.
 
 
 - Employee could be promoted to manager?
+- Fix the script that sets up the Hetzner server.

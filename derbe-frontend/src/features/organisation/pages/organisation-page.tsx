@@ -24,8 +24,10 @@ import { EMPTY_VALUE } from "@/features/settings/constants";
 
 export function OrganisationPage() {
   const { data: currentUser } = useQuery(currentUserQueryOptions());
-  const canViewEmployees =
+  const isAdminOrManager =
     currentUser?.role === "Admin" || currentUser?.role === "Manager";
+  const canViewEmployees = isAdminOrManager; // EmployeePermission::View
+  const canCreateEmployees = isAdminOrManager; // EmployeePermission::Create
 
   const employeesQuery = useQuery(employeesQueryOptions());
   const divisionsQuery = useQuery(divisionsQueryOptions());
@@ -39,12 +41,14 @@ export function OrganisationPage() {
       <PageHeading
         title="Organisation"
         action={
-          <Button asChild>
-            <Link to="/employee/new">
-              <Plus />
-              Create Employee
-            </Link>
-          </Button>
+          canCreateEmployees && (
+            <Button asChild>
+              <Link to="/employee/new">
+                <Plus />
+                Create Employee
+              </Link>
+            </Button>
+          )
         }
       />
       {pending || error ? (
