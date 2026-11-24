@@ -1,0 +1,60 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH due AS (\n                    SELECT id\n                    FROM email_outbox\n                    WHERE sent_at IS NULL\n                      AND attempt_count < $1\n                      AND next_attempt_at <= now()\n                      AND (locked_until IS NULL OR locked_until < now())\n                    ORDER BY next_attempt_at, id\n                    FOR UPDATE SKIP LOCKED\n                    LIMIT $2\n                )\n                UPDATE email_outbox AS email\n                SET locked_until = now() + interval '5 minutes'\n                FROM due\n                WHERE email.id = due.id\n                RETURNING email.id, email.event_key, email.recipient,\n                          email.template, email.payload, email.attempt_count,\n                          email.created_at <= now() - make_interval(mins => $3)\n                              AS \"past_retry_cutoff!\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "event_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "recipient",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "template",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "payload",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "attempt_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "past_retry_cutoff!",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "ce3f27beec20d57e104e8447e269acef47cb9a39e612218293bc4fe09d645bc6"
+}

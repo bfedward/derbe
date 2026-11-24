@@ -29,6 +29,7 @@ Internal development history for Derbe. Not user-facing.
 - An employee's manager must now be an admin or a manager. The Manager dropdown only lists admins and managers (plus the employee's current manager, when editing older data), and POST/PUT /employees return 400 for any other manager.
 
 - Employee emails are now unique among active employees (employees_email_active_key, a partial unique index on email WHERE deleted_at IS NULL). Previously two employees could share an address, and login picked one of them arbitrarily. Creating or updating an employee with an email that's already in use returns 409 'An employee with this email address already exists'. A soft-deleted employee's address can be reused. create_employee in the test helpers now derives the email from the first name.
+- Bounded email retries to Resend's 24-hour idempotency window: the last retry delay is now 600 minutes instead of 1,440 (final attempt at about 12.6 hours instead of 26.6), and the worker gives up instead of sending any row queued more than 23 hours ago, so worker downtime can't push a retry past the window and send a duplicate. Unit tests tie the schedule to the cutoff.
 
 - Added a Team Leave screen (`/team-leave`, under Days Off) listing the pending leave requests the logged-in user can decide on: an admin sees everyone's, a manager sees their direct reports'. `MoreInfoReq` requests are not listed, because they are waiting on the employee and already show on their My Leave screen. Each row has the employee's name, leave type, dates, duration, date requested and a Review link to the request page. The menu item is only shown to admins and managers.
   - New `GET /teamLeave` endpoint instead of extending `/myLeave`. The backend decides whose team it is from the session (`None` for an admin, `Some(user.unid)` for a manager), so the client can never ask for another manager's team. It also needs a different response shape (`TeamLeaveResponse`, with `employee_name`). The SQL excludes soft-deleted employees and orders by `date_from`. A manager's own pending request doesn't appear, because they can't approve it.
@@ -74,6 +75,7 @@ useQuery(currentUserQueryOptions());
 
 - Fixed the employee form's Manager dropdown: it converted the selected UUID with `Number(value)`, which stored `NaN`, left the dropdown blank and failed validation with "Invalid input".
 
+- Added `SUGGESTIONS_W4.md`: review of email retry safety, Resend conflict handling, and production link configuration.
 - Documented that migration `9999_____seed_data.sql` is temporary fake demo data, acceptable pre-launch and to remove before onboarding real users.
 
 - Fixed the Quality workflow's tests failing with MissingValue("database_url"): CI has no .env, so the Tests step now sets DATABASE_URL, JWT_SECRET, APP_ENV and CORS_ORIGINS for the Postgres service.
@@ -617,6 +619,9 @@ After:
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 ```
+||||||| parent of 6e1667e (docs: add SUGGESTIONS_W3 week 3 review)
+=======
+- Added `SUGGESTIONS_W3.md`: week 3 review of `feature/auth` (access controller, leave status transitions, migrations, tests, auth structure).
 
 ## [0.2.0] - 2026-11-07
 
