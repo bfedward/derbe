@@ -42,6 +42,7 @@ import {
   ROLE_LABELS,
 } from "@/features/employees/constants";
 import { derbeKeys } from "@/query-keys";
+import { ROUTES } from "@/routes";
 
 const employeeFormSchema = z.object({
   first_name: z.string().trim().min(1, "First name is required."),
@@ -118,7 +119,7 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.employees() });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.employeeDetails() });
-      navigate("/dashboard/organisation");
+      navigate(ROUTES.organisation);
     },
   });
 
@@ -370,7 +371,7 @@ export function EmployeeForm({ employee_unid }: { employee_unid?: string }) {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/dashboard/organisation")}
+                  onClick={() => navigate(ROUTES.organisation)}
                 >
                   Cancel
                 </Button>

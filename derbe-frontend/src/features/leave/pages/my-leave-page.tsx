@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { LeaveStatusBadge } from "@/features/leave/components/leave-status-badge";
 import { formatDate } from "@/lib/dates";
+import { ROUTES } from "@/routes";
 
 export function MyLeavePage() {
   const year = new Date().getFullYear();
@@ -26,7 +27,7 @@ export function MyLeavePage() {
         title="My Leave"
         action={
           <Button asChild>
-            <Link to="/dashboard/leave-request">
+            <Link to={ROUTES.newLeaveRequest}>
               <Plus />
               Request Days Off
             </Link>
@@ -65,7 +66,7 @@ export function MyLeavePage() {
                       aria-label="Edit leave request"
                       asChild
                     >
-                      <Link to={`/dashboard/leave-request/${leave.leave_request_id}`}>
+                      <Link to={ROUTES.leaveRequest(leave.leave_request_id)}>
                         <Pencil />
                       </Link>
                     </Button>

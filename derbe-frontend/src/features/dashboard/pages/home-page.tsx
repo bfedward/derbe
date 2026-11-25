@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ROUTES } from "@/routes";
 
 export function HomePage() {
   return (
@@ -18,9 +19,9 @@ export function HomePage() {
       />
       <div className="grid gap-4 sm:grid-cols-3">
         {[
-          ["My Leave", "/dashboard/my-leave", "View requests and request days off."],
-          ["All Leave", "/dashboard/all-leave", "See the team leave calendar."],
-          ["Organisation", "/dashboard/organisation", "Manage employee records."],
+          ["My Leave", ROUTES.myLeave, "View requests and request days off."],
+          ["All Leave", ROUTES.allLeave, "See the team leave calendar."],
+          ["Organisation", ROUTES.organisation, "Manage employee records."],
         ].map(([title, href, description]) => (
           <Card key={href} className="transition-colors hover:border-primary/40">
             <CardHeader>

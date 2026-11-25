@@ -42,6 +42,7 @@ import {
 } from "@/features/leave/leave-requests";
 import { formatDate } from "@/lib/dates";
 import { derbeKeys } from "@/query-keys";
+import { ROUTES } from "@/routes";
 
 const leaveRequestEditSchema = z
   .object({
@@ -112,7 +113,7 @@ export function LeaveRequestProfilePage() {
       });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.myLeaveAll() });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.teamLeave() });
-      navigate("/dashboard/my-leave");
+      navigate(ROUTES.myLeave);
     },
   });
   const statusMutation = useMutation({
@@ -129,7 +130,7 @@ export function LeaveRequestProfilePage() {
       });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.myLeaveAll() });
       await queryClient.invalidateQueries({ queryKey: derbeKeys.teamLeave() });
-      navigate("/dashboard/my-leave");
+      navigate(ROUTES.myLeave);
     },
   });
 
@@ -243,7 +244,7 @@ export function LeaveRequestProfilePage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/dashboard/my-leave")}
+                  onClick={() => navigate(ROUTES.myLeave)}
                 >
                   Cancel
                 </Button>

@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EMPTY_VALUE, LEAVE_TYPE_FLAGS } from "@/features/settings/constants";
+import { ROUTES } from "@/routes";
 
 export function LeaveTypesPage() {
   const query = useQuery(leaveTypesQueryOptions());
@@ -25,7 +26,7 @@ export function LeaveTypesPage() {
         title="Leave Types"
         action={
           <Button asChild>
-            <Link to="/dashboard/leave-types/new">
+            <Link to={ROUTES.newLeaveType}>
               <Plus />
               Create Leave Type
             </Link>

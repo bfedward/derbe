@@ -33,6 +33,7 @@ import {
   OTHERS_DAYS_VISIBILITY_OPTIONS,
 } from "@/features/settings/constants";
 import { derbeKeys } from "@/query-keys";
+import { ROUTES } from "@/routes";
 
 const leaveTypeFormSchema = z.object({
   name: z.string().trim().min(1, "Leave type name is required."),
@@ -65,7 +66,7 @@ export function NewLeaveTypePage() {
     mutationFn: (values: LeaveTypeFormValues) => createLeaveType(values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.leaveTypes() });
-      navigate("/dashboard/leave-types");
+      navigate(ROUTES.leaveTypes);
     },
   });
 
@@ -182,7 +183,7 @@ export function NewLeaveTypePage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/dashboard/leave-types")}
+                  onClick={() => navigate(ROUTES.leaveTypes)}
                 >
                   Cancel
                 </Button>

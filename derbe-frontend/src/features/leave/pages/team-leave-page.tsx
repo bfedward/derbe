@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDate } from "@/lib/dates";
+import { ROUTES } from "@/routes";
 
 export function TeamLeavePage() {
   const query = useQuery(teamLeaveQueryOptions());
@@ -47,9 +48,7 @@ export function TeamLeavePage() {
                   <TableCell>{formatDate(leave.date_requested)}</TableCell>
                   <TableCell>
                     <Button size="sm" variant="secondary" asChild>
-                      <Link to={`/dashboard/leave-request/${leave.leave_request_id}`}>
-                        Review
-                      </Link>
+                      <Link to={ROUTES.leaveRequest(leave.leave_request_id)}>Review</Link>
                     </Button>
                   </TableCell>
                 </TableRow>

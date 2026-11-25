@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ROUTES } from "@/routes";
 
 export function LocationsPage() {
   const query = useQuery(locationsQueryOptions());
@@ -23,7 +24,7 @@ export function LocationsPage() {
         title="Location"
         action={
           <Button asChild>
-            <Link to="/dashboard/locations/new">
+            <Link to={ROUTES.newLocation}>
               <Plus />
               Create Location
             </Link>

@@ -10,7 +10,10 @@ use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 use thiserror::Error;
 use tokio::net::TcpListener;
-use tower_http::cors::{AllowCredentials, CorsLayer};
+use tower_http::{
+    compression::CompressionLayer,
+    cors::{AllowCredentials, CorsLayer},
+};
 
 use crate::routes;
 use derbe_auth::{
@@ -80,6 +83,7 @@ pub fn app_router(state: AppState, cors_origins: &[String]) -> Router {
         .merge(protected)
         .merge(public)
         .layer(get_cors_layer(cors_origins))
+        .layer(CompressionLayer::new())
         .with_state(state)
 }
 

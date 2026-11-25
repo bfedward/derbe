@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { derbeKeys } from "@/query-keys";
+import { ROUTES } from "@/routes";
 
 const loginFormSchema = z.object({
   email: z.string().trim().min(1, "Email required."),
@@ -45,7 +46,7 @@ export function LoginPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.currentUser() });
       const from = (location.state as { from?: { pathname?: string } } | null)?.from;
-      navigate(from?.pathname ?? "/dashboard/", { replace: true });
+      navigate(from?.pathname ?? ROUTES.home, { replace: true });
     },
   });
 

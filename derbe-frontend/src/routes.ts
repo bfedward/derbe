@@ -1,0 +1,20 @@
+/** Browser URLs. For the backend's URLs, see API_PATHS in api.ts. */
+export const ROUTES = {
+  publicHome: "/",
+  login: "/login",
+  home: "/home",
+  myLeave: "/my-leave",
+  allLeave: "/all-leave",
+  teamLeave: "/team-leave",
+  newLeaveRequest: "/leave-request",
+  leaveRequest: (id: number | string) => `/leave-request/${id}`,
+  organisation: "/organisation",
+  newEmployee: "/employee/new",
+  employee: (unid: string) => `/employee/${unid}`,
+  leaveTypes: "/leave-types",
+  newLeaveType: "/leave-types/new",
+  locations: "/locations",
+  newLocation: "/locations/new",
+  divisions: "/divisions",
+  newDivision: "/divisions/new",
+} as const;

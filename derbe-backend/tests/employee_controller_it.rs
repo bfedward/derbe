@@ -54,6 +54,34 @@ async fn create_as(
 }
 
 #[tokio::test]
+async fn api_responses_are_brotli_compressed_when_the_client_accepts_it() {
+    let app = test_helpers::spawn_app().await;
+    let (_admin, client) = test_helpers::login_as(&app, Admin).await;
+    let url = format!("{}/employees", app.address);
+
+    let brotli = client
+        .get(&url)
+        .header("Accept-Encoding", "br")
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(brotli.status(), StatusCode::OK);
+    assert_eq!(brotli.headers()["content-encoding"], "br");
+
+    // Only Brotli is enabled, so a gzip-only client gets an uncompressed response.
+    let gzip_only = client
+        .get(&url)
+        .header("Accept-Encoding", "gzip")
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(gzip_only.status(), StatusCode::OK);
+    assert!(gzip_only.headers().get("content-encoding").is_none());
+
+    cleanup_test_app(app).await;
+}
+
+#[tokio::test]
 async fn get_employees() {
     let app = test_helpers::spawn_app().await;
     let (_admin, client) =

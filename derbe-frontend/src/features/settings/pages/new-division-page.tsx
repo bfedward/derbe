@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { derbeKeys } from "@/query-keys";
+import { ROUTES } from "@/routes";
 
 const divisionFormSchema = z.object({
   name: z.string().trim().min(1, "Division name is required."),
@@ -39,7 +40,7 @@ export function NewDivisionPage() {
     mutationFn: (values: DivisionFormValues) => createDivision(values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.divisions() });
-      navigate("/dashboard/divisions");
+      navigate(ROUTES.divisions);
     },
   });
 
@@ -71,7 +72,7 @@ export function NewDivisionPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/dashboard/divisions")}
+                  onClick={() => navigate(ROUTES.divisions)}
                 >
                   Cancel
                 </Button>

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BrowserRouter,
   Link,
-  Navigate,
   Outlet,
   Route,
   Routes,
@@ -45,22 +44,22 @@ import { LocationsPage } from "@/features/settings/pages/locations-page";
 import { NewDivisionPage } from "@/features/settings/pages/new-division-page";
 import { NewLeaveTypePage } from "@/features/settings/pages/new-leave-type-page";
 import { NewLocationPage } from "@/features/settings/pages/new-location-page";
+import { ROUTES } from "./routes";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/dashboard/": "Dashboard",
-  "/dashboard/my-leave": "My Leave",
-  "/dashboard/all-leave": "All Leave",
-  "/dashboard/team-leave": "Team Leave",
-  "/dashboard/leave-request": "Request Days Off",
-  "/dashboard/organisation": "Organisation",
-  "/dashboard/employee/new": "Create Employee",
-  "/dashboard/leave-types": "Leave Types",
-  "/dashboard/leave-types/new": "New Leave Type",
-  "/dashboard/locations": "Locations",
-  "/dashboard/locations/new": "New Location",
-  "/dashboard/divisions": "Divisions",
-  "/dashboard/divisions/new": "New Division",
+  [ROUTES.home]: "Home",
+  [ROUTES.myLeave]: "My Leave",
+  [ROUTES.allLeave]: "All Leave",
+  [ROUTES.teamLeave]: "Team Leave",
+  [ROUTES.newLeaveRequest]: "Request Days Off",
+  [ROUTES.organisation]: "Organisation",
+  [ROUTES.newEmployee]: "Create Employee",
+  [ROUTES.leaveTypes]: "Leave Types",
+  [ROUTES.newLeaveType]: "New Leave Type",
+  [ROUTES.locations]: "Locations",
+  [ROUTES.newLocation]: "New Location",
+  [ROUTES.divisions]: "Divisions",
+  [ROUTES.newDivision]: "New Division",
 };
 
 function LoginLayout() {
@@ -85,14 +84,13 @@ function Layout() {
   const { pathname } = useLocation();
   const pageTitle =
     PAGE_TITLES[pathname] ??
-    (pathname.startsWith("/dashboard/leave-request/")
+    (pathname.startsWith("/leave-request/")
       ? "Leave Request"
-      : pathname.startsWith("/dashboard/employee/")
+      : pathname.startsWith("/employee/")
         ? "Employee"
         : "Derbe");
 
   if (!currentUser) return null;
-  if (pathname === "/dashboard") return <Navigate to="/dashboard/" replace />;
 
   return (
     <SidebarProvider>
@@ -134,11 +132,6 @@ function NotFoundPage() {
   );
 }
 
-function LegacyDashboardRedirect() {
-  const { pathname, search } = useLocation();
-  return <Navigate to={`/dashboard${pathname}${search}`} replace />;
-}
-
 function App() {
   return (
     <BrowserRouter>
@@ -146,35 +139,26 @@ function App() {
         <Route element={<LoginLayout />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
-        <Route path="/" element={<PublicHomePage />} />
+        <Route path={ROUTES.publicHome} element={<PublicHomePage />} />
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="my-leave" element={<MyLeavePage />} />
-            <Route path="all-leave" element={<AllLeavePage />} />
-            <Route path="team-leave" element={<TeamLeavePage />} />
-            <Route path="leave-request" element={<LeaveRequestFormPage />} />
-            <Route path="leave-request/:id" element={<LeaveRequestProfilePage />} />
-            <Route path="organisation" element={<OrganisationPage />} />
-            <Route path="employee/new" element={<EmployeeFormPage />} />
-            <Route path="employee/:employee_unid" element={<EmployeeProfilePage />} />
-            <Route path="leave-types" element={<LeaveTypesPage />} />
-            <Route path="leave-types/new" element={<NewLeaveTypePage />} />
-            <Route path="locations" element={<LocationsPage />} />
-            <Route path="locations/new" element={<NewLocationPage />} />
-            <Route path="divisions" element={<DivisionsPage />} />
-            <Route path="divisions/new" element={<NewDivisionPage />} />
+          <Route element={<Layout />}>
+            <Route path={ROUTES.home} element={<HomePage />} />
+            <Route path={ROUTES.myLeave} element={<MyLeavePage />} />
+            <Route path={ROUTES.allLeave} element={<AllLeavePage />} />
+            <Route path={ROUTES.teamLeave} element={<TeamLeavePage />} />
+            <Route path={ROUTES.newLeaveRequest} element={<LeaveRequestFormPage />} />
+            <Route path="/leave-request/:id" element={<LeaveRequestProfilePage />} />
+            <Route path={ROUTES.organisation} element={<OrganisationPage />} />
+            <Route path={ROUTES.newEmployee} element={<EmployeeFormPage />} />
+            <Route path="/employee/:employee_unid" element={<EmployeeProfilePage />} />
+            <Route path={ROUTES.leaveTypes} element={<LeaveTypesPage />} />
+            <Route path={ROUTES.newLeaveType} element={<NewLeaveTypePage />} />
+            <Route path={ROUTES.locations} element={<LocationsPage />} />
+            <Route path={ROUTES.newLocation} element={<NewLocationPage />} />
+            <Route path={ROUTES.divisions} element={<DivisionsPage />} />
+            <Route path={ROUTES.newDivision} element={<NewDivisionPage />} />
           </Route>
         </Route>
-        <Route path="/my-leave" element={<LegacyDashboardRedirect />} />
-        <Route path="/all-leave" element={<LegacyDashboardRedirect />} />
-        <Route path="/team-leave" element={<LegacyDashboardRedirect />} />
-        <Route path="/leave-request/*" element={<LegacyDashboardRedirect />} />
-        <Route path="/organisation" element={<LegacyDashboardRedirect />} />
-        <Route path="/employee/*" element={<LegacyDashboardRedirect />} />
-        <Route path="/leave-types/*" element={<LegacyDashboardRedirect />} />
-        <Route path="/locations/*" element={<LegacyDashboardRedirect />} />
-        <Route path="/divisions/*" element={<LegacyDashboardRedirect />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

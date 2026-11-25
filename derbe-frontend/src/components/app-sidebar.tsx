@@ -13,49 +13,46 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { ROUTES } from "@/routes";
 
 export function AppSidebar({ user }: { user: CurrentUser }) {
   const { pathname } = useLocation();
   const canManageEmployees = user.role === "Admin" || user.role === "Manager";
-  const isCurrent = (url: string) =>
-    pathname === url ||
-    (url !== "/dashboard/leave-request" && pathname.startsWith(`${url}/`)) ||
-    (url === "/dashboard/leave-request" &&
-      /^\/dashboard\/leave-request\/[^/]+$/.test(pathname));
+  const isCurrent = (url: string) => pathname === url || pathname.startsWith(`${url}/`);
   const navItems: NavMainItem[] = [
     {
       title: "Days Off",
       icon: CalendarDays,
       isActive: [
-        "/dashboard/my-leave",
-        "/dashboard/team-leave",
-        "/dashboard/all-leave",
-        "/dashboard/leave-request",
+        ROUTES.myLeave,
+        ROUTES.teamLeave,
+        ROUTES.allLeave,
+        ROUTES.newLeaveRequest,
       ].some(isCurrent),
       items: [
         {
           title: "My Leave",
-          url: "/dashboard/my-leave",
-          isActive: isCurrent("/dashboard/my-leave"),
+          url: ROUTES.myLeave,
+          isActive: isCurrent(ROUTES.myLeave),
         },
         ...(canManageEmployees
           ? [
               {
                 title: "Team Leave",
-                url: "/dashboard/team-leave",
-                isActive: isCurrent("/dashboard/team-leave"),
+                url: ROUTES.teamLeave,
+                isActive: isCurrent(ROUTES.teamLeave),
               },
             ]
           : []),
         {
           title: "All Leave",
-          url: "/dashboard/all-leave",
-          isActive: isCurrent("/dashboard/all-leave"),
+          url: ROUTES.allLeave,
+          isActive: isCurrent(ROUTES.allLeave),
         },
         {
           title: "Request Days Off",
-          url: "/dashboard/leave-request",
-          isActive: isCurrent("/dashboard/leave-request"),
+          url: ROUTES.newLeaveRequest,
+          isActive: isCurrent(ROUTES.newLeaveRequest),
         },
       ],
     },
@@ -63,21 +60,21 @@ export function AppSidebar({ user }: { user: CurrentUser }) {
       title: "Employees",
       icon: UsersRound,
       isActive:
-        isCurrent("/dashboard/organisation") ||
-        isCurrent("/dashboard/employee/new") ||
-        pathname.startsWith("/dashboard/employee/"),
+        isCurrent(ROUTES.organisation) ||
+        isCurrent(ROUTES.newEmployee) ||
+        pathname.startsWith("/employee/"),
       items: [
         {
           title: "Organisation",
-          url: "/dashboard/organisation",
-          isActive: isCurrent("/dashboard/organisation"),
+          url: ROUTES.organisation,
+          isActive: isCurrent(ROUTES.organisation),
         },
         ...(canManageEmployees
           ? [
               {
                 title: "Create Employee",
-                url: "/dashboard/employee/new",
-                isActive: pathname === "/dashboard/employee/new",
+                url: ROUTES.newEmployee,
+                isActive: pathname === ROUTES.newEmployee,
               },
             ]
           : []),
@@ -86,26 +83,22 @@ export function AppSidebar({ user }: { user: CurrentUser }) {
     {
       title: "Lists",
       icon: Cog,
-      isActive: [
-        "/dashboard/leave-types",
-        "/dashboard/locations",
-        "/dashboard/divisions",
-      ].some(isCurrent),
+      isActive: [ROUTES.leaveTypes, ROUTES.locations, ROUTES.divisions].some(isCurrent),
       items: [
         {
           title: "Leave Types",
-          url: "/dashboard/leave-types",
-          isActive: isCurrent("/dashboard/leave-types"),
+          url: ROUTES.leaveTypes,
+          isActive: isCurrent(ROUTES.leaveTypes),
         },
         {
           title: "Locations",
-          url: "/dashboard/locations",
-          isActive: isCurrent("/dashboard/locations"),
+          url: ROUTES.locations,
+          isActive: isCurrent(ROUTES.locations),
         },
         {
           title: "Divisions",
-          url: "/dashboard/divisions",
-          isActive: isCurrent("/dashboard/divisions"),
+          url: ROUTES.divisions,
+          isActive: isCurrent(ROUTES.divisions),
         },
       ],
     },
@@ -117,7 +110,7 @@ export function AppSidebar({ user }: { user: CurrentUser }) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg" tooltip="Derbe">
-              <Link to="/dashboard/" aria-label="Derbe dashboard">
+              <Link to={ROUTES.home} aria-label="Derbe home">
                 <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <span className="text-sm font-bold">d</span>
                 </div>

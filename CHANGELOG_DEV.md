@@ -4,6 +4,12 @@ Internal development history for Derbe. Not user-facing.
 
 ## [Unreleased]
 
+- Removed the /dashboard prefix from all pages: the logged-in home is now /home, and other pages are at the root (e.g. /my-leave, /leave-request/:id). Deleted LegacyDashboardRedirect and its routes. Added routes.ts with a ROUTES object, used by every link, navigate call, sidebar check and page title, instead of hard-coded paths. It's kept separate from API_PATHS, which are the backend's URLs.
+
+- The leave request form's Employee dropdown now only offers people the user may request leave for, matching the backend scope: everyone for an admin, themselves and their direct reports for a manager, only themselves for a regular user (shown locked). It defaults to the logged-in user instead of the first employee in the list. Fixed submitting a request navigating to a non-existent /dashboard/leave-request/:id route, and it now also refreshes Team Leave.
+
+- API responses are now Brotli-compressed with `tower-http`'s `CompressionLayer` (`compression-br` feature) when the client sends `Accept-Encoding: br`, which every current browser does. Clients that don't accept Brotli get an uncompressed response. Responses under 32 bytes and already-compressed content are left alone. No frontend change was needed: browsers negotiate and decompress automatically. The SPA's static files were already gzipped by the frontend container's nginx. Integration test checks `content-encoding: br` for a Brotli client and no compression for a gzip-only client.
+
 - Split the backend into a Rust 2024 Cargo workspace: one crate per feature, with shared runtime state, errors, configuration, session identity, and domain types in `derbe-core`; the app crate now assembles feature routes.
 
 - Replaced separate leave-request date inputs with the shadcn range calendar (Calendar + Popover). Preserved half-day selection and duration preview; single-day ranges offer full day or half day, multi-day ranges can halve either endpoint or both.

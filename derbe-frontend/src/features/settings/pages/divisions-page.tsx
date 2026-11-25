@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ROUTES } from "@/routes";
 
 export function DivisionsPage() {
   const query = useQuery(divisionsQueryOptions());
@@ -23,7 +24,7 @@ export function DivisionsPage() {
         title="Division"
         action={
           <Button asChild>
-            <Link to="/dashboard/divisions/new">
+            <Link to={ROUTES.newDivision}>
               <Plus />
               Create Division
             </Link>

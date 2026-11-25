@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { derbeKeys } from "@/query-keys";
+import { ROUTES } from "@/routes";
 
 const locationFormSchema = z.object({
   name: z.string().trim().min(1, "Location name is required."),
@@ -39,7 +40,7 @@ export function NewLocationPage() {
     mutationFn: (values: LocationFormValues) => createLocation(values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.locations() });
-      navigate("/dashboard/locations");
+      navigate(ROUTES.locations);
     },
   });
 
@@ -71,7 +72,7 @@ export function NewLocationPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/dashboard/locations")}
+                  onClick={() => navigate(ROUTES.locations)}
                 >
                   Cancel
                 </Button>

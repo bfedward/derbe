@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROLE_LABELS } from "@/features/employees/constants";
+import { ROUTES } from "@/routes";
 
 type OrganisationChartProps = {
   employees: EmployeeResponse[];
@@ -36,7 +37,7 @@ function PersonCard({
             {canViewEmployees ? (
               <Link
                 className="text-foreground hover:text-primary hover:underline"
-                to={`/dashboard/employee/${employee.employee_unid}`}
+                to={ROUTES.employee(employee.employee_unid)}
               >
                 {name}
               </Link>

@@ -7,7 +7,14 @@ import type { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { createLeaveRequest, employeesQueryOptions, leaveTypesQueryOptions } from "@/api";
+import {
+  createLeaveRequest,
+  currentUserQueryOptions,
+  employeesQueryOptions,
+  leaveTypesQueryOptions,
+} from "@/api";
+import type { CurrentUser } from "@/bindings/CurrentUser";
+import type { EmployeeResponse } from "@/bindings/EmployeeResponse";
 import type { LeaveRequestCreate } from "@/bindings/LeaveRequestCreate";
 import { PageHeading } from "@/components/page-heading";
 import { ErrorAlert, QueryMessage } from "@/components/query-message";
@@ -42,16 +49,8 @@ import { derbeKeys } from "@/query-keys";
 
 const leaveRequestFormSchema = z
   .object({
-    employee_unid: z
-      .string()
-      .nullable()
-      .refine((value): boolean => value !== null, "Choose an employee."),
-    leave_type_id: z
-      .number()
-      .int()
-      .positive()
-      .nullable()
-      .refine((value): boolean => value !== null, "Choose a leave type."),
+    employee_unid: z.string().min(1, "Choose an employee."),
+    leave_type_id: z.number().int().positive("Choose a leave type."),
     date_from: z.string().min(1, "Choose a start date."),
     date_to: z.string().min(1, "Choose an end date."),
     half_days: z.enum(["full", "first", "last", "both"]),
@@ -64,8 +63,32 @@ const leaveRequestFormSchema = z
 
 type LeaveRequestFormValues = z.infer<typeof leaveRequestFormSchema>;
 
+function requestableEmployees(
+  employees: EmployeeResponse[],
+  user: CurrentUser,
+): EmployeeResponse[] {
+  const allowed = (() => {
+    switch (user.role) {
+      case "Admin":
+        return employees;
+      case "Manager":
+        return employees.filter(
+          (e) => e.employee_unid === user.unid || e.manager_unid === user.unid,
+        );
+      case "RegularUser":
+      case "Demo":
+        return employees.filter((e) => e.employee_unid === user.unid);
+    }
+  })();
+  return [...allowed].sort(
+    (a, b) =>
+      Number(b.employee_unid === user.unid) - Number(a.employee_unid === user.unid),
+  );
+}
+
 export function LeaveRequestFormPage() {
   const navigate = useNavigate();
+  const { data: currentUser } = useQuery(currentUserQueryOptions());
   const queryClient = useQueryClient();
   const employeesQuery = useQuery(employeesQueryOptions());
   const leaveTypesQuery = useQuery(leaveTypesQueryOptions());
@@ -74,8 +97,8 @@ export function LeaveRequestFormPage() {
   const form = useForm<LeaveRequestFormValues>({
     resolver: zodResolver(leaveRequestFormSchema),
     defaultValues: {
-      employee_unid: null,
-      leave_type_id: null,
+      employee_unid: "",
+      leave_type_id: 0,
       date_from: today,
       date_to: today,
       half_days: "full",
@@ -125,16 +148,16 @@ export function LeaveRequestFormPage() {
   }
 
   useEffect(() => {
-    if (getValues("employee_unid") === null && employeesQuery.data?.[0]) {
-      setValue("employee_unid", employeesQuery.data[0].employee_unid);
+    if (getValues("employee_unid") === "" && currentUser) {
+      setValue("employee_unid", currentUser.unid);
     }
-    if (getValues("leave_type_id") === null && leaveTypesQuery.data?.length) {
+    if (getValues("leave_type_id") === 0 && leaveTypesQuery.data?.length) {
       const defaultLeaveType =
         leaveTypesQuery.data.find((leaveType) => leaveType.default_in_leave_request) ??
         leaveTypesQuery.data[0];
       setValue("leave_type_id", defaultLeaveType.id);
     }
-  }, [employeesQuery.data, getValues, leaveTypesQuery.data, setValue]);
+  }, [currentUser, getValues, leaveTypesQuery.data, setValue]);
 
   useEffect(() => {
     if (!isSingleDay) return;
@@ -153,19 +176,9 @@ export function LeaveRequestFormPage() {
         ...halfDayFlags(values.half_days),
         total_duration: leaveDuration(values.date_from, values.date_to, values.half_days),
       };
-      const employee_unid =
-        values.employee_unid ?? employeesQuery.data?.[0]?.employee_unid;
-      if (employee_unid === undefined) {
-        throw new Error("Choose an employee for this leave request.");
-      }
       const request: LeaveRequestCreate = {
-        employee_unid,
-        leave_type_id:
-          values.leave_type_id ??
-          leaveTypesQuery.data?.find((leaveType) => leaveType.default_in_leave_request)
-            ?.id ??
-          leaveTypesQuery.data?.[0]?.id ??
-          0,
+        employee_unid: values.employee_unid,
+        leave_type_id: values.leave_type_id,
         leave_status: "Pending",
         values: requestValues,
         date_requested: new Date().toISOString(),
@@ -176,14 +189,17 @@ export function LeaveRequestFormPage() {
     },
     onSuccess: async (request) => {
       await queryClient.invalidateQueries({ queryKey: derbeKeys.myLeaveAll() });
-      navigate(`/dashboard/leave-request/${request.id}`);
+      await queryClient.invalidateQueries({ queryKey: derbeKeys.teamLeave() });
+      navigate(`/leave-request/${request.id}`);
     },
   });
   const loadError = employeesQuery.error ?? leaveTypesQuery.error;
 
-  if (employeesQuery.isPending || leaveTypesQuery.isPending) return <QueryMessage />;
+  if (employeesQuery.isPending || leaveTypesQuery.isPending || !currentUser)
+    return <QueryMessage />;
   if (loadError) return <QueryMessage error={loadError} />;
-  const employees = employeesQuery.data ?? [];
+  const employees = requestableEmployees(employeesQuery.data ?? [], currentUser);
+  const canChooseEmployee = employees.length > 1;
   const leaveTypes = leaveTypesQuery.data ?? [];
   const defaultLeaveTypes = leaveTypes.filter(
     (leaveType) => leaveType.default_in_leave_request,
@@ -211,8 +227,9 @@ export function LeaveRequestFormPage() {
                   <FormItem>
                     <FormLabel>Employee</FormLabel>
                     <Select
-                      value={field.value ? field.value : undefined}
-                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                      disabled={!canChooseEmployee}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -230,6 +247,11 @@ export function LeaveRequestFormPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {!canChooseEmployee && (
+                      <FormDescription>
+                        You can only request leave for yourself.
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -241,7 +263,7 @@ export function LeaveRequestFormPage() {
                   <FormItem>
                     <FormLabel>Leave Type</FormLabel>
                     <Select
-                      value={field.value ? String(field.value) : undefined}
+                      value={field.value > 0 ? String(field.value) : undefined}
                       onValueChange={(value) => field.onChange(Number(value))}
                     >
                       <FormControl>
@@ -365,7 +387,7 @@ export function LeaveRequestFormPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => navigate("/dashboard/my-leave")}
+                  onClick={() => navigate("/my-leave")}
                 >
                   Cancel
                 </Button>

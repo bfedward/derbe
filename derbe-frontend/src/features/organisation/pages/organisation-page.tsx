@@ -24,6 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ROLE_LABELS } from "@/features/employees/constants";
 import { EMPTY_VALUE } from "@/features/settings/constants";
+import { ROUTES } from "@/routes";
 
 export function OrganisationPage() {
   const { data: currentUser } = useQuery(currentUserQueryOptions());
@@ -46,7 +47,7 @@ export function OrganisationPage() {
         action={
           canCreateEmployees && (
             <Button asChild>
-              <Link to="/dashboard/employee/new">
+              <Link to={ROUTES.newEmployee}>
                 <Plus />
                 Create Employee
               </Link>
@@ -101,7 +102,7 @@ export function OrganisationPage() {
                             {canViewEmployees ? (
                               <Link
                                 className="text-primary hover:underline"
-                                to={`/dashboard/employee/${employee.employee_unid}`}
+                                to={ROUTES.employee(employee.employee_unid)}
                               >
                                 {employee.first_name} {employee.last_name}
                               </Link>
